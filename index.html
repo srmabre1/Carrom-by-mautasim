@@ -3,124 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Carrom Mobile</title>
+    <title>Mautasim Pro Carrom</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        body { margin: 0; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        #game-container { position: relative; border: 12px solid #3e2723; border-radius: 15px; box-shadow: 0 0 40px #000; }
-        #ui { position: absolute; top: -50px; width: 100%; display: flex; justify-content: space-between; color: gold; font-size: 20px; font-weight: bold; }
+        /* Realistic Wood Environment */
+        body { 
+            margin: 0; 
+            background: #1a1a1a; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', sans-serif; 
+        }
+        #game-wrapper { 
+            position: relative; 
+            /* Wood Frame Texture */
+            border: 20px solid #3e2723; 
+            border-radius: 25px; 
+            box-shadow: 0 0 50px #000; 
+        }
+        #ui { 
+            position: absolute; 
+            top: -70px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            color: #fff; 
+            font-size: 16px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .p-box { 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            background: #222; 
+            border: 1px solid #444;
+            transition: 0.3s; 
+        }
+        .active { 
+            background: linear-gradient(45deg, #FFD700, #DAA520); 
+            color: #000; 
+            font-weight: 900; 
+            border: 2px solid #fff; 
+            transform: scale(1.15); 
+            box-shadow: 0 0 15px #DAA520;
+        }
+        #msg { 
+            position: absolute; 
+            bottom: -50px; 
+            color: #ff5252; 
+            font-weight: bold; 
+            width: 100%; 
+            text-align: center; 
+            font-size: 18px; 
+            text-shadow: 1px 1px 2px #000;
+        }
+        /* Victory Screen */
+        #win-screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.92); display: none; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 100; border-radius: 5px;
+        }
+        #win-screen h1 { 
+            color: #FFD700; font-size: 42px; margin-bottom: 5px; 
+            text-shadow: 0 0 20px #FFD700;
+        }
+        #restart-btn { 
+            margin-top: 25px; padding: 12px 35px; font-size: 18px; cursor: pointer;
+            background: #FFD700; border: none; border-radius: 50px; font-weight: bold;
+            box-shadow: 0 0 15px #FFD700;
+        }
     </style>
 </head>
 <body>
 
-<div id="game-container">
+<div id="game-wrapper">
     <div id="ui">
-        <span>PLAYER 1</span>
-        <span id="score">SCORE: 0</span>
+        <div id="p1-ui" class="p-box active">P1: 0</div>
+        <div id="p2-ui" class="p-box">P2: 0</div>
+        <div id="p3-ui" class="p-box">P3: 0</div>
+        <div id="p4-ui" class="p-box">P4: 0</div>
+    </div>
+    <div id="msg"></div>
+    
+    <div id="win-screen">
+        <h1>VICTORY!</h1>
+        <p id="winner-text" style="color:#ddd; font-size:20px;">MAUTASIM IS THE CHAMPION</p>
+        <button id="restart-btn" onclick="location.reload()">PLAY AGAIN</button>
     </div>
 </div>
 
 <script>
 const config = {
     type: Phaser.AUTO,
-    parent: 'game-container',
+    parent: 'game-wrapper',
     width: 600,
     height: 600,
-    backgroundColor: '#dfbb85',
-    physics: {
-        default: 'arcade',
-        arcade: { friction: 0.1, debug: false }
-    },
+    backgroundColor: '#eecfa1', // Fallback color
+    physics: { default: 'arcade', arcade: { friction: 0.1, debug: false } },
     scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let striker, coins, pockets, score = 0;
-let isAiming = false, startPos = {}, graphics, sliderLine;
+let striker, coins, pockets, graphics;
+let isAiming = false, startPos = {}, currentPlayer = 1;
+let scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
+let waitingForStop = false;
 
 function preload() {}
 
 function create() {
+    // --- 1. REALISTIC BOARD BACKGROUND ---
+    // We create a gradient texture to look like a lit wooden board
+    let bg = this.make.graphics();
+    bg.fillGradientStyle(0xfdfbf7, 0xfdfbf7, 0xe0c392, 0xe0c392, 1);
+    bg.fillRect(0, 0, 600, 600);
+    bg.generateTexture('board_bg', 600, 600);
+    this.add.image(300, 300, 'board_bg');
+
+    // --- 2. BOARD MARKINGS ---
+    let boardG = this.add.graphics();
+    // Center Design
+    boardG.lineStyle(2, 0x5d4037, 0.3);
+    boardG.strokeCircle(300, 300, 85); 
+    boardG.lineStyle(1, 0x5d4037, 0.2);
+    boardG.strokeCircle(300, 300, 80); 
+    // Striker Lines
+    boardG.lineStyle(3, 0x3e2723, 0.8);
+    boardG.strokeRect(105, 105, 390, 390); // Inner play area
+    
+    // Diagonal Arrows (Visual Only)
+    boardG.lineStyle(2, 0x000000, 0.1);
+    boardG.lineBetween(35, 35, 105, 105);
+    boardG.lineBetween(565, 35, 495, 105);
+    boardG.lineBetween(35, 565, 105, 495);
+    boardG.lineBetween(565, 565, 495, 495);
+
+    // --- 3. MAUTASIM BRANDING ---
+    const brandStyle = { fontFamily: 'Georgia, serif', fontSize: '24px', color: '#5d4037', fontStyle: 'bold', alpha: 0.4 };
+    
+    // Bottom
+    this.add.text(300, 560, 'MAUTASIM', brandStyle).setOrigin(0.5);
+    // Top (Rotated 180)
+    this.add.text(300, 40, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(180);
+    // Left (Rotated -90)
+    this.add.text(40, 300, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(-90);
+    // Right (Rotated 90)
+    this.add.text(560, 300, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(90);
+
+    // --- 4. GAME OBJECTS ---
     let g = this.make.graphics();
     
-    // Create 3D Looking Striker
-    g.fillStyle(0x1a237e).fillCircle(20, 20, 20);
-    g.lineStyle(3, 0xffffff, 0.3).strokeCircle(20, 20, 16);
+    // Striker (Blue Marble Look)
+    g.fillStyle(0x1565c0).fillCircle(20, 20, 20);
+    g.lineStyle(2, 0xffffff, 0.5).strokeCircle(20, 20, 15);
     g.generateTexture('striker', 40, 40);
 
-    // Create 3D Looking White Coin
-    g.clear().fillStyle(0xffffff).fillCircle(15, 15, 15);
-    g.lineStyle(2, 0xdddddd).strokeCircle(15, 15, 12);
+    // White Coin (Creamy Look)
+    g.clear().fillStyle(0xfff8e1).fillCircle(15, 15, 15);
+    g.lineStyle(2, 0xd7ccc8).strokeCircle(15, 15, 12);
     g.generateTexture('white', 30, 30);
 
-    // Create 3D Looking Black Coin
+    // Black Coin (Matte Look)
     g.clear().fillStyle(0x212121).fillCircle(15, 15, 15);
-    g.lineStyle(2, 0x444444).strokeCircle(15, 15, 12);
+    g.lineStyle(2, 0x424242).strokeCircle(15, 15, 12);
     g.generateTexture('black', 30, 30);
 
-    // Queen
-    g.clear().fillStyle(0xd81b60).fillCircle(15, 15, 15);
-    g.lineStyle(2, 0xffffff, 0.4).strokeCircle(15, 15, 12);
+    // Queen (Pink/Red Jewel Look)
+    g.clear().fillStyle(0xe91e63).fillCircle(15, 15, 15);
+    g.lineStyle(2, 0xffffff, 0.6).strokeCircle(15, 15, 12);
     g.generateTexture('queen', 30, 30);
 
-    // Board Markings
-    let boardG = this.add.graphics();
-    boardG.lineStyle(2, 0x3e2723, 0.5);
-    boardG.strokeCircle(300, 300, 75); // Center Circle
-    boardG.strokeRect(100, 100, 400, 400); // Inner Box
-    // Striker Lines
-    boardG.lineStyle(4, 0x3e2723, 0.3);
-    boardG.lineBetween(120, 480, 480, 480);
-    boardG.lineBetween(120, 495, 480, 495);
-
+    // Pockets
     pockets = this.physics.add.staticGroup();
-    const pPos = [35, 565];
-    pPos.forEach(x => pPos.forEach(y => pockets.create(x, y, null).setSize(50, 50).setVisible(false)));
+    [35, 565].forEach(x => [35, 565].forEach(y => pockets.create(x, y, null).setSize(55, 55).setVisible(false)));
 
-    coins = this.physics.add.group({ bounceX: 0.7, bounceY: 0.7, dragX: 0.985, dragY: 0.985, useDamping: true });
+    coins = this.physics.add.group({ bounceX: 0.6, bounceY: 0.6, dragX: 0.99, dragY: 0.99, useDamping: true });
     
-    // Setup Coins in Hexagon
+    // Create Coins (Flower Pattern)
     createCoin(this, 300, 300, 'queen');
     for(let i=0; i<6; i++) {
         let angle = i * (Math.PI/3);
-        createCoin(this, 300 + Math.cos(angle)*35, 300 + Math.sin(angle)*35, 'white');
-        createCoin(this, 300 + Math.cos(angle+0.5)*65, 300 + Math.sin(angle+0.5)*65, 'black');
+        createCoin(this, 300 + Math.cos(angle)*36, 300 + Math.sin(angle)*36, 'white');
+        createCoin(this, 300 + Math.cos(angle+0.5)*68, 300 + Math.sin(angle+0.5)*68, 'black');
     }
 
-    striker = this.physics.add.image(300, 487, 'striker').setCircle(20).setCollideWorldBounds(true).setBounce(0.5).setDamping(true).setDrag(0.98);
-    striker.setInteractive({ draggable: true });
+    striker = this.physics.add.image(300, 485, 'striker')
+        .setCircle(20).setCollideWorldBounds(true).setBounce(0.5).setDamping(true).setDrag(0.98);
+
+    // Shadows (Simple visual trick)
+    // In a full engine we would use shaders, here we rely on the graphic texture styles
 
     this.physics.add.collider(striker, coins);
     this.physics.add.collider(coins, coins);
-    this.physics.add.overlap(coins, pockets, (c) => { c.destroy(); score += 10; document.getElementById('score').innerText = "SCORE: " + score; });
+
+    this.physics.add.overlap(coins, pockets, (c) => { 
+        scores[currentPlayer] += (c.texture.key === 'queen' ? 50 : 20);
+        updateUI();
+        c.destroy(); 
+        checkWin();
+    });
+
+    this.physics.add.overlap(striker, pockets, () => { handleFoul(); });
 
     graphics = this.add.graphics();
 
-    // Shooting Logic
+    // INPUT LOGIC
     this.input.on('pointerdown', (p) => {
-        if (striker.body.speed < 2) {
-            if (p.y > 450) { // Position Mode
-                striker.x = Phaser.Math.Clamp(p.x, 120, 480);
-            } else { // Aim Mode
-                isAiming = true;
-                startPos = { x: p.x, y: p.y };
-            }
+        if (!waitingForStop) {
+            if (isTouchOnSiderline(p)) { positionStriker(p.x, p.y); }
+            else { isAiming = true; startPos = { x: p.x, y: p.y }; }
         }
     });
 
     this.input.on('pointermove', (p) => {
         if (isAiming) {
-            graphics.clear().lineStyle(2, 0xffffff, 0.5).lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y));
+            // Draw Aim Line
+            graphics.clear().lineStyle(3, 0xffffff, 0.5); // White line
+            graphics.lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y));
+            // Draw Target Circle (Where it will end up roughly)
+            graphics.lineStyle(1, 0xffffff, 0.2);
+            graphics.strokeCircle(striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y), 20);
         }
     });
 
     this.input.on('pointerup', (p) => {
         if (isAiming) {
             graphics.clear();
-            striker.setVelocity((startPos.x - p.x) * 5, (startPos.y - p.y) * 5);
+            let dx = startPos.x - p.x;
+            let dy = startPos.y - p.y;
+            // Cap max power so it doesn't fly through walls
+            if (dx > 200) dx = 200; if (dx < -200) dx = -200;
+            if (dy > 200) dy = 200; if (dy < -200) dy = -200;
+            
+            striker.setVelocity(dx * 6, dy * 6);
             isAiming = false;
+            waitingForStop = true;
+            document.getElementById('msg').innerText = "";
         }
     });
+}
+
+function isTouchOnSiderline(p) {
+    let margin = 80;
+    if (currentPlayer === 1 && p.y > 600 - margin) return true;
+    if (currentPlayer === 3 && p.y < margin) return true;
+    if (currentPlayer === 2 && p.x < margin) return true;
+    if (currentPlayer === 4 && p.x > 600 - margin) return true;
+    return false;
+}
+
+function handleFoul() {
+    scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 10);
+    document.getElementById('msg').innerText = "FOUL! (-10)";
+    updateUI();
+    striker.setVelocity(0);
+}
+
+function positionStriker(x, y) {
+    if (currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, 125, 475), 485);
+    else if (currentPlayer === 2) striker.setPosition(115, Phaser.Math.Clamp(y, 125, 475));
+    else if (currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, 125, 475), 115);
+    else if (currentPlayer === 4) striker.setPosition(485, Phaser.Math.Clamp(y, 125, 475));
+}
+
+function update() {
+    if (waitingForStop) {
+        let moving = striker.body.speed > 2;
+        coins.children.iterate(c => { if(c.body.speed > 2) moving = true; });
+        if (!moving) { waitingForStop = false; nextTurn(); }
+    }
+}
+
+function nextTurn() {
+    document.querySelectorAll('.p-box').forEach(el => el.classList.remove('active'));
+    currentPlayer = (currentPlayer % 4) + 1;
+    document.getElementById(`p${currentPlayer}-ui`).classList.add('active');
+    
+    striker.setVelocity(0);
+    if (currentPlayer === 1) striker.setPosition(300, 485);
+    if (currentPlayer === 2) striker.setPosition(115, 300);
+    if (currentPlayer === 3) striker.setPosition(300, 115);
+    if (currentPlayer === 4) striker.setPosition(485, 300);
+}
+
+function updateUI() {
+    for(let i=1; i<=4; i++) {
+        document.getElementById(`p${i}-ui`).innerText = `P${i}: ${scores[i]}`;
+    }
 }
 
 function createCoin(scene, x, y, key) {
@@ -128,10 +300,12 @@ function createCoin(scene, x, y, key) {
     c.setCircle(15).setCollideWorldBounds(true);
 }
 
-function update() {
-    if (striker.body.speed < 5 && striker.body.speed > 0) {
-        striker.setVelocity(0);
-        striker.y = 487; // Reset to line
+function checkWin() {
+    if (coins.countActive() === 0) {
+        let winner = 1, maxScore = scores[1];
+        for(let i=2; i<=4; i++) { if(scores[i] > maxScore) { maxScore = scores[i]; winner = i; } }
+        document.getElementById('winner-text').innerHTML = `WINNER: PLAYER ${winner}<br>SCORE: ${maxScore}`;
+        document.getElementById('win-screen').style.display = 'flex';
     }
 }
 </script>
