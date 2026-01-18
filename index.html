@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; background: #222; height: 100vh; }
+        canvas { border: 10px solid #5d4037; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<script>
+const config = {
+    type: Phaser.AUTO,
+    width: 600,
+    height: 600,
+    backgroundColor: '#f3e5ab', // Board color
+    physics: {
+        default: 'arcade',
+        arcade: { 
+            friction: 0.1,
+            debug: false 
+        }
+    },
+    scene: { preload: preload, create: create, update: update }
+};
+
+const game = new Phaser.Game(config);
+let striker, coins, line, graphics;
+
+function preload() {
+    // We generate textures using code so you don't need external images
+}
+
+function create() {
+    // 1. Create the Striker
+    graphics = this.add.graphics();
+    graphics.fillStyle(0x303f9f, 1);
+    graphics.fillCircle(20, 20, 20);
+    graphics.generateTexture('striker_tex', 40, 40);
+    
+    striker = this.physics.add.image(300, 500, 'striker_tex');
+    striker.setCircle(20);
+    striker.setCollideWorldBounds(true);
+    striker.setBounce(0.7);
+    striker.setDamping(true);
+    striker.setDrag(0.98); // Friction
+
+    // 2. Create Coins
+    graphics.clear();
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillCircle(15, 15, 15);
+    graphics.generateTexture('coin_tex', 30, 30);
+
+    coins = this.physics.add.group({
+        key: 'coin_tex',
+        repeat: 5,
+        setXY: { x: 200, y: 300, stepX: 40 }
+    });
+
+    coins.children.iterate((coin) => {
+        coin.setCircle(15);
+        coin.setCollideWorldBounds(true);
+        coin.setBounce(0.8);
+        coin.setDamping(true);
+        coin.setDrag(0.98);
+    });
+
+    // 3. Add Collisions
+    this.physics.add.collider(striker, coins);
+    this.physics.add.collider(coins, coins);
+
+    // 4. Shooting Logic
+    this.input.on('pointerdown', (pointer) => {
+        if (striker.body.speed < 1) {
+            this.startX = pointer.x;
+            this.startY = pointer.y;
+            this.isDragging = true;
+        }
+    });
+
+    this.input.on('pointerup', (pointer) => {
+        if (this.isDragging) {
+            let dx = this.startX - pointer.x;
+            let dy = this.startY - pointer.y;
+            striker.setVelocity(dx * 5, dy * 5);
+            this.isDragging = false;
+        }
+    });
+}
+
+function update() {
+    // Visual aid: You can add an aiming line here if you wish
+}
+</script>
+</body>
+</html>
+
