@@ -3,102 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mautasim Royal Carrom</title>
+    <title>Mautasim Royal Carrom Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #121212; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', sans-serif; 
-        }
-        #game-wrapper { 
-            position: relative; 
-            /* Dark Brown Frame matching your image */
-            border: 25px solid #5D4037; 
-            border-radius: 10px; 
-            box-shadow: 0 0 60px #000; 
-            max-width: 95vw;
-            max-height: 95vw;
-        }
-        canvas {
-            border-radius: 4px; /* Slight inner rounding */
-            width: 100%;
-            height: 100%;
-        }
-        #ui { 
-            position: absolute; 
-            top: -65px; 
-            width: 100%; 
-            display: flex; 
-            justify-content: space-between; 
-            color: #fff; 
-            font-size: 14px; 
-            font-weight: bold;
-            padding: 0 10px;
-            box-sizing: border-box;
-        }
-        .p-box { 
-            padding: 8px 15px; 
-            border-radius: 6px; 
-            background: #2c1e19; 
-            border: 1px solid #5D4037;
-            color: #aaa;
-            transition: 0.3s; 
-        }
-        .active { 
-            background: #d32f2f; /* Red active color like the markings */
-            color: #fff; 
-            border: 2px solid #fff; 
-            transform: scale(1.1); 
-            box-shadow: 0 0 15px #d32f2f;
-        }
-        #msg { 
-            position: absolute; 
-            bottom: -50px; 
-            color: #ff5252; 
-            font-weight: bold; 
-            width: 100%; 
-            text-align: center; 
-            font-size: 18px; 
-        }
-        /* Win Screen */
-        #win-screen { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.92); display: none; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 100;
-        }
-        #win-screen h1 { color: #FFD700; font-size: 48px; margin: 0; }
-        #restart-btn { 
-            margin-top: 20px; padding: 12px 40px; font-size: 20px; cursor: pointer;
-            background: #d32f2f; color: white; border: none; border-radius: 50px; font-weight: bold;
-        }
+        body { margin: 0; background: #0a0a0a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Arial Black', sans-serif; }
+        #game-wrapper { position: relative; border: 22px solid #4E342E; border-radius: 12px; box-shadow: 0 0 80px #000; }
+        #ui { position: absolute; top: -75px; width: 100%; display: flex; justify-content: space-around; color: #fff; }
+        .p-box { padding: 8px 16px; border-radius: 6px; background: #222; border: 1px solid #4E342E; transition: 0.3s; font-size: 14px; letter-spacing: 1px; }
+        .active { background: #d32f2f; color: #fff; border: 2px solid #fff; transform: scale(1.1); box-shadow: 0 0 15px #d32f2f; }
+        #win-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: gold; }
+        #restart-btn { margin-top: 20px; padding: 12px 40px; background: #d32f2f; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-wrapper">
     <div id="ui">
-        <div id="p1-ui" class="p-box active">P1</div>
-        <div id="p2-ui" class="p-box">P2</div>
-        <div id="p3-ui" class="p-box">P3</div>
-        <div id="p4-ui" class="p-box">P4</div>
+        <div id="p1-ui" class="p-box active">PLAYER 1: 0</div>
+        <div id="p2-ui" class="p-box">PLAYER 2: 0</div>
+        <div id="p3-ui" class="p-box">PLAYER 3: 0</div>
+        <div id="p4-ui" class="p-box">PLAYER 4: 0</div>
     </div>
-    <div id="msg"></div>
-    
     <div id="win-screen">
-        <h1>WINNER!</h1>
-        <p id="winner-text" style="color:white; font-size:24px; margin-top:10px;">MAUTASIM WINS</p>
-        <button id="restart-btn" onclick="location.reload()">PLAY AGAIN</button>
+        <h1 id="win-title">MAUTASIM IS THE CHAMPION!</h1>
+        <button id="restart-btn" onclick="location.reload()">NEW GAME</button>
     </div>
 </div>
 
 <script>
-// SCALING UP TO 800x800 for "Bigger" look
 const GAME_SIZE = 800;
 const CENTER = GAME_SIZE / 2;
 
@@ -107,250 +39,167 @@ const config = {
     parent: 'game-wrapper',
     width: GAME_SIZE,
     height: GAME_SIZE,
-    backgroundColor: '#FFE0B2', // Light beige board color from image
+    backgroundColor: '#F5DEB3',
     physics: { default: 'arcade', arcade: { friction: 0.1, debug: false } },
     scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let striker, coins, pockets, graphics;
-let isAiming = false, startPos = {}, currentPlayer = 1;
-let scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
-let waitingForStop = false;
+let striker, coins, pockets, graphics, isAiming = false, startPos = {}, currentPlayer = 1;
+let scores = { 1: 0, 2: 0, 3: 0, 4: 0 }, waitingForStop = false;
 
 function preload() {}
 
 function create() {
-    // --- 1. THE BOARD ART (MATCHING YOUR IMAGE) ---
-    
-    // Draw the Pockets (Black circles in corners)
-    let pocketG = this.add.graphics();
-    pocketG.fillStyle(0x1a1a1a); // Black pockets
-    pocketG.fillCircle(45, 45, 35);
-    pocketG.fillCircle(GAME_SIZE-45, 45, 35);
-    pocketG.fillCircle(45, GAME_SIZE-45, 35);
-    pocketG.fillCircle(GAME_SIZE-45, GAME_SIZE-45, 35);
-
-    // Draw the "Vector Style" Board Markings
     let boardG = this.add.graphics();
     
-    // A. The 4 Long Striker Bars with Red Ends
-    drawStrikerBar(boardG, 140, 140, GAME_SIZE-140, 140); // Top
-    drawStrikerBar(boardG, 140, GAME_SIZE-140, GAME_SIZE-140, GAME_SIZE-140); // Bottom
-    drawStrikerBar(boardG, 140, 140, 140, GAME_SIZE-140); // Left
-    drawStrikerBar(boardG, GAME_SIZE-140, 140, GAME_SIZE-140, GAME_SIZE-140); // Right
+    // 1. Realistic Pockets
+    boardG.fillStyle(0x111111).fillCircle(45, 45, 42).fillCircle(755, 45, 42).fillCircle(45, 755, 42).fillCircle(755, 755, 42);
 
-    // B. The Diagonal Arrows
-    boardG.lineStyle(2, 0x000000, 1);
-    drawArrow(boardG, 80, 80, 180, 180);   // Top Left
-    drawArrow(boardG, GAME_SIZE-80, 80, GAME_SIZE-180, 180); // Top Right
-    drawArrow(boardG, 80, GAME_SIZE-80, 180, GAME_SIZE-180); // Bot Left
-    drawArrow(boardG, GAME_SIZE-80, GAME_SIZE-80, GAME_SIZE-180, GAME_SIZE-180); // Bot Right
-
-    // C. Center Design (Red Ring + Black details)
-    boardG.lineStyle(2, 0x000000, 1); // Black thin line
-    boardG.strokeCircle(CENTER, CENTER, 95); 
+    // 2. High-Fidelity Design (Matching your Vector Image)
+    const drawPillar = (x, y, w, h, isVert) => {
+        boardG.lineStyle(3, 0x3e2723, 1).strokeRoundedRect(x, y, w, h, 20);
+        boardG.fillStyle(0xd32f2f, 1);
+        if(!isVert) {
+            boardG.fillCircle(x+20, y+h/2, 14).strokeCircle(x+20, y+h/2, 14);
+            boardG.fillCircle(x+w-20, y+h/2, 14).strokeCircle(x+w-20, y+h/2, 14);
+        } else {
+            boardG.fillCircle(x+w/2, y+20, 14).strokeCircle(x+w/2, y+20, 14);
+            boardG.fillCircle(x+w/2, y+h-20, 14).strokeCircle(x+w/2, y+h-20, 14);
+        }
+    };
     
-    boardG.lineStyle(8, 0xD32F2F, 1); // Thick Red Ring
-    boardG.strokeCircle(CENTER, CENTER, 85);
-    
-    boardG.lineStyle(2, 0x000000, 1); // Inner Black line
-    boardG.strokeCircle(CENTER, CENTER, 75);
+    // Baselines
+    drawPillar(155, 155, 490, 42, false); // Top
+    drawPillar(155, 603, 490, 42, false); // Bottom
+    drawPillar(155, 155, 42, 490, true);  // Left
+    drawPillar(603, 155, 42, 490, true);  // Right
 
-    // D. The Curved Arcs (Foul lines near center)
-    boardG.lineStyle(2, 0x000000, 1);
-    boardG.beginPath(); boardG.arc(230, 230, 30, 0, Math.PI/2); boardG.strokePath(); // TL
-    boardG.beginPath(); boardG.arc(GAME_SIZE-230, 230, 30, Math.PI/2, Math.PI); boardG.strokePath(); // TR
-    boardG.beginPath(); boardG.arc(230, GAME_SIZE-230, 30, -Math.PI/2, 0); boardG.strokePath(); // BL
-    boardG.beginPath(); boardG.arc(GAME_SIZE-230, GAME_SIZE-230, 30, Math.PI, -Math.PI/2); boardG.strokePath(); // BR
+    // Diagonal Lines & Curved Arrows
+    boardG.lineStyle(2, 0x3e2723, 0.8);
+    [[110,110,180,180], [690,110,620,180], [110,690,180,620], [690,690,620,620]].forEach(l => boardG.lineBetween(l[0],l[1],l[2],l[3]));
 
-    // --- 2. MAUTASIM BRANDING (ON BORDERS) ---
-    const brandStyle = { fontFamily: 'Impact', fontSize: '32px', color: '#8D6E63', alpha: 0.6 };
-    this.add.text(CENTER, GAME_SIZE - 25, 'MAUTASIM', brandStyle).setOrigin(0.5);
-    this.add.text(CENTER, 25, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(180);
-    this.add.text(25, CENTER, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(-90);
-    this.add.text(GAME_SIZE - 25, CENTER, 'MAUTASIM', brandStyle).setOrigin(0.5).setAngle(90);
+    // 3. Central Master Design
+    boardG.lineStyle(2, 0x000000).strokeCircle(CENTER, CENTER, 95);
+    boardG.lineStyle(8, 0xd32f2f).strokeCircle(CENTER, CENTER, 85);
+    boardG.lineStyle(2, 0x000000).strokeCircle(CENTER, CENTER, 75);
 
+    // 4. Custom Branding
+    const ts = { fontFamily: 'Impact', fontSize: '32px', color: '#5D4037', alpha: 0.4 };
+    this.add.text(CENTER, 770, 'MAUTASIM', ts).setOrigin(0.5);
+    this.add.text(CENTER, 30, 'MAUTASIM', ts).setOrigin(0.5).setAngle(180);
+    this.add.text(30, CENTER, 'MAUTASIM', ts).setOrigin(0.5).setAngle(-90);
+    this.add.text(770, CENTER, 'MAUTASIM', ts).setOrigin(0.5).setAngle(90);
 
-    // --- 3. TEXTURE GENERATION (Matching the clean vector look) ---
-    let g = this.make.graphics();
-    
-    // Striker (Yellow/Cream vector style)
-    g.fillStyle(0xFFEB3B).fillCircle(25, 25, 25);
-    g.lineStyle(4, 0xFBC02D).strokeCircle(25, 25, 23);
-    g.generateTexture('striker', 50, 50);
+    // 5. Game Assets
+    let tex = this.make.graphics();
+    tex.fillStyle(0xffeb3b).fillCircle(25,25,25).lineStyle(3,0xfbc02d).strokeCircle(25,25,23).generateTexture('striker',50,50);
+    tex.clear().fillStyle(0xffffff).fillCircle(18,18,18).lineStyle(2,0x8d6e63).strokeCircle(18,18,16).generateTexture('white',36,36);
+    tex.clear().fillStyle(0x222222).fillCircle(18,18,18).lineStyle(2,0x000000).strokeCircle(18,18,16).generateTexture('black',36,36);
+    tex.clear().fillStyle(0xd32f2f).fillCircle(18,18,18).lineStyle(2,0xffffff).strokeCircle(18,18,16).generateTexture('queen',36,36);
 
-    // Wooden Coin (Beige)
-    g.clear().fillStyle(0xD7CCC8).fillCircle(18, 18, 18);
-    g.lineStyle(3, 0x8D6E63).strokeCircle(18, 18, 16); // Brown ring
-    g.lineStyle(1, 0x8D6E63).strokeCircle(18, 18, 10); // Inner detail
-    g.generateTexture('white', 36, 36);
-
-    // Black Coin
-    g.clear().fillStyle(0x212121).fillCircle(18, 18, 18);
-    g.lineStyle(3, 0x000000).strokeCircle(18, 18, 16);
-    g.lineStyle(1, 0x424242).strokeCircle(18, 18, 10);
-    g.generateTexture('black', 36, 36);
-
-    // Queen (Red)
-    g.clear().fillStyle(0xD32F2F).fillCircle(18, 18, 18);
-    g.lineStyle(3, 0xB71C1C).strokeCircle(18, 18, 16);
-    g.generateTexture('queen', 36, 36);
-
-
-    // --- 4. GAME OBJECTS SETUP ---
-    
-    // Actual Physics Pockets
     pockets = this.physics.add.staticGroup();
-    // Adjusted coordinates for 800x800 size
-    [45, GAME_SIZE-45].forEach(x => [45, GAME_SIZE-45].forEach(y => pockets.create(x, y, null).setSize(60, 60).setVisible(false)));
+    [[45,45],[755,45],[45,755],[755,755]].forEach(p => pockets.create(p[0],p[1],null).setSize(65,65).setVisible(false));
 
-    coins = this.physics.add.group({ bounceX: 0.6, bounceY: 0.6, dragX: 0.99, dragY: 0.99, useDamping: true });
-    
-    // Coin Arrangement (Matching the dense cluster in image)
+    coins = this.physics.add.group({ bounceX: 0.7, bounceY: 0.7, dragX: 0.99, dragY: 0.99, useDamping: true });
     createCoin(this, CENTER, CENTER, 'queen');
-    for(let i=0; i<6; i++) {
-        let angle = i * (Math.PI/3);
-        createCoin(this, CENTER + Math.cos(angle)*38, CENTER + Math.sin(angle)*38, 'white'); // Inner ring
-        createCoin(this, CENTER + Math.cos(angle+0.5)*74, CENTER + Math.sin(angle+0.5)*74, 'black'); // Outer ring
+    for(let i=0; i<6; i++){
+        let a = i*(Math.PI/3);
+        createCoin(this, CENTER+Math.cos(a)*39, CENTER+Math.sin(a)*39, 'white');
+        createCoin(this, CENTER+Math.cos(a+0.5)*76, CENTER+Math.sin(a+0.5)*76, 'black');
     }
 
-    // Striker Setup
-    striker = this.physics.add.image(CENTER, GAME_SIZE - 140, 'striker')
-        .setCircle(25).setCollideWorldBounds(true).setBounce(0.5).setDamping(true).setDrag(0.985);
-
+    striker = this.physics.add.image(CENTER, 624, 'striker').setCircle(25).setCollideWorldBounds(true).setDamping(true).setDrag(0.982).setBounce(0.5);
+    
     this.physics.add.collider(striker, coins);
     this.physics.add.collider(coins, coins);
-
+    
     this.physics.add.overlap(coins, pockets, (c) => { 
-        scores[currentPlayer] += (c.texture.key === 'queen' ? 50 : 20);
-        updateUI();
+        let points = (c.texture.key === 'queen') ? 50 : 20;
+        scores[currentPlayer] += points; 
+        updateScoreboard();
         c.destroy(); 
-        checkWin();
+        checkWin(); 
     });
-
-    this.physics.add.overlap(striker, pockets, () => { handleFoul(); });
+    
+    this.physics.add.overlap(striker, pockets, () => { 
+        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 10);
+        updateScoreboard();
+        striker.setVelocity(0); 
+    });
 
     graphics = this.add.graphics();
 
-    // INPUT
     this.input.on('pointerdown', (p) => {
-        // We scale pointer input because of CSS resizing
-        let scale = GAME_SIZE / parseInt(game.canvas.style.width || GAME_SIZE);
-        // Simplified for this demo: assumes 1:1 or uses internal pointer logic usually
-        
-        if (!waitingForStop) {
-            if (isTouchOnSiderline(p)) { positionStriker(p.x, p.y); }
-            else { isAiming = true; startPos = { x: p.x, y: p.y }; }
+        if(!waitingForStop) {
+            if(isLineTouch(p)) { moveStriker(p.x, p.y); }
+            else { isAiming = true; startPos = {x:p.x, y:p.y}; }
         }
     });
 
-    this.input.on('pointermove', (p) => {
-        if (isAiming) {
-            graphics.clear().lineStyle(4, 0xD32F2F, 0.6); // Red Aim Line
-            graphics.lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y));
+    this.input.on('pointermove', (p) => { 
+        if(isAiming) { 
+            graphics.clear().lineStyle(4,0xd32f2f,0.6).lineBetween(striker.x, striker.y, striker.x+(startPos.x-p.x), striker.y+(startPos.y-p.y)); 
         }
     });
 
-    this.input.on('pointerup', (p) => {
-        if (isAiming) {
-            graphics.clear();
-            let dx = startPos.x - p.x;
-            let dy = startPos.y - p.y;
-            // Power limiter
-            if (dx > 250) dx = 250; if (dx < -250) dx = -250;
-            if (dy > 250) dy = 250; if (dy < -250) dy = -250;
-            
-            striker.setVelocity(dx * 7, dy * 7);
-            isAiming = false;
-            waitingForStop = true;
-            document.getElementById('msg').innerText = "";
+    this.input.on('pointerup', (p) => { 
+        if(isAiming) { 
+            graphics.clear(); 
+            let forceX = (startPos.x - p.x) * 6.5;
+            let forceY = (startPos.y - p.y) * 6.5;
+            striker.setVelocity(forceX, forceY); 
+            isAiming = false; 
+            waitingForStop = true; 
         }
     });
 }
 
-// Helper to draw the Pill shapes with Red Ends
-function drawStrikerBar(g, x1, y1, x2, y2) {
-    g.lineStyle(2, 0x000000, 1);
-    g.lineBetween(x1, y1, x2, y2);
-    
-    // Draw Red Circles at ends
-    g.fillStyle(0xD32F2F, 1);
-    g.fillCircle(x1, y1, 12);
-    g.fillCircle(x2, y2, 12);
-    g.strokeCircle(x1, y1, 12);
-    g.strokeCircle(x2, y2, 12);
-}
-
-// Helper to draw arrows
-function drawArrow(g, x1, y1, x2, y2) {
-    g.lineBetween(x1, y1, x2, y2);
-    g.strokeCircle(x1, y1, 8); // Circle at start of arrow
-    // Simple arrow head logic could be added here
-}
-
-function isTouchOnSiderline(p) {
-    let margin = 100; // Increased margin for bigger board
-    if (currentPlayer === 1 && p.y > GAME_SIZE - 200) return true;
-    if (currentPlayer === 3 && p.y < 200) return true;
-    if (currentPlayer === 2 && p.x < 200) return true;
-    if (currentPlayer === 4 && p.x > GAME_SIZE - 200) return true;
+function isLineTouch(p) {
+    if(currentPlayer===1 && p.y > 580) return true;
+    if(currentPlayer===3 && p.y < 220) return true;
+    if(currentPlayer===2 && p.x < 220) return true;
+    if(currentPlayer===4 && p.x > 580) return true;
     return false;
 }
 
-function handleFoul() {
-    scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 10);
-    document.getElementById('msg').innerText = "FOUL! (-10)";
-    updateUI();
-    striker.setVelocity(0);
-}
-
-function positionStriker(x, y) {
-    let limitMin = 140, limitMax = GAME_SIZE - 140;
-    if (currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, limitMin, limitMax), GAME_SIZE - 140);
-    else if (currentPlayer === 2) striker.setPosition(140, Phaser.Math.Clamp(y, limitMin, limitMax));
-    else if (currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, limitMin, limitMax), 140);
-    else if (currentPlayer === 4) striker.setPosition(GAME_SIZE - 140, Phaser.Math.Clamp(y, limitMin, limitMax));
+function moveStriker(x, y) {
+    let min = 175, max = 625;
+    if(currentPlayer===1) striker.setPosition(Phaser.Math.Clamp(x, min, max), 624);
+    else if(currentPlayer===2) striker.setPosition(176, Phaser.Math.Clamp(y, min, max));
+    else if(currentPlayer===3) striker.setPosition(Phaser.Math.Clamp(x, min, max), 176);
+    else if(currentPlayer===4) striker.setPosition(624, Phaser.Math.Clamp(y, min, max));
 }
 
 function update() {
-    if (waitingForStop) {
-        let moving = striker.body.speed > 2;
-        coins.children.iterate(c => { if(c.body.speed > 2) moving = true; });
-        if (!moving) { waitingForStop = false; nextTurn(); }
+    if(waitingForStop) {
+        let moving = striker.body.speed > 5;
+        coins.children.iterate(c => { if(c.body.speed > 5) moving = true; });
+        if(!moving) { waitingForStop = false; nextPlayer(); }
     }
 }
 
-function nextTurn() {
-    document.querySelectorAll('.p-box').forEach(el => el.classList.remove('active'));
+function nextPlayer() {
+    document.querySelectorAll('.p-box').forEach(b => b.classList.remove('active'));
     currentPlayer = (currentPlayer % 4) + 1;
     document.getElementById(`p${currentPlayer}-ui`).classList.add('active');
-    
     striker.setVelocity(0);
-    if (currentPlayer === 1) striker.setPosition(CENTER, GAME_SIZE - 140);
-    if (currentPlayer === 2) striker.setPosition(140, CENTER);
-    if (currentPlayer === 3) striker.setPosition(CENTER, 140);
-    if (currentPlayer === 4) striker.setPosition(GAME_SIZE - 140, CENTER);
+    if(currentPlayer===1) striker.setPosition(CENTER, 624);
+    if(currentPlayer===2) striker.setPosition(176, CENTER);
+    if(currentPlayer===3) striker.setPosition(CENTER, 176);
+    if(currentPlayer===4) striker.setPosition(624, CENTER);
 }
 
-function updateUI() {
+function updateScoreboard() {
     for(let i=1; i<=4; i++) {
-        document.getElementById(`p${i}-ui`).innerText = `P${i}: ${scores[i]}`;
+        document.getElementById(`p${i}-ui`).innerText = `PLAYER ${i}: ${scores[i]}`;
     }
 }
 
-function createCoin(scene, x, y, key) {
-    let c = coins.create(x, y, key);
-    c.setCircle(18).setCollideWorldBounds(true);
-}
+function createCoin(s, x, y, k) { s.physics.add.existing(coins.create(x, y, k).setCircle(18).setCollideWorldBounds(true).setBounce(0.6)); }
 
 function checkWin() {
-    if (coins.countActive() === 0) {
-        let winner = 1, maxScore = scores[1];
-        for(let i=2; i<=4; i++) { if(scores[i] > maxScore) { maxScore = scores[i]; winner = i; } }
-        document.getElementById('winner-text').innerHTML = `WINNER: PLAYER ${winner}<br>SCORE: ${maxScore}`;
-        document.getElementById('win-screen').style.display = 'flex';
-    }
+    if(coins.countActive() === 0) { document.getElementById('win-screen').style.display = 'flex'; }
 }
 </script>
 </body>
