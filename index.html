@@ -1,98 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro Carrom Web App</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; background: #222; height: 100vh; }
-        canvas { border: 10px solid #5d4037; border-radius: 10px; }
+        body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #ui { position: absolute; top: 20px; color: white; font-size: 24px; pointer-events: none; text-shadow: 2px 2px #000; }
+        canvas { border: 15px solid #3e2723; border-radius: 10px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
+
+<div id="ui">Score: <span id="score">0</span></div>
 
 <script>
 const config = {
     type: Phaser.AUTO,
     width: 600,
     height: 600,
-    backgroundColor: '#f3e5ab', // Board color
+    backgroundColor: '#f3e5ab',
     physics: {
         default: 'arcade',
-        arcade: { 
-            friction: 0.1,
-            debug: false 
-        }
+        arcade: { friction: 0.05, debug: false }
     },
     scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let striker, coins, line, graphics;
+let striker, coins, pockets, score = 0;
+let isDragging = false, startPos = {x:0, y:0}, graphics;
 
-function preload() {
-    // We generate textures using code so you don't need external images
-}
+function preload() {}
 
 function create() {
-    // 1. Create the Striker
-    graphics = this.add.graphics();
-    graphics.fillStyle(0x303f9f, 1);
-    graphics.fillCircle(20, 20, 20);
-    graphics.generateTexture('striker_tex', 40, 40);
+    // 1. Create Textures programmatically (No external images needed)
+    let g = this.make.graphics();
     
-    striker = this.physics.add.image(300, 500, 'striker_tex');
-    striker.setCircle(20);
-    striker.setCollideWorldBounds(true);
-    striker.setBounce(0.7);
-    striker.setDamping(true);
-    striker.setDrag(0.98); // Friction
+    // Striker Texture
+    g.fillStyle(0x1a237e).fillCircle(20, 20, 20).generateTexture('striker', 40, 40);
+    // White Coin
+    g.clear().fillStyle(0xffffff).fillCircle(15, 15, 15).generateTexture('white', 30, 30);
+    // Black Coin
+    g.clear().fillStyle(0x212121).fillCircle(15, 15, 15).generateTexture('black', 30, 30);
+    // Queen
+    g.clear().fillStyle(0xe91e63).fillCircle(15, 15, 15).generateTexture('queen', 30, 30);
+    // Pocket
+    g.clear().fillStyle(0x000000, 0.5).fillCircle(25, 25, 25).generateTexture('pocket', 50, 50);
 
-    // 2. Create Coins
-    graphics.clear();
-    graphics.fillStyle(0xffffff, 1);
-    graphics.fillCircle(15, 15, 15);
-    graphics.generateTexture('coin_tex', 30, 30);
+    // 2. Add Pockets
+    pockets = this.physics.add.staticGroup();
+    pockets.create(25, 25, 'pocket');
+    pockets.create(575, 25, 'pocket');
+    pockets.create(25, 575, 'pocket');
+    pockets.create(575, 575, 'pocket');
 
+    // 3. Create Coins in a Circle pattern
     coins = this.physics.add.group({
-        key: 'coin_tex',
-        repeat: 5,
-        setXY: { x: 200, y: 300, stepX: 40 }
+        dragX: 0.98, dragY: 0.98, useDamping: true, bounceX: 0.8, bounceY: 0.8
     });
 
-    coins.children.iterate((coin) => {
-        coin.setCircle(15);
-        coin.setCollideWorldBounds(true);
-        coin.setBounce(0.8);
-        coin.setDamping(true);
-        coin.setDrag(0.98);
-    });
+    const centerX = 300, centerY = 300;
+    // Queen
+    createCoin(this, centerX, centerY, 'queen');
+    // Hexagon pattern for White/Black
+    for (let i = 0; i < 6; i++) {
+        let angle = (i * 60) * (Math.PI / 180);
+        createCoin(this, centerX + Math.cos(angle) * 35, centerY + Math.sin(angle) * 35, 'white');
+        createCoin(this, centerX + Math.cos(angle + 0.5) * 70, centerY + Math.sin(angle + 0.5) * 70, 'black');
+    }
 
-    // 3. Add Collisions
+    // 4. Create Striker
+    striker = this.physics.add.image(300, 500, 'striker');
+    striker.setCircle(20).setCollideWorldBounds(true).setBounce(0.6).setDamping(true).setDrag(0.97);
+
+    // 5. Collisions
     this.physics.add.collider(striker, coins);
     this.physics.add.collider(coins, coins);
+    
+    // 6. Overlap with Pockets (Goal)
+    this.physics.add.overlap(coins, pockets, pocketed, null, this);
+    this.physics.add.overlap(striker, pockets, (s, p) => {
+        s.setVelocity(0); s.setPosition(300, 500); // Foul logic
+    });
 
-    // 4. Shooting Logic
-    this.input.on('pointerdown', (pointer) => {
-        if (striker.body.speed < 1) {
-            this.startX = pointer.x;
-            this.startY = pointer.y;
-            this.isDragging = true;
+    // 7. Input
+    graphics = this.add.graphics();
+    this.input.on('pointerdown', (p) => {
+        if (striker.body.speed < 2) {
+            isDragging = true;
+            startPos = { x: p.x, y: p.y };
         }
     });
 
-    this.input.on('pointerup', (pointer) => {
-        if (this.isDragging) {
-            let dx = this.startX - pointer.x;
-            let dy = this.startY - pointer.y;
-            striker.setVelocity(dx * 5, dy * 5);
-            this.isDragging = false;
+    this.input.on('pointermove', (p) => {
+        if (isDragging) {
+            graphics.clear().lineStyle(3, 0xff0000).lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y));
         }
     });
+
+    this.input.on('pointerup', (p) => {
+        if (isDragging) {
+            graphics.clear();
+            let dx = startPos.x - p.x;
+            let dy = startPos.y - p.y;
+            striker.setVelocity(dx * 4, dy * 4);
+            isDragging = false;
+        }
+    });
+}
+
+function createCoin(scene, x, y, key) {
+    let coin = coins.create(x, y, key);
+    coin.setCircle(15).setCollideWorldBounds(true);
+    coin.type = key;
+}
+
+function pocketed(coin, pocket) {
+    if (coin.type === 'white') score += 20;
+    else if (coin.type === 'black') score += 10;
+    else if (coin.type === 'queen') score += 50;
+    
+    document.getElementById('score').innerText = score;
+    coin.destroy();
 }
 
 function update() {
-    // Visual aid: You can add an aiming line here if you wish
+    // Stop striker when it gets very slow so it can be played again
+    if (striker.body.speed < 5 && striker.body.speed > 0) {
+        striker.setVelocity(0);
+    }
 }
 </script>
 </body>
 </html>
-
