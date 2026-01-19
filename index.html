@@ -7,10 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
         body { margin: 0; background: #1a1a1a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; }
-        #game-wrapper { position: relative; border: 20px solid #3e2723; border-radius: 8px; box-shadow: 0 0 50px #000; }
-        #ui { position: absolute; top: -60px; width: 100%; display: flex; justify-content: space-around; color: #fff; pointer-events: none; }
-        .p-box { padding: 5px 15px; background: #333; border-radius: 4px; border-bottom: 4px solid #555; transition: 0.3s; font-weight: bold; }
-        .active { border-bottom-color: #d32f2f; transform: translateY(-3px); background: #444; }
+        #game-wrapper { position: relative; border: 15px solid #3e2723; border-radius: 12px; box-shadow: 0 0 50px #000; }
+        #ui { position: absolute; top: -55px; width: 100%; display: flex; justify-content: space-around; color: #fff; pointer-events: none; }
+        .p-box { padding: 4px 12px; background: #333; border-radius: 4px; border-bottom: 3px solid #d32f2f00; transition: 0.3s; font-size: 14px; font-weight: bold; }
+        .active { border-bottom: 3px solid #d32f2f; background: #444; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -25,120 +25,127 @@
 </div>
 
 <script>
-const GAME_SIZE = 740; 
+const GAME_SIZE = 700;
 const CENTER = GAME_SIZE / 2;
-const HARD_STOP_THRESHOLD = 20; // Increased to stop "fastly"
-const FRICTION_DRAG = 0.96; // Lower value = higher friction/faster stop
+const STOP_SPEED = 25; // High threshold for "Fast Stop" logic
+const DRAG = 0.95; // High friction for realistic stopping
 
 const config = {
     type: Phaser.AUTO,
     parent: 'game-wrapper',
     width: GAME_SIZE,
     height: GAME_SIZE,
-    backgroundColor: '#f3e5ab',
-    physics: { 
-        default: 'arcade', 
-        arcade: { friction: 0.2, gravity: { y: 0 }, debug: false } 
-    },
+    backgroundColor: '#e1c191',
+    physics: { default: 'arcade', arcade: { friction: 0.1, debug: false } },
     scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let striker, coins, pockets, graphics, isAiming = false, startPos = {}, currentPlayer = 1;
-let scores = { 1: 0, 2: 0, 3: 0, 4: 0 }, waitingForStop = false;
+let striker, coins, pockets, aimGraphics, isAiming = false, startPos = {}, currentPlayer = 1;
+let scores = { 1:0, 2:0, 3:0, 4:0 }, waitingForStop = false;
 
 function preload() {}
 
 function create() {
-    let boardG = this.add.graphics();
+    let board = this.add.graphics();
     
-    // --- BOARD ART ---
-    boardG.lineStyle(2, 0x3e2723, 0.5);
-    boardG.strokeCircle(CENTER, CENTER, 105).strokeCircle(CENTER, CENTER, 22);
-    boardG.fillStyle(0x111111).fillCircle(0, 0, 52).fillCircle(GAME_SIZE, 0, 52).fillCircle(0, GAME_SIZE, 52).fillCircle(GAME_SIZE, GAME_SIZE, 52);
+    // Board Markings (Mobile Style)
+    board.lineStyle(2, 0x3e2723, 0.4).strokeCircle(CENTER, CENTER, 100).strokeCircle(CENTER, CENTER, 25);
+    board.fillStyle(0x000000, 0.9).fillCircle(30, 30, 45).fillCircle(670, 30, 45).fillCircle(30, 670, 45).fillCircle(670, 670, 45);
 
-    const drawSide = (angle) => {
-        let container = this.add.container(CENTER, CENTER);
-        let g = this.add.graphics(); container.add(g);
-        g.lineStyle(2, 0x3e2723, 0.8);
-        g.strokeLineShape(new Phaser.Geom.Line(-210, 225, 210, 225));
-        g.strokeLineShape(new Phaser.Geom.Line(-210, 260, 210, 260));
-        g.fillStyle(0xd32f2f).fillCircle(-210, 242, 14).fillCircle(210, 242, 14);
-        container.setAngle(angle);
+    // Baselines
+    const drawLine = (x, y, w, h) => board.lineStyle(2, 0x3e2723, 0.8).strokeRect(x, y, w, h);
+    drawLine(150, 560, 400, 30); // P1
+    drawLine(150, 110, 400, 30); // P3
+    drawLine(110, 150, 30, 400); // P2
+    drawLine(560, 150, 30, 400); // P4
+
+    // Custom Textures with Labels
+    const genTexture = (key, color, size) => {
+        let g = this.make.graphics();
+        g.fillStyle(color).fillCircle(size, size, size).lineStyle(2, 0x000000, 0.5).strokeCircle(size, size, size-2);
+        g.generateTexture(key, size*2, size*2);
     };
-    [0, 90, 180, 270].forEach(a => drawSide(a));
-
-    // --- CUSTOM BRANDED TEXTURES ---
-    const createPiece = (name, color, line, size, label) => {
-        let tex = this.make.graphics();
-        tex.fillStyle(color).fillCircle(size, size, size);
-        tex.lineStyle(2, line).strokeCircle(size, size, size-2);
-        tex.generateTexture(name, size*2, size*2);
-    };
-
-    createPiece('striker', 0xffffff, 0xd32f2f, 22);
-    createPiece('white', 0xffffff, 0x8d6e63, 15);
-    createPiece('black', 0x333333, 0x000000, 15);
-    createPiece('queen', 0xd32f2f, 0xffffff, 15);
+    genTexture('str', 0xffffff, 22);
+    genTexture('wht', 0xffffff, 16);
+    genTexture('blk', 0x333333, 16);
+    genTexture('que', 0xd32f2f, 16);
 
     pockets = this.physics.add.staticGroup();
-    [[0,0],[GAME_SIZE,0],[0,GAME_SIZE],[GAME_SIZE,GAME_SIZE]].forEach(p => pockets.create(p[0],p[1],null).setSize(60,60).setVisible(false));
+    [[30,30],[670,30],[30,670],[670,670]].forEach(p => pockets.create(p[0],p[1],null).setSize(60,60).setVisible(false));
 
-    coins = this.physics.add.group({ bounceX: 0.5, bounceY: 0.5, dragX: FRICTION_DRAG, dragY: FRICTION_DRAG, useDamping: true });
+    coins = this.physics.add.group({ bounceX: 0.6, bounceY: 0.6, dragX: DRAG, dragY: DRAG, useDamping: true });
     
-    // Create Branded Pieces
-    createCoin(this, CENTER, CENTER, 'queen');
-    for(let i=0; i<6; i++){
-        let a = i*(Math.PI/3);
-        createCoin(this, CENTER+Math.cos(a)*34, CENTER+Math.sin(a)*34, 'white');
-        createCoin(this, CENTER+Math.cos(a+0.5)*68, CENTER+Math.sin(a+0.5)*68, 'black');
+    // Spawn Coins with MAUTASIM labels
+    const spawn = (x, y, key) => {
+        let c = coins.create(x, y, key).setCircle(16).setCollideWorldBounds(true);
+        c.label = this.add.text(x, y, 'MAUTASIM', {fontSize:'6px', color:'#f00', fontStyle:'bold'}).setOrigin(0.5);
+        return c;
+    };
+
+    spawn(CENTER, CENTER, 'que');
+    for(let i=0; i<6; i++) {
+        let a = i * (Math.PI/3);
+        spawn(CENTER + Math.cos(a)*35, CENTER + Math.sin(a)*35, 'wht');
+        spawn(CENTER + Math.cos(a+0.5)*70, CENTER + Math.sin(a+0.5)*70, 'blk');
     }
 
-    striker = this.physics.add.image(CENTER, 597, 'striker').setCircle(22).setCollideWorldBounds(true).setDamping(true).setDrag(FRICTION_DRAG).setBounce(0.5);
-    addNameLabel(this, striker);
+    striker = this.physics.add.image(CENTER, 575, 'str').setCircle(22).setCollideWorldBounds(true).setDamping(true).setDrag(DRAG).setBounce(0.5);
+    striker.label = this.add.text(striker.x, striker.y, 'MAUTASIM', {fontSize:'8px', color:'#f00', fontStyle:'bold'}).setOrigin(0.5);
 
     this.physics.add.collider(striker, coins);
     this.physics.add.collider(coins, coins);
-    
     this.physics.add.overlap(coins, pockets, (c) => { 
-        scores[currentPlayer] += (c.texture.key === 'queen') ? 50 : 20;
-        updateScoreboard();
-        c.label.destroy(); c.destroy(); 
+        scores[currentPlayer] += (c.texture.key === 'que' ? 50 : 20); 
+        c.label.destroy(); c.destroy(); updateUI();
     });
+
+    aimGraphics = this.add.graphics();
 
     this.input.on('pointerdown', (p) => {
         if(waitingForStop) return;
-        if(Phaser.Math.Distance.Between(p.x, p.y, striker.x, striker.y) < 50) {
-            isAiming = true; startPos = {x: p.x, y: p.y};
+        if(Phaser.Math.Distance.Between(p.x, p.y, striker.x, striker.y) < 60) {
+            isAiming = true;
+            startPos = {x: p.x, y: p.y};
         }
     });
 
     this.input.on('pointermove', (p) => {
         if(waitingForStop) return;
-        if(!isAiming && p.isDown) moveStriker(p.x, p.y);
+        if(!isAiming && p.isDown) positionStriker(p.x, p.y);
+        else if(isAiming) drawAim(p);
     });
 
-    this.input.on('pointerup', () => {
+    this.input.on('pointerup', (p) => {
         if(isAiming) {
-            let dist = Phaser.Math.Distance.Between(this.input.x, this.input.y, startPos.x, startPos.y);
-            let angle = Phaser.Math.Angle.Between(this.input.x, this.input.y, startPos.x, startPos.y);
-            striker.setVelocity(Math.cos(angle) * Math.min(dist * 6, 1200), Math.sin(angle) * Math.min(dist * 6, 1200));
-            isAiming = false; waitingForStop = true;
+            let dist = Phaser.Math.Distance.Between(p.x, p.y, startPos.x, startPos.y);
+            let angle = Phaser.Math.Angle.Between(p.x, p.y, startPos.x, startPos.y);
+            striker.setVelocity(Math.cos(angle) * dist * 6, Math.sin(angle) * dist * 6);
+            isAiming = false; waitingForStop = true; aimGraphics.clear();
         }
     });
 }
 
-function addNameLabel(scene, piece) {
-    let size = (piece.texture.key === 'striker') ? '8px' : '6px';
-    piece.label = scene.add.text(piece.x, piece.y, 'MAUTASIM', { fontSize: size, color: '#ff0000', fontWeight: 'bold' }).setOrigin(0.5);
+function positionStriker(x, y) {
+    if(currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, 175, 525), 575);
+    else if(currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, 175, 525), 125);
+    else if(currentPlayer === 2) striker.setPosition(125, Phaser.Math.Clamp(y, 175, 525));
+    else if(currentPlayer === 4) striker.setPosition(575, Phaser.Math.Clamp(y, 175, 525));
 }
 
-function moveStriker(x, y) {
-    let min = 180, max = 560;
-    if(currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, min, max), 597);
-    else if(currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, min, max), 143);
-    else if(currentPlayer === 2) striker.setPosition(143, Phaser.Math.Clamp(y, min, max));
-    else if(currentPlayer === 4) striker.setPosition(597, Phaser.Math.Clamp(y, min, max));
+function drawAim(p) {
+    aimGraphics.clear();
+    let angle = Phaser.Math.Angle.Between(p.x, p.y, startPos.x, startPos.y);
+    let dist = Phaser.Math.Distance.Between(p.x, p.y, startPos.x, startPos.y);
+    
+    // Dotted Line Logic
+    for(let i=0; i<15; i++) {
+        let lx = striker.x + Math.cos(angle) * (i * 20);
+        let ly = striker.y + Math.sin(angle) * (i * 20);
+        aimGraphics.fillStyle(0xffffff, 0.6).fillCircle(lx, ly, 2);
+    }
+    // Target Circle
+    aimGraphics.lineStyle(2, 0xffffff, 0.5).strokeCircle(striker.x + Math.cos(angle)*150, striker.y + Math.sin(angle)*150, 16);
 }
 
 function update() {
@@ -147,30 +154,26 @@ function update() {
     });
 
     if(waitingForStop) {
-        let moving = false;
+        let isMoving = false;
         [striker, ...coins.getChildren()].forEach(p => {
-            if(p.body.speed > HARD_STOP_THRESHOLD) moving = true;
-            else p.setVelocity(0); // FAST STOP LOGIC
+            if(p.body.speed > STOP_SPEED) isMoving = true;
+            else p.setVelocity(0); // Fast snap-stop logic
         });
-        if(!moving) { waitingForStop = false; nextPlayer(); }
+        if(!isMoving) { 
+            waitingForStop = false; 
+            currentPlayer = (currentPlayer % 4) + 1;
+            updateUI();
+            positionStriker(CENTER, CENTER);
+        }
     }
 }
 
-function nextPlayer() {
-    document.querySelectorAll('.p-box').forEach(b => b.classList.remove('active'));
-    currentPlayer = (currentPlayer % 4) + 1;
-    document.getElementById(`p${currentPlayer}-ui`).classList.add('active');
-    striker.setVelocity(0);
-    moveStriker(CENTER, CENTER);
-}
-
-function updateScoreboard() {
-    for(let i=1; i<=4; i++) document.getElementById(`p${i}-ui`).innerText = `P${i}: ${scores[i]}`;
-}
-
-function createCoin(s, x, y, k) { 
-    let c = coins.create(x, y, k).setCircle(15).setCollideWorldBounds(true).setBounce(0.4);
-    addNameLabel(s, c);
+function updateUI() {
+    for(let i=1; i<=4; i++) {
+        let el = document.getElementById(`p${i}-ui`);
+        el.innerText = `P${i}: ${scores[i]}`;
+        el.classList.toggle('active', currentPlayer === i);
+    }
 }
 </script>
 </body>
