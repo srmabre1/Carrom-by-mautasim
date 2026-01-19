@@ -3,339 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Carrom Royal: AI Edition</title>
+    <title>ATLETO Carrom Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&display=swap');
-
-        :root {
-            --gold: #d4af37;
-            --wood: #2c1810;
-            --cream: #f5deb3;
-        }
-
-        body {
-            margin: 0; background: #0a0a0a; color: white;
-            font-family: 'Poppins', sans-serif; display: flex;
-            flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
-        }
-
-        /* --- Header UI --- */
-        .header {
-            width: 100%; max-width: 500px; display: flex;
-            justify-content: space-around; padding: 20px 0; z-index: 10;
-        }
-        .stat-card {
-            background: linear-gradient(145deg, #1a1a1a, #000);
-            border: 1px solid var(--gold); padding: 10px 20px;
-            border-radius: 12px; text-align: center; min-width: 100px;
-            transition: 0.3s;
-        }
-        .stat-card.active { box-shadow: 0 0 20px var(--gold); transform: scale(1.1); }
-        .score { font-family: 'Cinzel', serif; font-size: 24px; color: var(--gold); }
-        .player-label { font-size: 10px; letter-spacing: 2px; color: #aaa; }
-
-        /* --- Game Board --- */
-        #game-container { position: relative; cursor: crosshair; }
-        canvas {
-            border: 10px solid var(--wood); border-radius: 25px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-
-        /* --- Controls --- */
-        .controls {
-            width: 100%; max-width: 450px; margin-top: 20px;
-            display: flex; flex-direction: column; align-items: center; gap: 15px;
-        }
-        .slider-box {
-            width: 90%; background: #1a1a1a; padding: 15px;
-            border-radius: 50px; border: 1px solid #333; display: flex; align-items: center;
-        }
-        input[type=range] { flex: 1; accent-color: var(--gold); cursor: pointer; }
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
         
-        #overlay-msg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-family: 'Cinzel', serif; font-size: 40px; color: var(--gold);
-            pointer-events: none; opacity: 0; transition: 0.5s; text-align: center;
-        }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: 'Oswald', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; touch-action: none; }
+        
+        /* ATLETO Realistic HUD */
+        .hud { width: 100%; max-width: 500px; display: flex; justify-content: space-between; padding: 10px; position: absolute; top: 10px; }
+        .p-card { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 8px; border: 2px solid #444; min-width: 100px; text-align: center; }
+        .p-card.active { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
+        .score { font-size: 28px; color: #f1c40f; }
+        .label { font-size: 12px; color: #aaa; letter-spacing: 1px; }
+
+        #board-container { position: relative; border: 15px solid #5d4037; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        canvas { background: #fdf5e6; border-radius: 5px; }
+
+        .ui-bottom { width: 100%; max-width: 450px; position: absolute; bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        input[type=range] { width: 80%; accent-color: #e74c3c; cursor: pointer; }
+        
+        #msg-overlay { position: absolute; font-size: 48px; font-weight: 700; text-transform: uppercase; color: white; text-shadow: 2px 2px 10px black; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="stat-card active" id="p1-ui">
-            <div class="player-label">YOU</div>
-            <div class="score" id="s1">0</div>
+    <div id="msg-overlay">STRIKE!</div>
+
+    <div class="hud">
+        <div class="p-card active" id="p1-ui">
+            <div class="label">PLAYER 1</div>
+            <div id="s1" class="score">0</div>
         </div>
-        <div class="stat-card" id="p2-ui">
-            <div class="player-label">CPU (BLACK)</div>
-            <div class="score" id="s2">0</div>
+        <div class="p-card" id="p2-ui">
+            <div class="label">GRANDMASTER AI</div>
+            <div id="s2" class="score">0</div>
         </div>
     </div>
 
-    <div id="game-container">
-        <canvas id="canvas"></canvas>
-        <div id="overlay-msg">YOUR TURN</div>
+    <div id="board-container">
+        <canvas id="carrom"></canvas>
     </div>
 
-    <div class="controls">
-        <div class="slider-box">
-            <span style="margin-right:15px">POSITION</span>
-            <input type="range" id="striker-slider" min="-140" max="140" value="0">
-        </div>
-        <div style="font-size: 12px; color: #666;">DRAG STRIKER BACK TO AIM & SHOOT</div>
+    <div class="ui-bottom">
+        <input type="range" id="positioner" min="-140" max="140" value="0">
+        <div style="font-size: 11px; color: #888;">USE SLIDER TO MOVE • DRAG STRIKER TO AIM</div>
     </div>
 
 <script>
-    const { Engine, Render, World, Bodies, Body, Vector, Events } = Matter;
+const { Engine, World, Bodies, Body, Vector, Events } = Matter;
 
-    // --- CONFIG & STATE ---
-    const WIDTH = 600;
-    const engine = Engine.create();
-    engine.world.gravity.y = 0;
+// --- CONFIGURATION ---
+const WIDTH = 600;
+const engine = Engine.create();
+engine.world.gravity.y = 0;
+const canvas = document.getElementById('carrom');
+const ctx = canvas.getContext('2d');
+const scale = Math.min(window.innerWidth - 40, 500) / WIDTH;
+canvas.width = WIDTH; canvas.height = WIDTH;
+canvas.style.width = (WIDTH * scale) + "px";
+canvas.style.height = (WIDTH * scale) + "px";
 
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const size = Math.min(window.innerWidth - 30, 500);
-    canvas.width = WIDTH; canvas.height = WIDTH;
-    canvas.style.width = size + "px"; canvas.style.height = size + "px";
+let gameState = {
+    turn: 'white',
+    phase: 'AIMING',
+    scores: { white: 0, black: 0 },
+    striker: null,
+    pieces: [],
+    drag: { start: null, current: null },
+    lastPocketed: false
+};
 
-    let state = {
-        turn: 'white', 
-        phase: 'AIMING', // AIMING, MOVING, AI
-        scores: { white: 0, black: 0 },
-        strikerLineY: 485,
-        pieces: [],
-        striker: null,
-        drag: { start: null, current: null }
+// --- INITIALIZE BOARD ---
+function initBoard() {
+    World.clear(engine.world);
+    gameState.pieces = [];
+    
+    // Borders
+    const wallAttr = { isStatic: true, restitution: 0.7, friction: 0.02 };
+    World.add(engine.world, [
+        Bodies.rectangle(300, 10, 600, 20, wallAttr),
+        Bodies.rectangle(300, 590, 600, 20, wallAttr),
+        Bodies.rectangle(10, 300, 20, 600, wallAttr),
+        Bodies.rectangle(590, 300, 20, 600, wallAttr)
+    ]);
+
+    // Coins Setup
+    const addP = (x, y, type) => {
+        const p = Bodies.circle(x, y, 14, { restitution: 0.8, frictionAir: 0.018, label: type });
+        gameState.pieces.push(p);
+        World.add(engine.world, p);
     };
 
-    // --- INITIALIZATION ---
-    function init() {
-        World.clear(engine.world);
-        state.pieces = [];
+    const cx = 300, cy = 300;
+    addP(cx, cy, 'queen');
+    for(let i=0; i<6; i++) {
+        let a = i * Math.PI/3;
+        addP(cx + Math.cos(a)*29, cy + Math.sin(a)*29, i%2==0?'white':'black');
+    }
+    for(let i=0; i<12; i++) {
+        let a = i * Math.PI/6;
+        addP(cx + Math.cos(a)*58, cy + Math.sin(a)*58, [0,3,4,7,8,11].includes(i)?'white':'black');
+    }
+    resetStriker();
+}
+
+function resetStriker() {
+    if(gameState.striker) World.remove(engine.world, gameState.striker);
+    const yPos = gameState.turn === 'white' ? 485 : 115;
+    gameState.striker = Bodies.circle(300, yPos, 22, { 
+        restitution: 0.4, frictionAir: 0.02, mass: 6, label: 'striker' 
+    });
+    World.add(engine.world, gameState.striker);
+    document.getElementById('positioner').value = 0;
+    document.getElementById('positioner').disabled = (gameState.turn === 'black');
+}
+
+// --- SMART AI LOGIC ---
+function runAI() {
+    if(gameState.turn !== 'black') return;
+    setTimeout(() => {
+        const targets = gameState.pieces.filter(p => p.label === 'black');
+        if(targets.length === 0) return;
         
-        // Walls
-        const wallProp = { isStatic: true, restitution: 0.6, friction: 0.05 };
-        World.add(engine.world, [
-            Bodies.rectangle(300, 10, 600, 20, wallProp), // T
-            Bodies.rectangle(300, 590, 600, 20, wallProp), // B
-            Bodies.rectangle(10, 300, 20, 600, wallProp), // L
-            Bodies.rectangle(590, 300, 20, 600, wallProp)  // R
-        ]);
+        const target = targets[Math.floor(Math.random()*targets.length)];
+        const slideX = target.position.x + (Math.random()*40-20);
+        Body.setPosition(gameState.striker, { x: Math.max(160, Math.min(440, slideX)), y: 115 });
 
-        spawnCoins();
-        spawnStriker();
-        loop();
-    }
-
-    function spawnCoins() {
-        const cx = 300, cy = 300, r = 15;
-        const addC = (x, y, type) => {
-            const p = Bodies.circle(x, y, r, { restitution: 0.8, frictionAir: 0.018, label: type });
-            state.pieces.push(p);
-            World.add(engine.world, p);
-        };
-
-        addC(cx, cy, 'queen');
-        for(let i=0; i<6; i++) {
-            let a = i * Math.PI/3;
-            addC(cx + Math.cos(a)*31, cy + Math.sin(a)*31, i%2==0?'white':'black');
-        }
-        for(let i=0; i<12; i++) {
-            let a = i * Math.PI/6;
-            addC(cx + Math.cos(a)*62, cy + Math.sin(a)*62, [0,3,4,7,8,11].includes(i)?'white':'black');
-        }
-    }
-
-    function spawnStriker() {
-        if(state.striker) World.remove(engine.world, state.striker);
-        const y = state.turn === 'white' ? 485 : 115;
-        state.striker = Bodies.circle(300, y, 24, { restitution: 0.5, frictionAir: 0.02, mass: 5, label: 'striker' });
-        World.add(engine.world, state.striker);
-        document.getElementById('striker-slider').value = 0;
-        document.getElementById('striker-slider').disabled = (state.turn === 'black');
-    }
-
-    // --- AI LOGIC (The "Beat the Video" Feature) ---
-    function runAI() {
-        if(state.turn !== 'black') return;
-        
         setTimeout(() => {
-            // Find a black piece to hit
-            const targets = state.pieces.filter(p => p.label === 'black');
-            const target = targets[Math.floor(Math.random() * targets.length)] || state.pieces[0];
-            
-            // Slide striker to a random position on its line
-            const targetX = 300 + (Math.random() * 200 - 100);
-            Body.setPosition(state.striker, { x: targetX, y: 115 });
-
-            // Aim at target
-            setTimeout(() => {
-                const vec = Vector.sub(target.position, state.striker.position);
-                const force = Vector.mult(Vector.normalise(vec), 0.25);
-                Body.applyForce(state.striker, state.striker.position, force);
-                state.phase = 'MOVING';
-            }, 800);
+            const vec = Vector.sub(target.position, gameState.striker.position);
+            const force = Vector.mult(Vector.normalise(vec), 0.3);
+            Body.applyForce(gameState.striker, gameState.striker.position, force);
+            gameState.phase = 'MOVING';
         }, 1000);
-    }
+    }, 1200);
+}
 
-    // --- CORE LOOP ---
-    function loop() {
-        Engine.update(engine, 1000/60);
-        
-        // Pocket Detection
-        const pockets = [{x:35,y:35}, {x:565,y:35}, {x:35,y:565}, {x:565,y:565}];
-        state.pieces.forEach((p, idx) => {
-            pockets.forEach(pk => {
-                if(Vector.magnitude(Vector.sub(p.position, pk)) < 38) {
-                    handleScore(p.label);
-                    World.remove(engine.world, p);
-                    state.pieces.splice(idx, 1);
-                }
-            });
-        });
-
-        // Check if striker pocketed (Foul)
+// --- GAME LOGIC ---
+Events.on(engine, 'afterUpdate', () => {
+    const pockets = [{x:35,y:35}, {x:565,y:35}, {x:35,y:565}, {x:565,y:565}];
+    
+    // Coin Pocketing
+    gameState.pieces.forEach((p, i) => {
         pockets.forEach(pk => {
-            if(Vector.magnitude(Vector.sub(state.striker.position, pk)) < 38) {
-                handleScore('foul');
-                Body.setPosition(state.striker, {x:-100, y:-100});
+            if(Vector.magnitude(Vector.sub(p.position, pk)) < 35) {
+                const points = (p.label === 'queen' ? 50 : 10);
+                gameState.scores[gameState.turn] += points;
+                showToast(`+${points} POCKETED!`);
+                World.remove(engine.world, p);
+                gameState.pieces.splice(i, 1);
+                gameState.lastPocketed = true;
             }
         });
+    });
 
-        // Switch turns when stopped
-        if(state.phase === 'MOVING') {
-            const moving = engine.world.bodies.some(b => b.speed > 0.2);
-            if(!moving) {
-                state.turn = (state.turn === 'white') ? 'black' : 'white';
-                state.phase = 'AIMING';
-                updateUI();
-                spawnStriker();
-                if(state.turn === 'black') {
-                    state.phase = 'AI';
-                    runAI();
-                }
-            }
+    // Striker Foul
+    pockets.forEach(pk => {
+        if(Vector.magnitude(Vector.sub(gameState.striker.position, pk)) < 35) {
+            gameState.scores[gameState.turn] -= 10;
+            showToast("FOUL -10!");
+            Body.setPosition(gameState.striker, {x:-500, y:-500});
         }
+    });
 
-        draw();
-        requestAnimationFrame(loop);
-    }
-
-    function handleScore(type) {
-        if(type === 'white') state.scores.white += 10;
-        if(type === 'black') state.scores.black += 10;
-        if(type === 'queen') state.scores[state.turn] += 50;
-        if(type === 'foul') state.scores[state.turn] -= 5;
-        notify(type.toUpperCase());
-    }
-
-    // --- DRAWING ---
-    function draw() {
-        ctx.clearRect(0,0,WIDTH,WIDTH);
-        
-        // 1. Board
-        ctx.fillStyle = '#1a0f0a'; ctx.fillRect(0,0,WIDTH,WIDTH);
-        ctx.fillStyle = '#f5deb3'; ctx.fillRect(20,20,560,560);
-        
-        // Design
-        ctx.strokeStyle = '#2c1810'; ctx.lineWidth = 2;
-        ctx.strokeRect(30,30,540,540);
-        ctx.beginPath(); ctx.arc(300,300,80,0,7); ctx.stroke();
-        
-        // Pockets
-        ctx.fillStyle = '#000';
-        [{x:35,y:35},{x:565,y:35},{x:35,y:565},{x:565,y:565}].forEach(p => {
-            ctx.beginPath(); ctx.arc(p.x,p.y,35,0,7); ctx.fill();
-        });
-
-        // Striker Lines
-        ctx.strokeStyle = '#d32f2f';
-        ctx.strokeRect(100, 475, 400, 20);
-        ctx.strokeRect(100, 105, 400, 20);
-
-        // 2. Bodies
-        state.pieces.forEach(p => drawCircle(p.position, 15, p.label));
-        drawCircle(state.striker.position, 24, 'striker');
-
-        // 3. Aim Line
-        if(state.drag.start && state.drag.current) {
-            ctx.beginPath();
-            ctx.moveTo(state.striker.position.x, state.striker.position.y);
-            ctx.lineTo(state.drag.current.x, state.drag.current.y);
-            ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
-            ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+    // Turn Management
+    if(gameState.phase === 'MOVING') {
+        const moving = engine.world.bodies.some(b => b.speed > 0.15);
+        if(!moving) {
+            if(!gameState.lastPocketed) gameState.turn = (gameState.turn === 'white' ? 'black' : 'white');
+            gameState.lastPocketed = false;
+            gameState.phase = 'AIMING';
+            updateUI();
+            resetStriker();
+            if(gameState.turn === 'black') runAI();
         }
     }
+});
 
-    function drawCircle(pos, r, type) {
-        ctx.save();
-        ctx.translate(pos.x, pos.y);
-        
-        let grad = ctx.createRadialGradient(-r/3, -r/3, 0, 0, 0, r);
-        if(type === 'white') { grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#ccc'); }
-        else if(type === 'black') { grad.addColorStop(0, '#444'); grad.addColorStop(1, '#000'); }
-        else if(type === 'queen') { grad.addColorStop(0, '#ff69b4'); grad.addColorStop(1, '#c71585'); }
-        else { grad.addColorStop(0, '#ffd700'); grad.addColorStop(1, '#b8860b'); }
+// --- ARTISTIC RENDERER ---
+function draw() {
+    ctx.clearRect(0,0,WIDTH,WIDTH);
+    
+    // ATLETO Theme Board
+    ctx.fillStyle = "#f5deb3"; ctx.fillRect(0,0,WIDTH,WIDTH);
+    ctx.strokeStyle = "#3e2723"; ctx.lineWidth = 2;
+    ctx.strokeRect(35,35,530,530);
+    
+    // Corner Lines & Circles
+    ctx.beginPath(); ctx.arc(300,300,70,0,7); ctx.stroke();
+    ctx.fillStyle = "#000"; pockets().forEach(p => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 35, 0, 7); ctx.fill();
+    });
 
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill();
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
-        
-        // Shine
-        ctx.beginPath(); ctx.arc(-r/3, -r/3, r/4, 0, 7);
-        ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fill();
-        ctx.restore();
+    // Baseline Striker Zones
+    ctx.strokeStyle = "#c0392b";
+    ctx.strokeRect(150, 475, 300, 20); // Bottom
+    ctx.strokeRect(150, 105, 300, 20); // Top
+
+    // Render Coins
+    gameState.pieces.forEach(p => renderCoin(p));
+    renderCoin(gameState.striker);
+
+    // Aiming Dotted Line
+    if(gameState.drag.start && gameState.drag.current) {
+        ctx.beginPath();
+        ctx.moveTo(gameState.striker.position.x, gameState.striker.position.y);
+        ctx.lineTo(gameState.drag.current.x, gameState.drag.current.y);
+        ctx.setLineDash([5,5]); ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.stroke(); ctx.setLineDash([]);
     }
 
-    // --- INPUTS ---
-    document.getElementById('striker-slider').oninput = (e) => {
-        if(state.phase === 'AIMING') {
-            Body.setPosition(state.striker, { x: 300 + parseInt(e.target.value), y: state.strikerLineY });
-        }
-    };
+    requestAnimationFrame(draw);
+}
 
-    canvas.onmousedown = (e) => {
-        if(state.phase !== 'AIMING') return;
-        const rect = canvas.getBoundingClientRect();
-        const pos = { x: (e.clientX - rect.left)*(600/size), y: (e.clientY - rect.top)*(600/size) };
-        if(Vector.magnitude(Vector.sub(pos, state.striker.position)) < 40) state.drag.start = pos;
-    };
+function renderCoin(b) {
+    if(!b) return;
+    const {x, y} = b.position;
+    const r = b.circleRadius;
+    const type = b.label;
 
-    window.onmousemove = (e) => {
-        if(state.drag.start) {
-            const rect = canvas.getBoundingClientRect();
-            state.drag.current = { x: (e.clientX - rect.left)*(600/size), y: (e.clientY - rect.top)*(600/size) };
-        }
-    };
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Shadow
+    ctx.beginPath(); ctx.arc(2, 2, r, 0, 7); ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fill();
 
-    window.onmouseup = () => {
-        if(state.drag.start && state.drag.current) {
-            const dist = Vector.sub(state.drag.start, state.drag.current);
-            const force = Vector.mult(dist, 0.18);
-            Body.applyForce(state.striker, state.striker.position, force);
-            state.phase = 'MOVING';
-        }
-        state.drag.start = null; state.drag.current = null;
-    };
+    // Body
+    let grad = ctx.createRadialGradient(-r/3, -r/3, 0, 0, 0, r);
+    if(type === 'striker') { grad.addColorStop(0, '#e74c3c'); grad.addColorStop(1, '#962d22'); }
+    else if(type === 'queen') { grad.addColorStop(0, '#f39c12'); grad.addColorStop(1, '#d35400'); }
+    else if(type === 'white') { grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#bdc3c7'); }
+    else { grad.addColorStop(0, '#444'); grad.addColorStop(1, '#111'); }
 
-    // --- UI HELPERS ---
-    function updateUI() {
-        document.getElementById('s1').innerText = state.scores.white;
-        document.getElementById('s2').innerText = state.scores.black;
-        document.getElementById('p1-ui').className = state.turn === 'white' ? 'stat-card active' : 'stat-card';
-        document.getElementById('p2-ui').className = state.turn === 'black' ? 'stat-card active' : 'stat-card';
-        notify(state.turn === 'white' ? "YOUR TURN" : "CPU THINKING...");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+}
+
+function pockets() { return [{x:35,y:35},{x:565,y:35},{x:35,y:565},{x:565,y:565}]; }
+
+// --- INPUTS ---
+const positioner = document.getElementById('positioner');
+positioner.oninput = () => {
+    if(gameState.phase === 'AIMING') {
+        const y = gameState.turn === 'white' ? 485 : 115;
+        Body.setPosition(gameState.striker, { x: 300 + parseInt(positioner.value), y: y });
     }
+};
 
-    function notify(msg) {
-        const el = document.getElementById('overlay-msg');
-        el.innerText = msg; el.style.opacity = 1;
-        setTimeout(() => el.style.opacity = 0, 1500);
+canvas.onmousedown = (e) => {
+    if(gameState.phase !== 'AIMING' || gameState.turn === 'black') return;
+    const rect = canvas.getBoundingClientRect();
+    const pos = { x: (e.clientX - rect.left)/scale, y: (e.clientY - rect.top)/scale };
+    if(Vector.magnitude(Vector.sub(pos, gameState.striker.position)) < 50) gameState.drag.start = pos;
+};
+
+window.onmousemove = (e) => {
+    if(!gameState.drag.start) return;
+    const rect = canvas.getBoundingClientRect();
+    gameState.drag.current = { x: (e.clientX - rect.left)/scale, y: (e.clientY - rect.top)/scale };
+};
+
+window.onmouseup = () => {
+    if(gameState.drag.start && gameState.drag.current) {
+        const force = Vector.mult(Vector.sub(gameState.drag.start, gameState.drag.current), 0.2);
+        Body.applyForce(gameState.striker, gameState.striker.position, force);
+        gameState.phase = 'MOVING';
     }
+    gameState.drag.start = null; gameState.drag.current = null;
+};
 
-    init();
+// --- UTILS ---
+function updateUI() {
+    document.getElementById('s1').innerText = gameState.scores.white;
+    document.getElementById('s2').innerText = gameState.scores.black;
+    document.getElementById('p1-ui').className = gameState.turn === 'white' ? 'p-card active' : 'p-card';
+    document.getElementById('p2-ui').className = gameState.turn === 'black' ? 'p-card active' : 'p-card';
+}
+
+function showToast(txt) {
+    const el = document.getElementById('msg-overlay');
+    el.innerText = txt; el.style.opacity = 1;
+    setTimeout(() => el.style.opacity = 0, 1000);
+}
+
+initBoard();
+updateUI();
+draw();
+function mainLoop() { Engine.update(engine, 1000/60); requestAnimationFrame(mainLoop); }
+mainLoop();
 </script>
 </body>
 </html>
