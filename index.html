@@ -1,180 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mautasim Royal Carrom Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
-    <style>
-        body { margin: 0; background: #1a1a1a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; }
-        #game-wrapper { position: relative; border: 15px solid #3e2723; border-radius: 12px; box-shadow: 0 0 50px #000; }
-        #ui { position: absolute; top: -55px; width: 100%; display: flex; justify-content: space-around; color: #fff; pointer-events: none; }
-        .p-box { padding: 4px 12px; background: #333; border-radius: 4px; border-bottom: 3px solid #d32f2f00; transition: 0.3s; font-size: 14px; font-weight: bold; }
-        .active { border-bottom: 3px solid #d32f2f; background: #444; transform: scale(1.05); }
-    </style>
+<meta charset="UTF-8">
+<title>Carrom Game</title>
+<style>
+    body {
+        margin: 0;
+        background: #222;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    canvas {
+        background: #deb887;
+        border: 12px solid #5a2d0c;
+        border-radius: 12px;
+    }
+</style>
 </head>
 <body>
 
-<div id="game-wrapper">
-    <div id="ui">
-        <div id="p1-ui" class="p-box active">P1: 0</div>
-        <div id="p2-ui" class="p-box">P2: 0</div>
-        <div id="p3-ui" class="p-box">P3: 0</div>
-        <div id="p4-ui" class="p-box">P4: 0</div>
-    </div>
-</div>
+<canvas id="board" width="500" height="500"></canvas>
 
 <script>
-const GAME_SIZE = 700;
-const CENTER = GAME_SIZE / 2;
-const STOP_SPEED = 25; // High threshold for "Fast Stop" logic
-const DRAG = 0.95; // High friction for realistic stopping
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
 
-const config = {
-    type: Phaser.AUTO,
-    parent: 'game-wrapper',
-    width: GAME_SIZE,
-    height: GAME_SIZE,
-    backgroundColor: '#e1c191',
-    physics: { default: 'arcade', arcade: { friction: 0.1, debug: false } },
-    scene: { preload: preload, create: create, update: update }
-};
+const friction = 0.99;
+const coins = [];
+const pockets = [
+    {x:20,y:20},{x:480,y:20},{x:20,y:480},{x:480,y:480}
+];
 
-const game = new Phaser.Game(config);
-let striker, coins, pockets, aimGraphics, isAiming = false, startPos = {}, currentPlayer = 1;
-let scores = { 1:0, 2:0, 3:0, 4:0 }, waitingForStop = false;
-
-function preload() {}
-
-function create() {
-    let board = this.add.graphics();
-    
-    // Board Markings (Mobile Style)
-    board.lineStyle(2, 0x3e2723, 0.4).strokeCircle(CENTER, CENTER, 100).strokeCircle(CENTER, CENTER, 25);
-    board.fillStyle(0x000000, 0.9).fillCircle(30, 30, 45).fillCircle(670, 30, 45).fillCircle(30, 670, 45).fillCircle(670, 670, 45);
-
-    // Baselines
-    const drawLine = (x, y, w, h) => board.lineStyle(2, 0x3e2723, 0.8).strokeRect(x, y, w, h);
-    drawLine(150, 560, 400, 30); // P1
-    drawLine(150, 110, 400, 30); // P3
-    drawLine(110, 150, 30, 400); // P2
-    drawLine(560, 150, 30, 400); // P4
-
-    // Custom Textures with Labels
-    const genTexture = (key, color, size) => {
-        let g = this.make.graphics();
-        g.fillStyle(color).fillCircle(size, size, size).lineStyle(2, 0x000000, 0.5).strokeCircle(size, size, size-2);
-        g.generateTexture(key, size*2, size*2);
-    };
-    genTexture('str', 0xffffff, 22);
-    genTexture('wht', 0xffffff, 16);
-    genTexture('blk', 0x333333, 16);
-    genTexture('que', 0xd32f2f, 16);
-
-    pockets = this.physics.add.staticGroup();
-    [[30,30],[670,30],[30,670],[670,670]].forEach(p => pockets.create(p[0],p[1],null).setSize(60,60).setVisible(false));
-
-    coins = this.physics.add.group({ bounceX: 0.6, bounceY: 0.6, dragX: DRAG, dragY: DRAG, useDamping: true });
-    
-    // Spawn Coins with MAUTASIM labels
-    const spawn = (x, y, key) => {
-        let c = coins.create(x, y, key).setCircle(16).setCollideWorldBounds(true);
-        c.label = this.add.text(x, y, 'MAUTASIM', {fontSize:'6px', color:'#f00', fontStyle:'bold'}).setOrigin(0.5);
-        return c;
-    };
-
-    spawn(CENTER, CENTER, 'que');
-    for(let i=0; i<6; i++) {
-        let a = i * (Math.PI/3);
-        spawn(CENTER + Math.cos(a)*35, CENTER + Math.sin(a)*35, 'wht');
-        spawn(CENTER + Math.cos(a+0.5)*70, CENTER + Math.sin(a+0.5)*70, 'blk');
+// Coin class
+class Coin {
+    constructor(x,y,r,color){
+        this.x=x; this.y=y;
+        this.r=r;
+        this.dx=0; this.dy=0;
+        this.color=color;
+        this.active=true;
     }
-
-    striker = this.physics.add.image(CENTER, 575, 'str').setCircle(22).setCollideWorldBounds(true).setDamping(true).setDrag(DRAG).setBounce(0.5);
-    striker.label = this.add.text(striker.x, striker.y, 'MAUTASIM', {fontSize:'8px', color:'#f00', fontStyle:'bold'}).setOrigin(0.5);
-
-    this.physics.add.collider(striker, coins);
-    this.physics.add.collider(coins, coins);
-    this.physics.add.overlap(coins, pockets, (c) => { 
-        scores[currentPlayer] += (c.texture.key === 'que' ? 50 : 20); 
-        c.label.destroy(); c.destroy(); updateUI();
-    });
-
-    aimGraphics = this.add.graphics();
-
-    this.input.on('pointerdown', (p) => {
-        if(waitingForStop) return;
-        if(Phaser.Math.Distance.Between(p.x, p.y, striker.x, striker.y) < 60) {
-            isAiming = true;
-            startPos = {x: p.x, y: p.y};
-        }
-    });
-
-    this.input.on('pointermove', (p) => {
-        if(waitingForStop) return;
-        if(!isAiming && p.isDown) positionStriker(p.x, p.y);
-        else if(isAiming) drawAim(p);
-    });
-
-    this.input.on('pointerup', (p) => {
-        if(isAiming) {
-            let dist = Phaser.Math.Distance.Between(p.x, p.y, startPos.x, startPos.y);
-            let angle = Phaser.Math.Angle.Between(p.x, p.y, startPos.x, startPos.y);
-            striker.setVelocity(Math.cos(angle) * dist * 6, Math.sin(angle) * dist * 6);
-            isAiming = false; waitingForStop = true; aimGraphics.clear();
-        }
-    });
-}
-
-function positionStriker(x, y) {
-    if(currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, 175, 525), 575);
-    else if(currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, 175, 525), 125);
-    else if(currentPlayer === 2) striker.setPosition(125, Phaser.Math.Clamp(y, 175, 525));
-    else if(currentPlayer === 4) striker.setPosition(575, Phaser.Math.Clamp(y, 175, 525));
-}
-
-function drawAim(p) {
-    aimGraphics.clear();
-    let angle = Phaser.Math.Angle.Between(p.x, p.y, startPos.x, startPos.y);
-    let dist = Phaser.Math.Distance.Between(p.x, p.y, startPos.x, startPos.y);
-    
-    // Dotted Line Logic
-    for(let i=0; i<15; i++) {
-        let lx = striker.x + Math.cos(angle) * (i * 20);
-        let ly = striker.y + Math.sin(angle) * (i * 20);
-        aimGraphics.fillStyle(0xffffff, 0.6).fillCircle(lx, ly, 2);
+    draw(){
+        if(!this.active) return;
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+        ctx.fillStyle=this.color;
+        ctx.fill();
     }
-    // Target Circle
-    aimGraphics.lineStyle(2, 0xffffff, 0.5).strokeCircle(striker.x + Math.cos(angle)*150, striker.y + Math.sin(angle)*150, 16);
-}
+    move(){
+        if(!this.active) return;
+        this.x+=this.dx;
+        this.y+=this.dy;
+        this.dx*=friction;
+        this.dy*=friction;
 
-function update() {
-    [striker, ...coins.getChildren()].forEach(p => {
-        if(p.label) { p.label.x = p.x; p.label.y = p.y; }
-    });
+        // wall bounce
+        if(this.x<this.r||this.x>500-this.r) this.dx*=-1;
+        if(this.y<this.r||this.y>500-this.r) this.dy*=-1;
 
-    if(waitingForStop) {
-        let isMoving = false;
-        [striker, ...coins.getChildren()].forEach(p => {
-            if(p.body.speed > STOP_SPEED) isMoving = true;
-            else p.setVelocity(0); // Fast snap-stop logic
-        });
-        if(!isMoving) { 
-            waitingForStop = false; 
-            currentPlayer = (currentPlayer % 4) + 1;
-            updateUI();
-            positionStriker(CENTER, CENTER);
+        // pocket check
+        for(let p of pockets){
+            let d=Math.hypot(this.x-p.x,this.y-p.y);
+            if(d<15){
+                this.active=false;
+            }
         }
     }
 }
 
-function updateUI() {
-    for(let i=1; i<=4; i++) {
-        let el = document.getElementById(`p${i}-ui`);
-        el.innerText = `P${i}: ${scores[i]}`;
-        el.classList.toggle('active', currentPlayer === i);
+// Striker
+const striker = new Coin(250,420,12,"white");
+
+// Coins setup
+for(let i=0;i<6;i++){
+    coins.push(new Coin(240+i*6,250,8,"black"));
+    coins.push(new Coin(260-i*6,250,8,"white"));
+}
+coins.push(new Coin(250,250,9,"red")); // queen
+
+let dragging=false;
+let startX,startY;
+
+// Mouse controls
+canvas.addEventListener("mousedown",e=>{
+    let rect=canvas.getBoundingClientRect();
+    let x=e.clientX-rect.left;
+    let y=e.clientY-rect.top;
+    if(Math.hypot(x-striker.x,y-striker.y)<striker.r){
+        dragging=true;
+        startX=x; startY=y;
+    }
+});
+
+canvas.addEventListener("mouseup",e=>{
+    if(dragging){
+        let rect=canvas.getBoundingClientRect();
+        let x=e.clientX-rect.left;
+        let y=e.clientY-rect.top;
+        striker.dx=(startX-x)/5;
+        striker.dy=(startY-y)/5;
+        dragging=false;
+    }
+});
+
+// Collision logic
+function collide(a,b){
+    if(!a.active||!b.active) return;
+    let d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d<a.r+b.r){
+        let angle=Math.atan2(b.y-a.y,b.x-a.x);
+        let speed1=Math.hypot(a.dx,a.dy);
+        let speed2=Math.hypot(b.dx,b.dy);
+        a.dx=speed2*Math.cos(angle);
+        a.dy=speed2*Math.sin(angle);
+        b.dx=speed1*Math.cos(angle+Math.PI);
+        b.dy=speed1*Math.sin(angle+Math.PI);
     }
 }
+
+function drawBoard(){
+    ctx.clearRect(0,0,500,500);
+
+    // pockets
+    ctx.fillStyle="black";
+    for(let p of pockets){
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,15,0,Math.PI*2);
+        ctx.fill();
+    }
+
+    striker.draw();
+    striker.move();
+
+    for(let c of coins){
+        c.draw();
+        c.move();
+        collide(striker,c);
+        for(let o of coins){
+            if(c!==o) collide(c,o);
+        }
+    }
+    requestAnimationFrame(drawBoard);
+}
+
+drawBoard();
 </script>
+
 </body>
 </html>
