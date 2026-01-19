@@ -1,151 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Carrom Game</title>
+<title>Carrom Pro</title>
 <style>
-    body {
-        margin: 0;
-        background: #222;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-    canvas {
-        background: #deb887;
-        border: 12px solid #5a2d0c;
-        border-radius: 12px;
-    }
+body{
+    margin:0;
+    background:#0f0f0f;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:Arial;
+    color:white;
+}
+canvas{
+    background:radial-gradient(#f1d29c,#d2a679);
+    border:18px solid #5a2d0c;
+    border-radius:22px;
+    box-shadow:0 0 40px #000;
+}
+#hud{
+    position:absolute;
+    top:10px;
+    text-align:center;
+}
+.bar{
+    height:10px;
+    background:#0f0;
+    width:0;
+}
 </style>
 </head>
 <body>
 
-<canvas id="board" width="500" height="500"></canvas>
+<div id="hud">
+    <h3 id="turn">Your Turn</h3>
+    <p>You: <span id="p1">0</span> | AI: <span id="p2">0</span></p>
+    <div style="width:200px;background:#333">
+        <div class="bar" id="power"></div>
+    </div>
+</div>
+
+<canvas id="c" width="600" height="600"></canvas>
 
 <script>
-const canvas = document.getElementById("board");
-const ctx = canvas.getContext("2d");
+const c=document.getElementById("c");
+const ctx=c.getContext("2d");
 
-const friction = 0.99;
-const coins = [];
-const pockets = [
-    {x:20,y:20},{x:480,y:20},{x:20,y:480},{x:480,y:480}
-];
+const FRICTION=0.985;
+const REST=0.98;
+let current="player";
+let scores={player:0,ai:0};
+let waiting=false;
 
-// Coin class
-class Coin {
-    constructor(x,y,r,color){
-        this.x=x; this.y=y;
-        this.r=r;
-        this.dx=0; this.dy=0;
-        this.color=color;
+const sounds={
+    hit:new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_22c49c0e5c.mp3")
+};
+
+class Disk{
+    constructor(x,y,r,col,type){
+        this.x=x;this.y=y;
+        this.vx=0;this.vy=0;
+        this.r=r;this.col=col;
         this.active=true;
+        this.type=type;
     }
     draw(){
         if(!this.active) return;
+        let g=ctx.createRadialGradient(this.x-3,this.y-3,2,this.x,this.y,this.r);
+        g.addColorStop(0,"#fff");
+        g.addColorStop(1,this.col);
+        ctx.fillStyle=g;
         ctx.beginPath();
         ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-        ctx.fillStyle=this.color;
         ctx.fill();
     }
     move(){
         if(!this.active) return;
-        this.x+=this.dx;
-        this.y+=this.dy;
-        this.dx*=friction;
-        this.dy*=friction;
+        this.x+=this.vx; this.y+=this.vy;
+        this.vx*=FRICTION; this.vy*=FRICTION;
+        if(Math.abs(this.vx)<0.05) this.vx=0;
+        if(Math.abs(this.vy)<0.05) this.vy=0;
+        if(this.x<this.r||this.x>600-this.r) this.vx*=-REST;
+        if(this.y<this.r||this.y>600-this.r) this.vy*=-REST;
+    }
+}
 
-        // wall bounce
-        if(this.x<this.r||this.x>500-this.r) this.dx*=-1;
-        if(this.y<this.r||this.y>500-this.r) this.dy*=-1;
+const pockets=[
+{x:20,y:20},{x:580,y:20},{x:20,y:580},{x:580,y:580}
+];
 
-        // pocket check
-        for(let p of pockets){
-            let d=Math.hypot(this.x-p.x,this.y-p.y);
-            if(d<15){
-                this.active=false;
-            }
+function pocketCheck(d){
+    for(let p of pockets){
+        if(Math.hypot(d.x-p.x,d.y-p.y)<18){
+            d.active=false;
+            sounds.hit.play();
+            if(d.type==="coin") scores[current]+=10;
+            if(d.type==="queen") scores[current]+=20;
+            updateHUD();
         }
     }
 }
 
-// Striker
-const striker = new Coin(250,420,12,"white");
-
-// Coins setup
-for(let i=0;i<6;i++){
-    coins.push(new Coin(240+i*6,250,8,"black"));
-    coins.push(new Coin(260-i*6,250,8,"white"));
-}
-coins.push(new Coin(250,250,9,"red")); // queen
-
-let dragging=false;
-let startX,startY;
-
-// Mouse controls
-canvas.addEventListener("mousedown",e=>{
-    let rect=canvas.getBoundingClientRect();
-    let x=e.clientX-rect.left;
-    let y=e.clientY-rect.top;
-    if(Math.hypot(x-striker.x,y-striker.y)<striker.r){
-        dragging=true;
-        startX=x; startY=y;
-    }
-});
-
-canvas.addEventListener("mouseup",e=>{
-    if(dragging){
-        let rect=canvas.getBoundingClientRect();
-        let x=e.clientX-rect.left;
-        let y=e.clientY-rect.top;
-        striker.dx=(startX-x)/5;
-        striker.dy=(startY-y)/5;
-        dragging=false;
-    }
-});
-
-// Collision logic
 function collide(a,b){
     if(!a.active||!b.active) return;
-    let d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(d<a.r+b.r){
-        let angle=Math.atan2(b.y-a.y,b.x-a.x);
-        let speed1=Math.hypot(a.dx,a.dy);
-        let speed2=Math.hypot(b.dx,b.dy);
-        a.dx=speed2*Math.cos(angle);
-        a.dy=speed2*Math.sin(angle);
-        b.dx=speed1*Math.cos(angle+Math.PI);
-        b.dy=speed1*Math.sin(angle+Math.PI);
+    let dx=b.x-a.x, dy=b.y-a.y;
+    let dist=Math.hypot(dx,dy);
+    if(dist<a.r+b.r){
+        let ang=Math.atan2(dy,dx);
+        let sin=Math.sin(ang), cos=Math.cos(ang);
+        let v1={x:a.vx*cos+a.vy*sin,y:-a.vx*sin+a.vy*cos};
+        let v2={x:b.vx*cos+b.vy*sin,y:-b.vx*sin+b.vy*cos};
+        [v1.x,v2.x]=[v2.x,v1.x];
+        a.vx=v1.x*cos-v1.y*sin;
+        a.vy=v1.x*sin+v1.y*cos;
+        b.vx=v2.x*cos-v2.y*sin;
+        b.vy=v2.x*sin+v2.y*cos;
     }
 }
 
-function drawBoard(){
-    ctx.clearRect(0,0,500,500);
+const coins=[];
+const cx=300,cy=300;
+for(let i=0;i<6;i++){
+    coins.push(new Disk(cx+Math.cos(i)*25,cy+Math.sin(i)*25,10,"#111","coin"));
+    coins.push(new Disk(cx+Math.cos(i+0.5)*35,cy+Math.sin(i+0.5)*35,10,"#eee","coin"));
+}
+coins.push(new Disk(cx,cy,11,"red","queen"));
 
-    // pockets
-    ctx.fillStyle="black";
-    for(let p of pockets){
+const striker=new Disk(300,520,14,"#f5f5f5","striker");
+
+let aiming=false,sx,sy,power=0;
+
+c.addEventListener("pointerdown",e=>{
+    if(current!=="player") return;
+    let r=c.getBoundingClientRect();
+    let x=e.clientX-r.left,y=e.clientY-r.top;
+    if(Math.hypot(x-striker.x,y-striker.y)<striker.r){
+        aiming=true; sx=x; sy=y;
+    }
+});
+
+c.addEventListener("pointermove",e=>{
+    if(aiming){
+        let r=c.getBoundingClientRect();
+        let x=e.clientX-r.left,y=e.clientY-r.top;
+        power=Math.min(80,Math.hypot(sx-x,sy-y));
+        document.getElementById("power").style.width=power*2+"px";
+    }
+});
+
+c.addEventListener("pointerup",e=>{
+    if(aiming){
+        let r=c.getBoundingClientRect();
+        let x=e.clientX-r.left,y=e.clientY-r.top;
+        striker.vx=(sx-x)/3;
+        striker.vy=(sy-y)/3;
+        aiming=false;
+        power=0;
+        waiting=true;
+    }
+});
+
+function aiTurn(){
+    let target=coins.find(c=>c.active&&c.type==="coin");
+    if(!target) return;
+    let dx=target.x-striker.x;
+    let dy=target.y-striker.y;
+    striker.vx=dx/25;
+    striker.vy=dy/25;
+    waiting=true;
+}
+
+function allStopped(){
+    return [striker,...coins].every(d=>Math.abs(d.vx)+Math.abs(d.vy)<0.1);
+}
+
+function updateHUD(){
+    document.getElementById("p1").innerText=scores.player;
+    document.getElementById("p2").innerText=scores.ai;
+}
+
+function loop(){
+    ctx.clearRect(0,0,600,600);
+
+    ctx.fillStyle="#000";
+    pockets.forEach(p=>{
         ctx.beginPath();
-        ctx.arc(p.x,p.y,15,0,Math.PI*2);
+        ctx.arc(p.x,p.y,18,0,Math.PI*2);
         ctx.fill();
-    }
+    });
 
-    striker.draw();
     striker.move();
+    striker.draw();
+    pocketCheck(striker);
 
-    for(let c of coins){
-        c.draw();
-        c.move();
+    coins.forEach(c=>{
+        c.move(); c.draw();
+        pocketCheck(c);
         collide(striker,c);
-        for(let o of coins){
-            if(c!==o) collide(c,o);
-        }
-    }
-    requestAnimationFrame(drawBoard);
-}
+        coins.forEach(o=>{if(o!==c) collide(c,o)});
+    });
 
-drawBoard();
+    if(waiting && allStopped()){
+        waiting=false;
+        current=current==="player"?"ai":"player";
+        striker.x=300;
+        striker.y=current==="player"?520:80;
+        document.getElementById("turn").innerText=
+            current==="player"?"Your Turn":"AI Turn";
+        if(current==="ai") setTimeout(aiTurn,700);
+    }
+
+    requestAnimationFrame(loop);
+}
+loop();
 </script>
 
 </body>
