@@ -6,13 +6,11 @@
     <title>Mautasim Royal Carrom Pro - Tournament Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <style>
-        body { margin: 0; background: #1a1a1a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #game-wrapper { position: relative; border: 25px solid #3e2723; border-radius: 8px; box-shadow: 0 0 100px rgba(0,0,0,0.7); }
-        #ui { position: absolute; top: -65px; width: 100%; display: flex; justify-content: space-between; color: #fff; }
-        .p-box { padding: 5px 15px; border-radius: 4px; background: #333; border-bottom: 3px solid #555; font-weight: bold; min-width: 100px; text-align: center; }
-        .active { border-bottom-color: #d32f2f; background: #444; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(211,47,47,0.4); }
-        #win-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: #FFD700; text-align: center; }
-        #restart-btn { margin-top: 20px; padding: 15px 40px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1.2rem; }
+        body { margin: 0; background: #1a1a1a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; }
+        #game-wrapper { position: relative; border: 20px solid #3e2723; border-radius: 8px; box-shadow: 0 0 50px #000; }
+        #ui { position: absolute; top: -60px; width: 100%; display: flex; justify-content: space-around; color: #fff; pointer-events: none; }
+        .p-box { padding: 5px 15px; background: #333; border-radius: 4px; border-bottom: 4px solid #555; transition: 0.3s; }
+        .active { border-bottom-color: #d32f2f; transform: translateY(-3px); background: #444; }
     </style>
 </head>
 <body>
@@ -24,83 +22,56 @@
         <div id="p3-ui" class="p-box">P3: 0</div>
         <div id="p4-ui" class="p-box">P4: 0</div>
     </div>
-    <div id="win-screen">
-        <h1 id="win-title">TOURNAMENT OVER</h1>
-        <h2 id="winner-name"></h2>
-        <button id="restart-btn" onclick="location.reload()">REMATCH</button>
-    </div>
 </div>
 
 <script>
-const GAME_SIZE = 740; // Regulation 74cm scaled
+const GAME_SIZE = 740; // Regulation 74cm scale
 const CENTER = GAME_SIZE / 2;
+const STOP_THRESHOLD = 8; // Fix for "striker isn't stopped"
 
 const config = {
     type: Phaser.AUTO,
     parent: 'game-wrapper',
     width: GAME_SIZE,
     height: GAME_SIZE,
-    backgroundColor: '#f3e5ab', // Birch plywood color
-    physics: { 
-        default: 'arcade', 
-        arcade: { 
-            friction: 0.05,
-            debug: false 
-        } 
-    },
+    backgroundColor: '#f3e5ab', // Birch Plywood
+    physics: { default: 'arcade', arcade: { friction: 0.05, debug: false } },
     scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
 let striker, coins, pockets, graphics, isAiming = false, startPos = {}, currentPlayer = 1;
 let scores = { 1: 0, 2: 0, 3: 0, 4: 0 }, waitingForStop = false;
-let queenPocketedThisTurn = false, queenWaitingForCover = false;
 
 function preload() {}
 
 function create() {
     let boardG = this.add.graphics();
     
-    // --- BOARD DESIGN (TOURNAMENT SPEC) ---
-    // Frame & Pockets
-    boardG.fillStyle(0x000000, 0.9).fillCircle(0, 0, 50).fillCircle(GAME_SIZE, 0, 50).fillCircle(0, GAME_SIZE, 50).fillCircle(GAME_SIZE, GAME_SIZE, 50);
+    // --- BOARD MARKINGS ---
+    boardG.lineStyle(2, 0x3e2723, 0.5);
+    // Outer Circle & Queen Circle
+    boardG.strokeCircle(CENTER, CENTER, 105).strokeCircle(CENTER, CENTER, 22);
+    
+    // Pockets
+    boardG.fillStyle(0x111111).fillCircle(0, 0, 51).fillCircle(GAME_SIZE, 0, 51).fillCircle(0, GAME_SIZE, 51).fillCircle(GAME_SIZE, GAME_SIZE, 51);
 
-    // Baselines & Base Circles (The "Red Spots")
-    const drawTournamentLines = (rotation) => {
-        boardG.lineStyle(2, 0x3e2723, 0.8);
-        // Baselines
-        boardG.strokeLineShape(new Phaser.Geom.Line(160, 580, 580, 580));
-        boardG.strokeLineShape(new Phaser.Geom.Line(160, 615, 580, 615));
-        // End Circles
-        boardG.fillStyle(0xd32f2f, 1).fillCircle(160, 597, 14).strokeCircle(160, 597, 14);
-        boardG.fillCircle(580, 597, 14).strokeCircle(580, 597, 14);
-    };
-
-    // Draw lines for 4 sides
-    [0, 90, 180, 270].forEach(angle => {
+    // Baseline & Foul Lines
+    const drawSide = (angle) => {
         let container = this.add.container(CENTER, CENTER);
         let g = this.add.graphics();
         container.add(g);
         g.lineStyle(2, 0x3e2723, 0.8);
-        g.strokeLineShape(new Phaser.Geom.Line(-210, 220, 210, 220));
-        g.strokeLineShape(new Phaser.Geom.Line(-210, 255, 210, 255));
-        g.fillStyle(0xd32f2f).fillCircle(-210, 237, 14).strokeCircle(-210, 237, 14);
-        g.fillCircle(210, 237, 14).strokeCircle(210, 237, 14);
+        g.strokeLineShape(new Phaser.Geom.Line(-210, 225, 210, 225)); // Inner
+        g.strokeLineShape(new Phaser.Geom.Line(-210, 260, 210, 260)); // Outer
+        g.fillStyle(0xd32f2f).fillCircle(-210, 242, 14).fillCircle(210, 242, 14); // Base Circles
         container.setAngle(angle);
-    });
+    };
+    [0, 90, 180, 270].forEach(a => drawSide(a));
 
-    // Center Circles
-    boardG.lineStyle(2, 0x3e2723).strokeCircle(CENTER, CENTER, 100); // Outer
-    boardG.lineStyle(2, 0xd32f2f).strokeCircle(CENTER, CENTER, 22);  // Queen spot
-
-    // Branding
-    this.add.text(CENTER, CENTER + 140, 'MAUTASIM PRO', { fontFamily: 'serif', fontSize: '24px', color: '#3e2723', alpha: 0.3 }).setOrigin(0.5);
-
-    // --- ASSETS ---
+    // --- PIECES ---
     let tex = this.make.graphics();
-    // Striker (Heavier, Larger)
-    tex.fillStyle(0xe0e0e0).fillCircle(22,22,22).lineStyle(3,0xd32f2f).strokeCircle(22,22,19).generateTexture('striker',44,44);
-    // Pieces (Regulation size)
+    tex.fillStyle(0xe0e0e0).fillCircle(22,22,22).lineStyle(3,0xd32f2f).strokeCircle(22,22,20).generateTexture('striker',44,44);
     tex.clear().fillStyle(0xffffff).fillCircle(15,15,15).lineStyle(2,0x8d6e63).strokeCircle(15,15,14).generateTexture('white',30,30);
     tex.clear().fillStyle(0x333333).fillCircle(15,15,15).lineStyle(1,0x000000).strokeCircle(15,15,14).generateTexture('black',30,30);
     tex.clear().fillStyle(0xd32f2f).fillCircle(15,15,15).lineStyle(2,0xffffff).strokeCircle(15,15,14).generateTexture('queen',30,30);
@@ -110,7 +81,7 @@ function create() {
 
     coins = this.physics.add.group({ bounceX: 0.6, bounceY: 0.6, dragX: 0.985, dragY: 0.985, useDamping: true });
     
-    // Initial Setup (Hexagonal)
+    // Standard Formation
     createCoin(this, CENTER, CENTER, 'queen');
     for(let i=0; i<6; i++){
         let a = i*(Math.PI/3);
@@ -119,95 +90,83 @@ function create() {
     }
 
     striker = this.physics.add.image(CENTER, 597, 'striker').setCircle(22).setCollideWorldBounds(true).setDamping(true).setDrag(0.97).setBounce(0.5);
-    striker.setMass(1.5);
-
+    
     this.physics.add.collider(striker, coins);
     this.physics.add.collider(coins, coins);
     
     this.physics.add.overlap(coins, pockets, (c) => { 
-        handlePocket(c);
+        scores[currentPlayer] += (c.texture.key === 'queen') ? 50 : 20;
+        updateScoreboard();
+        c.destroy(); 
     });
     
     this.physics.add.overlap(striker, pockets, () => { 
-        handleFoul();
+        scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 10); // Foul penalty
+        updateScoreboard();
+        striker.setPosition(-100, -100).setVelocity(0); 
     });
 
     graphics = this.add.graphics();
 
+    // --- TWO FINGER LOGIC ---
     this.input.on('pointerdown', (p) => {
-        if(!waitingForStop) {
-            if(Math.abs(p.y - striker.y) < 50 && Math.abs(p.x - striker.x) < 100) { /* drag logic */ } 
-            else { isAiming = true; startPos = {x:p.x, y:p.y}; }
+        if(waitingForStop) return;
+        
+        // If touching near striker, start aiming (2nd finger feel)
+        if(Phaser.Math.Distance.Between(p.x, p.y, striker.x, striker.y) < 60) {
+            isAiming = true;
+            startPos = {x: p.x, y: p.y};
         }
     });
 
-    this.input.on('pointermove', (p) => { 
-        if(isAiming) { 
-            graphics.clear().lineStyle(2, 0x000000, 0.5);
-            graphics.lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y)); 
-        }
-        if(!waitingForStop && !isAiming && this.input.activePointer.isDown) {
+    this.input.on('pointermove', (p) => {
+        if(waitingForStop) return;
+        
+        if(!isAiming && p.isDown) {
+            // First finger: Positioning on baseline
             moveStriker(p.x, p.y);
+        } else if (isAiming) {
+            // Second finger/drag: Aiming
+            graphics.clear().lineStyle(2, 0x000000, 0.5);
+            graphics.lineBetween(striker.x, striker.y, striker.x + (startPos.x - p.x), striker.y + (startPos.y - p.y));
         }
     });
 
-    this.input.on('pointerup', (p) => { 
-        if(isAiming) { 
-            graphics.clear(); 
-            let forceX = (startPos.x - p.x) * 5;
-            let forceY = (startPos.y - p.y) * 5;
-            striker.setVelocity(forceX, forceY); 
-            isAiming = false; 
-            waitingForStop = true; 
+    this.input.on('pointerup', (p) => {
+        if(isAiming) {
+            graphics.clear();
+            let forceX = (startPos.x - p.x) * 5.5;
+            let forceY = (startPos.y - p.y) * 5.5;
+            striker.setVelocity(forceX, forceY);
+            isAiming = false;
+            waitingForStop = true;
         }
     });
-}
-
-function handlePocket(coin) {
-    let type = coin.texture.key;
-    if(type === 'queen') {
-        queenPocketedThisTurn = true;
-        queenWaitingForCover = true;
-    } else {
-        if(queenWaitingForCover) {
-            scores[currentPlayer] += 50; // Queen covered!
-            queenWaitingForCover = false;
-        }
-        scores[currentPlayer] += 20;
-    }
-    coin.destroy();
-    updateScoreboard();
-}
-
-function handleFoul() {
-    scores[currentPlayer] = Math.max(0, scores[currentPlayer] - 10);
-    striker.setVelocity(0);
-    striker.setPosition(-100, -100); // Remove temporarily
-    updateScoreboard();
 }
 
 function moveStriker(x, y) {
+    // Enforce touching both baselines
     let min = 180, max = 560;
-    if(currentPlayer===1) striker.setPosition(Phaser.Math.Clamp(x, min, max), 597);
-    else if(currentPlayer===3) striker.setPosition(Phaser.Math.Clamp(x, min, max), 143);
-    else if(currentPlayer===2) striker.setPosition(143, Phaser.Math.Clamp(y, min, max));
-    else if(currentPlayer===4) striker.setPosition(597, Phaser.Math.Clamp(y, min, max));
+    if(currentPlayer === 1) striker.setPosition(Phaser.Math.Clamp(x, min, max), 597);
+    else if(currentPlayer === 3) striker.setPosition(Phaser.Math.Clamp(x, min, max), 143);
+    else if(currentPlayer === 2) striker.setPosition(143, Phaser.Math.Clamp(y, min, max));
+    else if(currentPlayer === 4) striker.setPosition(597, Phaser.Math.Clamp(y, min, max));
 }
 
 function update() {
     if(waitingForStop) {
-        let moving = striker.body.speed > 2;
-        coins.children.iterate(c => { if(c.body.speed > 2) moving = true; });
-        
-        if(!moving) { 
-            waitingForStop = false; 
-            if(queenWaitingForCover && !queenPocketedThisTurn) {
-                // Failed to cover queen, respawn it
-                createCoin(this, CENTER, CENTER, 'queen');
-                queenWaitingForCover = false;
-            }
-            queenPocketedThisTurn = false;
-            nextPlayer(); 
+        let moving = false;
+        if(striker.body.speed > STOP_THRESHOLD) moving = true;
+        else striker.setVelocity(0); // Kill jitter
+
+        coins.children.iterate(c => {
+            if(c.body.speed > STOP_THRESHOLD) moving = true;
+            else c.setVelocity(0);
+        });
+
+        if(!moving) {
+            waitingForStop = false;
+            nextPlayer();
         }
     }
 }
@@ -218,31 +177,15 @@ function nextPlayer() {
     document.getElementById(`p${currentPlayer}-ui`).classList.add('active');
     
     striker.setVelocity(0);
-    if(currentPlayer===1) striker.setPosition(CENTER, 597);
-    if(currentPlayer===2) striker.setPosition(143, CENTER);
-    if(currentPlayer===3) striker.setPosition(CENTER, 143);
-    if(currentPlayer===4) striker.setPosition(597, CENTER);
-    
-    if(coins.countActive() === 0) {
-        showWin();
-    }
+    moveStriker(CENTER, CENTER); // Reset to line center
 }
 
 function updateScoreboard() {
-    for(let i=1; i<=4; i++) {
-        document.getElementById(`p${i}-ui`).innerText = `P${i}: ${scores[i]}`;
-    }
+    for(let i=1; i<=4; i++) document.getElementById(`p${i}-ui`).innerText = `P${i}: ${scores[i]}`;
 }
 
-function createCoin(scene, x, y, k) { 
-    let c = coins.create(x, y, k);
-    c.setCircle(15).setCollideWorldBounds(true).setBounce(0.5).setMass(1);
-}
-
-function showWin() {
-    let winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-    document.getElementById('winner-name').innerText = `PLAYER ${winner} WINS WITH ${scores[winner]} POINTS!`;
-    document.getElementById('win-screen').style.display = 'flex';
+function createCoin(s, x, y, k) { 
+    s.physics.add.existing(coins.create(x, y, k).setCircle(15).setCollideWorldBounds(true).setBounce(0.5)); 
 }
 </script>
 </body>
