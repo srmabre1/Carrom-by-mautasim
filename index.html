@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS DEITY | ARCHITECT: MAUTASIM</title>
+    <title>CHESS DEITY | DEV: MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono&display=swap');
 
         :root {
             --primary: #00f2ff;
+            --gold: #ffcc00;
             --danger: #ff0055;
-            --bg: #08080a;
+            --bg: #050508;
             --sq-l: #1e1e26;
             --sq-d: #121217;
         }
@@ -22,69 +23,78 @@
             display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
         }
 
-        /* UI ELEMENTS */
-        .header { width: 100%; text-align: center; padding: 15px; border-bottom: 1px solid #222; }
-        .logo { font-family: 'Orbitron'; font-size: 24px; color: var(--primary); text-shadow: 0 0 15px var(--primary); margin: 0; }
-        .dev-credit { font-size: 9px; letter-spacing: 4px; color: #555; margin-top: 5px; }
+        /* GOLD THEME (Triggers at Lvl 10) */
+        body.gold-mode { --primary: var(--gold); --sq-l: #2d2610; --sq-d: #1a1608; }
 
-        /* THE BOARD */
+        .hud {
+            width: 100%; max-width: 400px; padding: 15px;
+            display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary);
+            background: rgba(0,0,0,0.8); z-index: 10;
+        }
+        .stat-val { font-family: 'Orbitron'; font-size: 16px; color: var(--primary); }
+
         #board-box {
-            position: relative; margin: 20px 0;
-            width: 92vw; max-width: 400px; aspect-ratio: 1/1;
-            border: 4px solid #1a1a1a; border-radius: 4px;
+            position: relative; margin: 15px 0;
+            width: 92vw; max-width: 380px; aspect-ratio: 1/1;
+            border: 3px solid var(--primary); transition: 0.3s;
         }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
-        .sq { display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
+        .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sq-l); }
         .sq.d { background: var(--sq-d); }
         
-        /* PIECES & EFFECTS */
-        .piece { 
-            width: 88%; height: 88%; z-index: 5;
-            filter: drop-shadow(0 0 2px rgba(255,255,255,0.4));
-        }
-        .piece.black { filter: drop-shadow(0 0 5px #7000ff); } /* Purple glow for black pieces */
+        .piece { width: 90%; height: 90%; z-index: 5; filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
+        .piece.black { filter: drop-shadow(0 0 6px #7000ff); }
         
-        .dot { 
-            width: 14px; height: 14px; background: rgba(0, 242, 255, 0.5); 
-            border-radius: 50%; position: absolute; z-index: 2;
-        }
-        .threatened { background: radial-gradient(circle, var(--danger) 0%, transparent 70%) !important; animation: pulse 1s infinite; }
-        .selected { background: rgba(0, 242, 255, 0.2) !important; box-shadow: inset 0 0 10px var(--primary); }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 242, 255, 0.6); border-radius: 50%; z-index: 2; position: absolute; pointer-events: none; }
+        .threatened { background: radial-gradient(circle, var(--danger) 0%, transparent 80%) !important; animation: pulse 0.6s infinite; }
+        .selected { background: rgba(0, 242, 255, 0.3) !important; }
 
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
-        /* OVERLAY */
-        #menu, #win-screen {
-            position: fixed; inset: 0; background: rgba(5,5,7,0.98);
+        .overlay {
+            position: fixed; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
         }
         .btn {
-            width: 240px; padding: 16px; margin: 10px; background: none; 
+            width: 220px; padding: 15px; margin: 10px; background: none; 
             border: 2px solid var(--primary); color: var(--primary);
-            font-family: 'Orbitron'; font-weight: bold; cursor: pointer; transition: 0.3s;
+            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s;
         }
-        .btn:hover { background: var(--primary); color: black; box-shadow: 0 0 20px var(--primary); }
+        .btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
+        
+        .win-shake { animation: shake 0.4s infinite; }
+        @keyframes shake { 0% {transform:translate(0,0)} 25% {transform:translate(4px,4px)} 50% {transform:translate(-4px,-4px)} }
     </style>
 </head>
 <body>
 
-    <div id="menu">
-        <h1 class="logo">CHESS DEITY</h1>
-        <div class="dev-credit">ENGINE BY MAUTASIM</div>
-        <button class="btn" onclick="startGame(true)">VS SUPER AI</button>
-        <button class="btn" onclick="startGame(false)">PASS & PLAY</button>
+    <div id="start-menu" class="overlay">
+        <h1 style="font-family:Orbitron; color:var(--primary); text-shadow: 0 0 10px var(--primary);">CHESS DEITY</h1>
+        <p style="font-size:10px; color:#555; letter-spacing:4px; margin-bottom:30px;">ARCHITECT: MAUTASIM</p>
+        <button class="btn" onclick="uiClick(); start(true)">SOLO: VS SERIOUS AI</button>
+        <button class="btn" onclick="uiClick(); start(false)">DUO: PASS & PLAY</button>
     </div>
 
-    <div id="win-screen" style="display:none">
-        <h1 id="winner-text" class="logo"></h1>
-        <p style="color:#555">SYSTEM RE-CODED BY MAUTASIM</p>
-        <button class="btn" onclick="location.reload()">RE-INITIALIZE</button>
+    <div id="win-screen" class="overlay" style="display:none">
+        <h1 id="win-text" style="font-family:Orbitron; color:var(--primary);"></h1>
+        <p id="level-msg" style="color:#00ff88;"></p>
+        <button class="btn" onclick="uiClick(); location.reload()">PROCEED</button>
     </div>
 
-    <div class="header">
-        <h1 class="logo" style="font-size:16px;">MAUTASIM CORE v3</h1>
-        <div id="status" style="font-size:10px; color:var(--primary); margin-top:5px;">WAITING...</div>
+    <div class="hud">
+        <div style="text-align:left">
+            <div style="font-size:8px; color:#555">PHASE</div>
+            <div id="lvl-val" class="stat-val">01</div>
+        </div>
+        <div style="text-align:center">
+            <div style="font-size:8px; color:#555">CREATOR</div>
+            <div class="stat-val" style="font-size:12px;">MAUTASIM</div>
+        </div>
+        <div style="text-align:right">
+            <div style="font-size:8px; color:#555">STREAK</div>
+            <div id="streak-val" class="stat-val">0</div>
+        </div>
     </div>
 
     <div id="board-box">
@@ -94,14 +104,38 @@
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let vsBot = true, selectedSq = null;
+    let vsBot = true, selectedSq = null, audioCtx = null;
+    
+    let level = parseInt(localStorage.getItem('m_lvl')) || 1;
+    let streak = parseInt(localStorage.getItem('m_streak')) || 0;
 
-    // Piece Weights for AI
-    const weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+    // --- SOUND SYSTEM ---
+    function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playNote(f, t, d, v) {
+        if(!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        g.gain.setValueAtTime(v, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + d);
+    }
 
-    function startGame(mode) {
+    const sfx = {
+        btn: () => playNote(600, 'sine', 0.1, 0.1),
+        move: () => playNote(400, 'triangle', 0.1, 0.1),
+        capture: () => playNote(120, 'sawtooth', 0.2, 0.15),
+        win: () => { [523, 659, 783].forEach((f, i) => setTimeout(() => playNote(f, 'square', 0.4, 0.1), i*150)); }
+    };
+    function uiClick() { initAudio(); sfx.btn(); }
+
+    function start(mode) {
         vsBot = mode;
-        document.getElementById('menu').style.display = 'none';
+        document.getElementById('start-menu').style.display = 'none';
+        if(level >= 10) document.body.classList.add('gold-mode');
+        document.getElementById('lvl-val').innerText = level.toString().padStart(2, '0');
+        document.getElementById('streak-val').innerText = streak;
         initBoard();
     }
 
@@ -110,10 +144,9 @@
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
-                const id = String.fromCharCode(97 + c) + (8 - r);
                 sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
-                sq.dataset.id = id;
-                sq.onclick = () => handleMove(id);
+                sq.dataset.id = String.fromCharCode(97 + c) + (8 - r);
+                sq.onclick = () => onTileClick(sq.dataset.id);
                 boardEl.appendChild(sq);
             }
         }
@@ -121,152 +154,121 @@
     }
 
     function render() {
-        const queenThreats = getQueenThreats();
-        
+        const queenThreats = getThreats('q');
         document.querySelectorAll('.sq').forEach(s => {
             const id = s.dataset.id;
-            const piece = game.get(id);
-            s.innerHTML = '';
-            s.classList.remove('selected', 'threatened');
-            
-            if (piece) {
+            const p = game.get(id);
+            s.innerHTML = ''; s.classList.remove('selected', 'threatened');
+            if (p) {
                 const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${piece.color}${piece.type.toUpperCase()}.svg`;
-                img.className = `piece ${piece.color === 'b' ? 'black' : ''}`;
+                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
+                img.className = `piece ${p.color === 'b' ? 'black' : ''}`;
                 s.appendChild(img);
-                
-                // QUEEN DANGER LOGIC
-                if (piece.type === 'q' && queenThreats.includes(id)) {
-                    s.classList.add('threatened');
-                }
+                if (p.type === 'q' && queenThreats.includes(id)) s.classList.add('threatened');
             }
         });
-
-        if (game.game_over()) {
-            document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = game.in_checkmate() ? 
-                (game.turn() === 'w' ? "AI VICTORIOUS" : "MAUTASIM WINS") : "DRAW";
-        }
+        if (game.game_over()) handleGameOver();
     }
 
-    function handleMove(id) {
+    function onTileClick(id) {
         if (vsBot && game.turn() === 'b') return;
-
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
-                selectedSq = null;
-                render();
-                if (vsBot) {
-                    document.getElementById('status').innerText = "AI THINKING...";
-                    setTimeout(makeBestMove, 300);
-                }
+                move.captured ? sfx.capture() : sfx.move();
+                selectedSq = null; render();
+                if (vsBot) setTimeout(seriousAI, 400);
                 return;
             }
         }
-
         const p = game.get(id);
         if (p && p.color === game.turn()) {
-            selectedSq = id;
-            render();
+            sfx.btn(); selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            // SHOW DOTS (Legal Moves)
             game.moves({square: id, verbose: true}).forEach(m => {
-                const d = document.createElement('div'); d.className = 'dot';
+                const d = document.createElement('div'); d.className = 'move-dot';
                 document.querySelector(`[data-id="${m.to}"]`).appendChild(d);
             });
-        } else {
-            selectedSq = null;
-            render();
-        }
+        } else { selectedSq = null; render(); }
     }
 
-    // --- ENHANCED AI (MINIMAX ALPHA-BETA) ---
-    function makeBestMove() {
-        let moves = game.moves();
-        if (moves.length === 0) return;
-
+    // --- DEADLY SERIOUS AI (MINIMAX DEPTH 3) ---
+    function seriousAI() {
+        if (game.game_over()) return;
+        const moves = game.moves({verbose: true});
         let bestMove = null;
         let bestValue = -9999;
+        
+        // Serious move ordering: Check captures first
+        moves.sort((a,b) => (b.captured?1:0) - (a.captured?1:0));
 
         for (let m of moves) {
             game.move(m);
-            let boardVal = -minimax(2, -10000, 10000, false);
+            let val = -evaluate(2, -10000, 10000);
             game.undo();
-            if (boardVal > bestValue) {
-                bestValue = boardVal;
-                bestMove = m;
-            }
+            if (val > bestValue) { bestValue = val; bestMove = m; }
         }
-        game.move(bestMove);
-        document.getElementById('status').innerText = "YOUR TURN";
+        const final = game.move(bestMove);
+        final.captured ? sfx.capture() : sfx.move();
         render();
     }
 
-    function minimax(depth, alpha, beta, isMax) {
-        if (depth === 0) return evaluateBoard();
-        let moves = game.moves();
-        if (isMax) {
-            let best = -9999;
-            for (let m of moves) {
-                game.move(m);
-                best = Math.max(best, minimax(depth - 1, alpha, beta, !isMax));
-                game.undo();
-                alpha = Math.max(alpha, best);
-                if (beta <= alpha) return best;
-            }
-            return best;
-        } else {
-            let best = 9999;
-            for (let m of moves) {
-                game.move(m);
-                best = Math.min(best, minimax(depth - 1, alpha, beta, !isMax));
-                game.undo();
-                beta = Math.min(beta, best);
-                if (beta <= alpha) return best;
-            }
-            return best;
+    function evaluate(depth, alpha, beta) {
+        if (depth === 0) {
+            let total = 0;
+            const weights = {p:10, n:30, b:30, r:50, q:90, k:900};
+            game.board().forEach(r => r.forEach(p => { if(p) total += weights[p.type] * (p.color==='b'?1:-1); }));
+            return total;
         }
+        let moves = game.moves();
+        let best = -9999;
+        for (let m of moves) {
+            game.move(m);
+            best = Math.max(best, -evaluate(depth-1, -beta, -alpha));
+            game.undo();
+            alpha = Math.max(alpha, best);
+            if (beta <= alpha) break;
+        }
+        return best;
     }
 
-    function evaluateBoard() {
-        let total = 0;
-        game.board().forEach(row => {
-            row.forEach(p => { if (p) total += weights[p.type] * (p.color === 'w' ? -1 : 1); });
-        });
-        return total;
-    }
+    function handleGameOver() {
+        const winScreen = document.getElementById('win-screen');
+        const winText = document.getElementById('win-text');
+        const lvlMsg = document.getElementById('level-msg');
+        winScreen.style.display = 'flex';
 
-    function getQueenThreats() {
-        const threats = [];
-        const currentTurn = game.turn();
-        // Check both queens
-        ['w', 'b'].forEach(color => {
-            let qPos = null;
-            game.board().forEach((row, r) => row.forEach((p, c) => {
-                if(p && p.type === 'q' && p.color === color) qPos = String.fromCharCode(97+c) + (8-r);
-            }));
-            
-            if (qPos) {
-                // Temporarily flip turn to see if queen can be captured
-                const originalTurn = game.turn();
-                // This is a simplified check: is square attacked by opposite color
-                if (isSquareAttacked(qPos, color === 'w' ? 'b' : 'w')) threats.push(qPos);
+        if (game.in_checkmate()) {
+            const winner = game.turn() === 'w' ? 'BLACK' : 'WHITE';
+            if (winner === 'WHITE') {
+                level++; streak++;
+                localStorage.setItem('m_lvl', level);
+                localStorage.setItem('m_streak', streak);
+                winText.innerText = "MAUTASIM VICTORIOUS";
+                lvlMsg.innerText = "LEVEL " + level + " UNLOCKED";
+                sfx.win(); document.getElementById('board-box').classList.add('win-shake');
+            } else {
+                streak = 0; localStorage.setItem('m_streak', 0);
+                winText.innerText = "DEITY BOT WINS";
+                lvlMsg.innerText = "RETRY PHASE " + level;
             }
-        });
-        return threats;
+        } else { winText.innerText = "STALEMATE / DRAW"; }
     }
 
-    function isSquareAttacked(sq, attackerColor) {
-        const moves = game.moves({ verbose: true });
-        // We need to check if the attacker can move to this square in the current state
-        // chess.js simple way:
-        const tempGame = new Chess(game.fen());
-        // Force the turn to the attacker
-        const tokens = tempGame.fen().split(' ');
-        tokens[1] = attackerColor;
-        tempGame.load(tokens.join(' '));
-        return tempGame.moves({verbose: true}).some(m => m.to === sq);
+    function getThreats(type) {
+        const threats = [];
+        const fen = game.fen();
+        game.board().forEach((row, r) => row.forEach((p, c) => {
+            if (p && p.type === type) {
+                const pos = String.fromCharCode(97+c) + (8-r);
+                const temp = new Chess(fen);
+                const tokens = temp.fen().split(' ');
+                tokens[1] = p.color === 'w' ? 'b' : 'w';
+                temp.load(tokens.join(' '));
+                if (temp.moves({verbose:true}).some(m => m.to === pos)) threats.push(pos);
+            }
+        }));
+        return threats;
     }
 </script>
 </body>
