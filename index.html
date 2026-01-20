@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARCHITECT CHESS PRO | MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
         
@@ -17,39 +18,13 @@
         }
 
         body { 
-            margin: 0; 
-            background: var(--bg); 
-            color: white; 
-            font-family: 'Orbitron', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            height: 100vh; 
-            overflow: hidden; 
-            touch-action: none; 
+            margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; 
         }
         
-        /* Navigation Buttons */
-        .nav-ui {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 110;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-ui {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-size: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        /* Navigation */
+        .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
+        .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
 
         .architect-tag { font-size: 22px; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary); letter-spacing: 3px; margin: 20px 0; text-transform: uppercase; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
@@ -61,29 +36,21 @@
         .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; }
         .xp-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.8s ease-out; box-shadow: 0 0 10px var(--primary); }
 
-        .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; margin-top: 60px; }
+        .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; margin-top: 55px; }
         .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--primary); width: 45%; }
         .lvl-badge { background: var(--primary); color: black; padding: 1px 4px; border-radius: 3px; font-weight: 900; margin-right: 5px; font-size: 9px; }
 
-        #board-box { margin: 15px 0; width: 94vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--card); position: relative; border-radius: 8px; }
+        #board-box { margin: 10px 0; width: 94vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--card); position: relative; border-radius: 8px; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
-        .sq.l { background: #ced4da; } 
-        .sq.d { background: #495057; }
+        .sq.l { background: #ced4da; } .sq.d { background: #495057; }
         
         .piece { width: 90%; z-index: 5; pointer-events: none; }
         .selected { background: rgba(0, 212, 255, 0.5) !important; }
-        
-        .move-dot { 
-            width: 15px; height: 15px; 
-            background: rgba(0, 212, 255, 0.6); 
-            border-radius: 50%; z-index: 10; 
-            pointer-events: none; border: 2px solid #fff;
-            box-shadow: 0 0 10px var(--primary);
-        }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.6); border-radius: 50%; z-index: 10; pointer-events: none; border: 2px solid #fff; }
 
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
-        .menu-item { background: var(--card); border: 1px solid #333; padding: 20px 10px; border-radius: 15px; text-align: center; cursor: pointer; }
+        .menu-item { background: var(--card); border: 1px solid #333; padding: 18px 10px; border-radius: 15px; text-align: center; cursor: pointer; }
         .menu-item span { display: block; font-size: 10px; font-weight: bold; }
     </style>
 </head>
@@ -113,15 +80,20 @@
         
         <div class="dashboard">
             <div class="menu-item" onclick="startGame('bot')"><span>ULTRA AI</span></div>
+            <div class="menu-item" onclick="showOnlineSetup()"><span>ONLINE P2P</span></div>
             <div class="menu-item" onclick="showLocalSetup()"><span>LOCAL BATTLE</span></div>
-            <div class="menu-item" onclick="doLogout()" style="grid-column: span 2;"><span>LOGOUT</span></div>
+            <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
         </div>
     </div>
 
-    <div id="win-screen" class="overlay" style="display:none; text-align:center;">
-        <h1 id="winner-text" style="color:var(--primary); font-size:30px;">VICTORY</h1>
-        <p id="lvl-up-alert" style="color:white; font-family:'Roboto Mono'; margin-bottom:20px;"></p>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">CONTINUE</button>
+    <div id="online-setup" class="overlay" style="display:none">
+        <div class="auth-card">
+            <h2>ONLINE LINK</h2>
+            <p style="font-size:10px; color:var(--primary)">YOUR UID: <span id="my-id" style="color:white">...</span></p>
+            <input type="text" id="peer-id-in" placeholder="FRIEND UID">
+            <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
+            <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
+        </div>
     </div>
 
     <div id="local-setup" class="overlay" style="display:none">
@@ -131,6 +103,12 @@
             <input type="text" id="p2-local" placeholder="PLAYER 2">
             <button class="btn-main" onclick="startGame('pass')">START</button>
         </div>
+    </div>
+
+    <div id="win-screen" class="overlay" style="display:none; text-align:center;">
+        <h1 id="winner-text" style="color:var(--primary); font-size:30px;">VICTORY</h1>
+        <p id="lvl-up-alert" style="color:white; font-family:'Roboto Mono'; margin-bottom:20px;"></p>
+        <button class="btn-main" style="width:200px" onclick="showDashboard()">CONTINUE</button>
     </div>
 
     <div class="hud">
@@ -143,7 +121,8 @@
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let currentUser = null, vsBot = true, audioCtx = null, authMode = 'login', selectedSq = null;
+    let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null;
+    let audioCtx = null, authMode = 'login', selectedSq = null;
 
     function getStats() {
         let lvl = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
@@ -157,10 +136,10 @@
         if(!u || !p) return;
         if(authMode === 'signup') {
             localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
-            alert("Account Linked."); toggleAuth();
+            alert("Identity Registered."); toggleAuth();
         } else {
             if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
-            else alert("Auth Failed");
+            else alert("Auth Error");
         }
     }
 
@@ -171,27 +150,45 @@
         let stats = getStats();
         document.getElementById('lvl-status').innerText = `LEVEL ${stats.lvl} ARCHITECT`;
         document.getElementById('xp-visual').style.width = (stats.xp / stats.next * 100) + "%";
-        document.getElementById('xp-text').innerText = `${stats.xp} / ${stats.next} XP TO NEXT LEVEL`;
+        document.getElementById('xp-text').innerText = `${stats.xp} / ${stats.next} XP`;
     }
 
-    function goBack() {
-        if(document.getElementById('local-setup').style.display === 'flex') {
-            showDashboard();
-        } else {
-            if(confirm("Exit Match? Progress will not be saved.")) showDashboard();
+    function showOnlineSetup() {
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('online-setup').style.display = 'flex';
+        document.getElementById('global-nav').style.display = 'flex';
+        if(!peer) {
+            peer = new Peer('ARCH-' + currentUser + "-" + Math.floor(Math.random()*999));
+            peer.on('open', id => document.getElementById('my-id').innerText = id);
+            peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); });
         }
     }
 
+    function connectToPeer() {
+        const id = document.getElementById('peer-id-in').value;
+        if(!id) return; conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online');
+    }
+
+    function setupConn() {
+        conn.on('data', data => { if(data.type === 'move') { game.move(data.move); playSound('move'); render(); } });
+    }
+
+    function goBack() { if(confirm("Quit to Dashboard?")) showDashboard(); }
+
     function startGame(m) {
-        vsBot = (m === 'bot');
+        vsBot = (m === 'bot'); isOnline = (m === 'online');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('p1-label').innerText = currentUser.toUpperCase();
-        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : "GUEST";
+        
+        let p1 = currentUser.toUpperCase(), p2 = "ULTRA AI";
+        if(m === 'pass') { p1 = document.getElementById('p1-local').value || "P1"; p2 = document.getElementById('p2-local').value || "P2"; }
+        if(m === 'online') { p1 = myColor === 'w' ? currentUser : "GUEST"; p2 = myColor === 'b' ? currentUser : "GUEST"; }
+
+        document.getElementById('p1-label').innerText = p1;
+        document.getElementById('p2-label').innerText = p2;
         document.getElementById('p1-lvl-icon').innerText = "L" + getStats().lvl;
         document.getElementById('p2-lvl-icon').innerText = vsBot ? "L99" : "L1";
-        game.reset();
-        initBoard();
+        game.reset(); initBoard();
     }
 
     function initBoard() {
@@ -209,10 +206,13 @@
     }
 
     function handleInput(id) {
+        if (isOnline && game.turn() !== myColor) return;
         if (vsBot && game.turn() === 'b') return;
+        
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
+                if(isOnline) conn.send({type: 'move', move: move});
                 playSound('move'); selectedSq = null; render();
                 if (vsBot && !game.game_over()) setTimeout(masterAI, 500);
                 return;
@@ -220,13 +220,10 @@
         }
         const piece = game.get(id);
         if (piece && piece.color === game.turn()) {
-            selectedSq = id;
-            render();
+            selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            const moves = game.moves({ square: id, verbose: true });
-            moves.forEach(m => {
-                const dot = document.createElement('div');
-                dot.className = 'move-dot';
+            game.moves({ square: id, verbose: true }).forEach(m => {
+                const dot = document.createElement('div'); dot.className = 'move-dot';
                 document.querySelector(`[data-id="${m.to}"]`).appendChild(dot);
             });
         } else { selectedSq = null; render(); }
@@ -234,18 +231,16 @@
 
     function render() {
         document.querySelectorAll('.sq').forEach(s => {
-            const p = game.get(s.dataset.id); 
-            s.innerHTML = ''; s.classList.remove('selected');
+            const p = game.get(s.dataset.id); s.innerHTML = ''; s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
-                img.className = 'piece';
-                s.appendChild(img);
+                img.className = 'piece'; s.appendChild(img);
             }
         });
         if (game.game_over()) {
             let win = game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText;
-            if (win === currentUser.toUpperCase()) {
+            if (win.toLowerCase() === currentUser) {
                 let s = getStats(); s.xp += 100;
                 if(s.xp >= 100) { s.lvl++; s.xp = 0; }
                 localStorage.setItem(`lvl_${currentUser}`, s.lvl); localStorage.setItem(`xp_${currentUser}`, s.xp);
@@ -264,11 +259,7 @@
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
     function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
-    function showLocalSetup() { 
-        document.getElementById('home-screen').style.display = 'none'; 
-        document.getElementById('local-setup').style.display = 'flex'; 
-        document.getElementById('global-nav').style.display = 'flex';
-    }
+    function showLocalSetup() { document.getElementById('home-screen').style.display='none'; document.getElementById('local-setup').style.display='flex'; document.getElementById('global-nav').style.display='flex'; }
     window.onload = () => { const s = localStorage.getItem('active_session'); if(s) { currentUser = s; showDashboard(); } };
 </script>
 </body>
