@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARCHITECT ELITE | V17</title>
+    <title>ARCHITECT ELITE | V18</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -13,32 +13,37 @@
         
         body { margin: 0; background: #010409; background-image: radial-gradient(circle at 50% 10%, #0a192f 0%, #010409 100%); color: white; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         
-        /* UI Components */
-        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 32px; box-shadow: 0 15px 60px rgba(0,0,0,0.9); padding: 35px; width: 100%; max-width: 360px; text-align: center; }
-        .architect-title { font-family: 'Orbitron'; font-weight: 900; font-size: 28px; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 6px; margin: 35px 0; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 25px; }
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 32px; box-shadow: 0 15px 60px rgba(0,0,0,0.9); padding: 30px; width: 100%; max-width: 380px; text-align: center; }
+        .architect-title { font-family: 'Orbitron'; font-weight: 900; font-size: 26px; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 5px; margin: 30px 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.94); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         
-        /* Navigation Buttons */
+        /* Nav */
         .nav-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 2000; }
-        .btn-nav { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; border-radius: 12px; font-family: 'Orbitron'; font-size: 10px; cursor: pointer; transition: 0.3s; }
-        .btn-nav:active { background: var(--p); color: #000; }
+        .btn-nav { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 14px; font-family: 'Orbitron'; font-size: 10px; cursor: pointer; }
+        
+        /* Inputs & Buttons */
+        input { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 16px; margin: 8px 0; width: 100%; border-radius: 15px; text-align: center; font-family: 'Orbitron'; font-size: 11px; }
+        .btn { width: 100%; padding: 18px; background: var(--p); color: #000; border: none; border-radius: 15px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 11px; margin-top: 10px; transition: 0.2s; }
+        .btn-sec { background: transparent; border: 1px solid var(--p); color: var(--p); }
+        .btn:active { transform: scale(0.97); }
 
-        /* General Buttons */
-        input { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 18px; margin: 8px 0; width: 100%; border-radius: 18px; text-align: center; font-family: 'Orbitron'; font-size: 11px; }
-        .btn { width: 100%; padding: 20px; background: var(--p); color: #000; border: none; border-radius: 18px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; font-size: 11px; margin-top: 12px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2); }
-        .btn-sec { background: transparent; border: 1px solid var(--p); color: var(--p); box-shadow: none; }
+        /* Theme Switcher */
+        .theme-box { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .theme-dot { width: 35px; height: 35px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+        .theme-dot.active { border-color: white; transform: scale(1.1); }
 
-        /* Board Elements */
+        /* Board */
         #board-box { width: 94vw; max-width: 400px; aspect-ratio: 1; border: 6px solid #161b22; border-radius: 20px; overflow: hidden; position: relative; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
-        img.piece { width: 88%; z-index: 10; }
+        img.piece { width: 88%; z-index: 10; transition: transform 0.3s; }
         .piece.black { filter: invert(1) brightness(0.9) drop-shadow(0 0 2px var(--p)); }
         .piece.rotated { transform: rotate(180deg); } 
-        .sq.hint::after { content: ''; width: 14px; height: 14px; background: var(--p); border-radius: 50%; opacity: 0.4; }
+        .sq.hint::after { content: ''; width: 14px; height: 14px; background: var(--p); border-radius: 50%; opacity: 0.5; box-shadow: 0 0 8px var(--p); }
         .sq.selected { background: rgba(0, 212, 255, 0.3) !important; }
         
         .hud { width: 100%; padding: 80px 30px 10px; display: flex; justify-content: space-between; font-size: 10px; font-family: 'Orbitron'; color: #666; font-weight: 900; }
+        .id-badge { font-size: 9px; color: var(--p); margin-bottom: 15px; display: block; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -46,34 +51,46 @@
     <div id="auth-screen" class="overlay">
         <div class="architect-title">VAULT</div>
         <div class="glass">
-            <input type="text" id="user-id" placeholder="IDENTITY">
+            <input type="text" id="user-id" placeholder="ARCHITECT NAME">
             <input type="password" id="user-pw" placeholder="PASSKEY">
-            <button class="btn" onclick="authAction('login')">ENTER VAULT</button>
-            <button class="btn btn-sec" onclick="authAction('signup')">CREATE PROFILE</button>
+            <button class="btn" onclick="authAction('login')">LOGIN</button>
+            <button class="btn btn-sec" onclick="authAction('signup')">SIGN UP</button>
         </div>
     </div>
 
     <div id="dash-screen" class="overlay" style="display:none">
-        <div class="architect-title" id="dash-user">ARCHITECT</div>
+        <div class="architect-title" id="dash-user">USER</div>
+        <span class="id-badge" id="online-id">LINK: OFFLINE</span>
         <div class="glass">
-            <button class="btn" onclick="openCfg('bot')">NEURAL AI (INF)</button>
-            <button class="btn" onclick="openCfg('online')">GLOBAL P2P</button>
+            <button class="btn" onclick="openCfg('bot')">NEURAL AI</button>
+            <button class="btn" onclick="openCfg('online')">GLOBAL ONLINE</button>
             <button class="btn" onclick="openCfg('pass')">PASS & PLAY</button>
-            <button class="btn btn-sec" style="margin-top:40px; color:#ff4b2b; border-color:#ff4b2b" onclick="logout()">SHUTDOWN</button>
+            <button class="btn btn-sec" style="margin-top:30px; color:#ff4b2b; border-color:#ff4b2b" onclick="logout()">SHUTDOWN</button>
         </div>
     </div>
 
     <div id="cfg-screen" class="overlay" style="display:none">
-        <div class="nav-bar">
-            <button class="btn-nav" onclick="showDash()">← BACK</button>
-        </div>
+        <div class="nav-bar"><button class="btn-nav" onclick="showDash()">← BACK</button></div>
         <div class="glass">
-            <h3 style="font-size:11px; color:var(--p); font-family:'Orbitron';">BATTLE CONFIG</h3>
-            <div id="bot-ui" style="display:none">
-                <input type="number" id="ai-lvl" value="10" placeholder="DIFFICULTY LEVEL">
+            <h3 style="font-size:11px; color:var(--p); font-family:'Orbitron'; margin-bottom:15px;">SESSION CONFIG</h3>
+            
+            <div class="theme-box">
+                <div class="theme-dot active" style="background:#00d4ff" onclick="setTheme('neon', this)"></div>
+                <div class="theme-dot" style="background:#769656" onclick="setTheme('wood', this)"></div>
+                <div class="theme-dot" style="background:#7f1d1d" onclick="setTheme('crimson', this)"></div>
             </div>
-            <input type="text" id="p2-id" placeholder="OPPONENT ID">
-            <button class="btn" onclick="launchGame()">ENGAGE</button>
+
+            <div id="ai-inputs">
+                <p style="font-size:9px; color:#666;">DIFFICULTY (1-∞)</p>
+                <input type="number" id="ai-lvl" value="10">
+            </div>
+
+            <div id="multi-inputs">
+                <input type="text" id="p1-name" placeholder="PLAYER 1">
+                <input type="text" id="p2-name" placeholder="PLAYER 2 / TARGET ID">
+            </div>
+
+            <button class="btn" onclick="launchGame()">INITIALIZE</button>
         </div>
     </div>
 
@@ -82,14 +99,21 @@
             <button class="btn-nav" onclick="showDash()">🏠 HOME</button>
             <button class="btn-nav" onclick="undoMove()">↩ UNDO</button>
         </div>
-        <div class="hud"><div id="label-w">---</div><div style="color:var(--p)">VS</div><div id="label-b" style="text-align:right">---</div></div>
+        <div class="hud"><div id="label-w">---</div><div id="vs-txt" style="color:var(--p)">VS</div><div id="label-b" style="text-align:right">---</div></div>
         <div id="board-box"><div id="board"></div></div>
     </div>
 
     <script>
         const game = new Chess();
         const boardEl = document.getElementById('board');
-        let currentUser = null, currentMode = null, selectedSq = null, audioCtx;
+        let currentUser, currentMode, peer, conn, selectedSq, audioCtx, myColor = 'w';
+        
+        const themes = {
+            neon: { l: '#1b222c', d: '#0d1117', p: '#00d4ff' },
+            wood: { l: '#eeeed2', d: '#769656', p: '#adff2f' },
+            crimson: { l: '#d1d5db', d: '#7f1d1d', p: '#ff4444' }
+        };
+        let activeTheme = themes.neon;
 
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSnd(f, d) { if(!audioCtx) return; let o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + d); o.start(); o.stop(audioCtx.currentTime + d); }
@@ -99,10 +123,21 @@
             const p = document.getElementById('user-pw').value;
             if(!u) return;
             const vault = JSON.parse(localStorage.getItem('arc_vault') || '{}');
-            if(type === 'signup') { vault[u] = p; localStorage.setItem('arc_vault', JSON.stringify(vault)); alert("PROFILE CREATED"); }
-            else if(vault[u] !== p) { return alert("ACCESS DENIED"); }
+            if(type === 'signup') { vault[u] = p; localStorage.setItem('arc_vault', JSON.stringify(vault)); }
+            else if(vault[u] !== p) return alert("WRONG KEY");
             currentUser = u; localStorage.setItem('active_session', u);
-            showDash();
+            initP2P(); showDash();
+        }
+
+        function initP2P() {
+            const randID = currentUser + "_" + Math.floor(Math.random()*999);
+            peer = new Peer(randID);
+            peer.on('open', id => document.getElementById('online-id').innerText = "YOUR ID: " + id);
+            peer.on('connection', c => {
+                conn = c; myColor = 'b'; currentMode = 'online';
+                conn.on('data', d => { if(d.move) { game.move(d.move); render(); playSnd(400,0.1); }});
+                launchGame(true);
+            });
         }
 
         function showDash() {
@@ -110,22 +145,34 @@
             document.getElementById('game-ui').style.display = 'none';
             document.getElementById('dash-screen').style.display = 'flex';
             document.getElementById('dash-user').innerText = currentUser;
-            playSnd(400, 0.1);
         }
 
         function openCfg(mode) {
             currentMode = mode;
             document.getElementById('dash-screen').style.display = 'none';
             document.getElementById('cfg-screen').style.display = 'flex';
-            document.getElementById('bot-ui').style.display = mode === 'bot' ? 'block' : 'none';
-            document.getElementById('p2-id').style.display = mode === 'bot' ? 'none' : 'block';
+            document.getElementById('ai-inputs').style.display = mode === 'bot' ? 'block' : 'none';
+            document.getElementById('p1-name').value = currentUser;
+            document.getElementById('p2-name').placeholder = mode === 'online' ? "FRIEND'S LINK ID" : "PLAYER 2";
         }
 
-        function launchGame() {
+        function setTheme(t, el) {
+            activeTheme = themes[t];
+            document.documentElement.style.setProperty('--p', activeTheme.p);
+            document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function launchGame(isJoin = false) {
+            const p2 = document.getElementById('p2-name').value;
+            if(currentMode === 'online' && !isJoin) {
+                conn = peer.connect(p2); myColor = 'w';
+                conn.on('data', d => { if(d.move) { game.move(d.move); render(); playSnd(400,0.1); }});
+            }
             document.getElementById('cfg-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
-            document.getElementById('label-w').innerText = currentUser;
-            document.getElementById('label-b').innerText = currentMode === 'bot' ? "AI ARCHITECT" : "OPPONENT";
+            document.getElementById('label-w').innerText = document.getElementById('p1-name').value;
+            document.getElementById('label-b').innerText = currentMode === 'bot' ? "AI" : (p2 || "GUEST");
             game.reset(); initBoard();
         }
 
@@ -136,7 +183,7 @@
             for (let i = 0; i < 64; i++) {
                 const sq = document.createElement('div');
                 sq.className = 'sq';
-                sq.style.background = (Math.floor(i/8) + i%8)%2===0 ? '#1b222c' : '#0d1117';
+                sq.style.background = (Math.floor(i/8) + i%8)%2===0 ? activeTheme.l : activeTheme.d;
                 sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8));
                 sq.onclick = () => handleMove(sq.dataset.id);
                 boardEl.appendChild(sq);
@@ -145,10 +192,12 @@
         }
 
         function handleMove(id) {
+            if(currentMode === 'online' && game.turn() !== myColor) return;
             if (selectedSq) {
                 if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
+                    if(conn) conn.send({move: id, from: selectedSq});
                     selectedSq = null; render(); playSnd(600, 0.1);
-                    if(currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
+                    if(currentMode === 'bot') setTimeout(aiMove, 500);
                     return;
                 }
             }
@@ -180,7 +229,10 @@
             });
         }
 
-        window.onload = () => { if(localStorage.getItem('active_session')) { currentUser = localStorage.getItem('active_session'); showDash(); } };
+        window.onload = () => {
+            const saved = localStorage.getItem('active_session');
+            if(saved) { currentUser = saved; initP2P(); showDash(); }
+        };
     </script>
 </body>
 </html>
