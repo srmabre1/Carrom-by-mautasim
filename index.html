@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
         :root { --primary: #00d4ff; --bg: #0a0e17; --card: #141b26; --sq-l: #ced4da; --sq-d: #495057; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 22px; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary); letter-spacing: 3px; margin: 20px 0; text-transform: uppercase; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
@@ -18,15 +18,13 @@
         input { background: #050505; border: 1px solid var(--primary); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        .back-btn { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: var(--primary); padding: 5px 10px; border-radius: 5px; font-size: 10px; z-index: 110; cursor: pointer; }
+        .back-btn { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 5px; font-size: 10px; z-index: 110; cursor: pointer; font-weight: bold; }
 
-        /* DASHBOARD */
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
         .menu-item { background: var(--card); border: 1px solid #333; padding: 20px 10px; border-radius: 15px; text-align: center; cursor: pointer; }
         .menu-item svg { width: 30px; fill: var(--primary); margin-bottom: 10px; }
         .menu-item span { display: block; font-size: 10px; font-weight: bold; }
 
-        /* HUD & BOARD */
         .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; }
         .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--primary); width: 40%; }
         #board-box { margin: 15px 0; width: 94vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--card); position: relative;}
@@ -34,22 +32,22 @@
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sq-l); } .sq.d { background: var(--sq-d); }
         .piece { width: 90%; z-index: 5; pointer-events: none; }
-        .move-intel { width: 15px; height: 15px; background: rgba(0, 212, 255, 0.6); border-radius: 50%; z-index: 10; pointer-events: none; box-shadow: 0 0 10px var(--primary); }
+        .move-intel { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.5); border-radius: 50%; z-index: 10; pointer-events: none; border: 1px solid var(--primary); }
         .selected { background: rgba(0, 212, 255, 0.4) !important; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-    <div id="btn-back-ui" class="back-btn" style="display:none" onclick="location.reload()">BACK</div>
+    <div id="btn-back-ui" class="back-btn" style="display:none" onclick="location.reload()">← BACK</div>
 
     <div id="auth-screen" class="overlay">
-        <div class="architect-tag">ARCHITECT: MAUTASIM</div>
+        <div class="architect-tag">MAUTASIM</div>
         <div class="auth-card">
-            <h2 id="auth-title" style="font-size:16px;">SECURE LOGIN</h2>
+            <h2 id="auth-title" style="font-size:16px; margin-bottom:15px;">SECURE LOGIN</h2>
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #888; margin-top: 15px; cursor: pointer;" onclick="toggleAuth()">SWITCH LOGIN/SIGNUP</p>
+            <p style="font-size: 10px; color: #888; margin-top: 15px; cursor: pointer;" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
         </div>
     </div>
 
@@ -66,7 +64,7 @@
             </div>
             <div class="menu-item" onclick="showLocalSetup()">
                 <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3z"/></svg>
-                <span>LOCAL FRIENDS</span>
+                <span>LOCAL</span>
             </div>
             <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
         </div>
@@ -74,18 +72,17 @@
 
     <div id="online-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2 style="font-size:14px;">ONLINE ROOM</h2>
-            <p style="font-size:10px; color:var(--primary)">YOUR ID: <span id="my-id">...</span></p>
-            <input type="text" id="peer-id-in" placeholder="FRIEND'S ID">
-            <button class="btn-main" onclick="connectToPeer()">JOIN FRIEND</button>
-            <p style="font-size:9px; margin:10px;">Wait for friend to join or enter their ID above.</p>
+            <h2>ONLINE</h2>
+            <p style="font-size:10px; color:var(--primary)">UID: <span id="my-id">...</span></p>
+            <input type="text" id="peer-id-in" placeholder="FRIEND UID">
+            <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
             <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
     <div id="local-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2 style="font-size:14px;">LOCAL BATTLE</h2>
+            <h2>LOCAL BATTLE</h2>
             <input type="text" id="p1-local" placeholder="PLAYER 1">
             <input type="text" id="p2-local" placeholder="PLAYER 2">
             <button class="btn-main" onclick="startGame('pass')">START</button>
@@ -94,9 +91,9 @@
     </div>
 
     <div class="hud">
-        <div class="player-tag" id="p1-label">WHITE</div>
+        <div class="player-tag" id="p1-label">---</div>
         <div style="font-weight:900; color:#444;">VS</div>
-        <div class="player-tag" id="p2-label" style="text-align:right">BLACK</div>
+        <div class="player-tag" id="p2-label" style="text-align:right">---</div>
     </div>
     <div id="board-box"><div id="board"></div></div>
 
@@ -104,58 +101,69 @@
     const game = new Chess();
     const boardEl = document.getElementById('board');
     let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null;
-    let selectedSq = null, audioCtx = null;
-    let authMode = 'login';
+    let selectedSq = null, audioCtx = null, authMode = 'login';
 
-    function playTap() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = 'sine'; o.frequency.value = 750;
-        g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + 0.1);
+    // --- NEW AUDIO ENGINE ---
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g);
+        g.connect(audioCtx.destination);
+
+        if (type === 'select') {
+            o.type = 'sine'; o.frequency.setValueAtTime(800, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            o.start(); o.stop(audioCtx.currentTime + 0.05);
+        } else if (type === 'move') {
+            o.type = 'triangle'; o.frequency.setValueAtTime(200, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            o.start(); o.stop(audioCtx.currentTime + 0.1);
+        }
     }
 
     // --- AUTH ---
-    function toggleAuth() { authMode = (authMode === 'login' ? 'signup' : 'login'); document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
+    function toggleAuth() { authMode = (authMode === 'login' ? 'signup' : 'login'); document.getElementById('auth-title').innerText = authMode.toUpperCase(); playSound('select'); }
     function handleAuth() {
+        playSound('select');
         const u = document.getElementById('user-in').value.trim().toLowerCase(), p = document.getElementById('pass-in').value.trim();
-        if(!u || !p) return alert("Fill all fields");
+        if(!u || !p) return;
         if(authMode === 'signup') {
-            if(localStorage.getItem(`pw_${u}`)) return alert("User exists");
-            localStorage.setItem(`pw_${u}`, p); alert("Created! Now login."); toggleAuth();
+            localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); alert("Created!"); toggleAuth();
         } else {
             if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
-            else alert("Invalid Login");
+            else alert("Error");
         }
     }
     window.onload = () => { const s = localStorage.getItem('active_session'); if(s) { currentUser = s; showDashboard(); } };
     function showDashboard() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); document.getElementById('home-screen').style.display = 'flex'; }
     function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
-    function showLocalSetup() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('local-setup').style.display = 'flex'; }
+    function showLocalSetup() { playSound('select'); document.getElementById('home-screen').style.display = 'none'; document.getElementById('local-setup').style.display = 'flex'; }
     
-    // --- ONLINE P2P ---
+    // --- ONLINE ---
     function showOnlineSetup() {
+        playSound('select');
         document.getElementById('home-screen').style.display = 'none';
         document.getElementById('online-setup').style.display = 'flex';
         if(!peer) {
-            peer = new Peer(currentUser + "-" + Math.floor(Math.random()*1000));
+            peer = new Peer('DEITY-' + currentUser + "-" + Math.floor(Math.random()*99));
             peer.on('open', id => document.getElementById('my-id').innerText = id);
             peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); });
         }
     }
     function connectToPeer() {
         const id = document.getElementById('peer-id-in').value;
-        if(!id) return alert("Enter Friend ID");
-        conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online');
+        if(!id) return; conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online');
     }
-    function setupConn() {
-        conn.on('data', data => { if(data.type === 'move') { game.move(data.move); renderPieces(); } });
-    }
+    function setupConn() { conn.on('data', data => { if(data.type === 'move') { game.move(data.move); playSound('move'); renderPieces(); } }); }
 
-    // --- GAMEPLAY ---
+    // --- CORE GAMEPLAY ---
     function startGame(m) {
+        playSound('select');
         vsBot = (m === 'bot'); isOnline = (m === 'online');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('btn-back-ui').style.display = 'block';
@@ -190,7 +198,7 @@
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
-                playTap(); 
+                playSound('move'); 
                 if(isOnline) conn.send({type: 'move', move: move});
                 selectedSq = null; renderPieces();
                 if (vsBot) setTimeout(masterAI, 500);
@@ -200,7 +208,7 @@
 
         const p = game.get(id);
         if (p && p.color === game.turn()) {
-            playTap(); selectedSq = id; renderPieces();
+            playSound('select'); selectedSq = id; renderPieces();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({ square: id, verbose: true }).forEach(m => {
                 const dot = document.createElement('div'); dot.className = 'move-intel';
@@ -225,7 +233,7 @@
     function masterAI() {
         const moves = game.moves(); if(!moves.length) return;
         game.move(moves[Math.floor(Math.random()*moves.length)]);
-        playTap(); renderPieces();
+        playSound('move'); renderPieces();
     }
 </script>
 </body>
