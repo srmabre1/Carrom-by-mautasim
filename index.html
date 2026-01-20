@@ -2,113 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Pro: Grandmaster Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CHESS 100: THE GAUNTLET</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
 
         :root {
-            --light-sq: #edeed1;
-            --dark-sq: #779556;
-            --highlight: rgba(255, 255, 0, 0.4);
+            --bg: #050505;
+            --primary: #00ffcc;
+            --sq-light: #e0e0e0;
+            --sq-dark: #333;
+            --glow: 0 0 20px rgba(0,255,204,0.5);
         }
 
         body {
-            margin: 0; background: #161512; color: white;
-            font-family: 'Inter', sans-serif; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; overflow: hidden;
+            margin: 0; background: var(--bg); color: white;
+            font-family: 'Orbitron', sans-serif; display: flex;
+            flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
+            transition: background 0.5s;
         }
 
-        /* --- UI Header --- */
-        .game-info {
-            width: 100%; max-width: 480px; display: flex;
-            justify-content: space-between; align-items: center;
-            padding: 15px; background: #262421; border-radius: 8px 8px 0 0;
+        /* --- Level Progress --- */
+        .level-header {
+            width: 100%; max-width: 500px; padding: 20px;
+            text-align: center; z-index: 10;
         }
-        .status-badge {
-            background: #312e2b; padding: 5px 12px; border-radius: 4px;
-            font-size: 14px; font-weight: bold; color: #999;
+        .progress-container {
+            width: 100%; height: 8px; background: #222; border-radius: 4px; margin-top: 10px;
         }
-        .status-badge.active { color: #fff; border-bottom: 2px solid var(--dark-sq); }
+        #progress-bar {
+            width: 1%; height: 100%; background: var(--primary);
+            box-shadow: var(--glow); transition: 0.5s;
+        }
 
-        /* --- Chessboard --- */
-        #board-container {
-            position: relative; width: 90vw; max-width: 480px;
-            aspect-ratio: 1/1; display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            border: 5px solid #312e2b; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        /* --- Chess Board --- */
+        #board-wrapper {
+            position: relative; width: 95vw; max-width: 450px;
+            aspect-ratio: 1/1; border: 4px solid var(--primary);
+            box-shadow: var(--glow); transition: transform 0.1s;
+        }
+        #board {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr); height: 100%;
         }
         .square {
             display: flex; justify-content: center; align-items: center;
-            position: relative; cursor: pointer; user-select: none;
+            position: relative; transition: background 0.3s;
         }
-        .square.light { background-color: var(--light-sq); }
-        .square.dark { background-color: var(--dark-sq); }
-        .square.selected { background-color: #f5f682 !important; }
-        .square.last-move { background-color: #f5f682bb !important; }
-        .hint {
-            width: 25%; height: 25%; background: rgba(0,0,0,0.1);
-            border-radius: 50%; pointer-events: none;
+        .piece {
+            width: 90%; height: 90%; z-index: 5;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+            transition: transform 0.2s;
         }
+        .piece:active { transform: scale(1.2); }
 
-        img.piece { width: 90%; height: 90%; pointer-events: none; }
+        /* --- Indicators --- */
+        .hint { width: 12px; height: 12px; background: var(--primary); border-radius: 50%; opacity: 0.6; }
+        .last-move { background: rgba(255,255,255,0.2) !important; }
+        .selected { box-shadow: inset 0 0 15px var(--primary) !important; }
 
-        /* --- Controls --- */
+        /* --- HUD --- */
         .controls {
-            width: 100%; max-width: 480px; background: #262421;
-            display: flex; gap: 10px; padding: 15px; border-radius: 0 0 8px 8px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            width: 95%; max-width: 450px; padding: 20px;
         }
         button {
-            flex: 1; padding: 10px; border: none; border-radius: 4px;
-            background: #312e2b; color: white; cursor: pointer;
-            font-weight: bold; transition: 0.2s;
+            background: #111; border: 1px solid var(--primary); color: var(--primary);
+            padding: 12px; border-radius: 5px; font-family: 'Orbitron'; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
         }
-        button:hover { background: #403d39; }
-        button.primary { background: var(--dark-sq); }
+        button:hover { background: var(--primary); color: black; }
 
-        /* --- Promotion Modal --- */
-        #promotion-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: none;
-            justify-content: center; align-items: center; z-index: 100;
+        #msg-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 50px; font-weight: 900; text-shadow: 0 0 30px var(--primary);
+            pointer-events: none; opacity: 0; transition: 0.3s; z-index: 100;
         }
-        .promo-box { background: white; padding: 10px; border-radius: 8px; display: flex; gap: 10px; }
-        .promo-choice { width: 60px; height: 60px; cursor: pointer; border-radius: 4px; }
-        .promo-choice:hover { background: #eee; }
+
+        /* --- Animations --- */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-3px, 0px); }
+            40% { transform: translate(3px, 2px); }
+            60% { transform: translate(-3px, 1px); }
+            80% { transform: translate(1px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+        .shake { animation: shake 0.2s; }
     </style>
 </head>
 <body>
 
-    <div class="game-info">
-        <div id="p-white" class="status-badge active">WHITE</div>
-        <div id="game-status" style="font-size: 12px; color: #81b64c;">STARTING...</div>
-        <div id="p-black" class="status-badge">BLACK</div>
+    <div id="msg-box">CHECKMATE</div>
+
+    <div class="level-header">
+        <div style="display:flex; justify-content: space-between;">
+            <span>LEVEL <span id="lvl-num">1</span></span>
+            <span id="bot-rank">BOT: ROOKIE</span>
+        </div>
+        <div class="progress-container"><div id="progress-bar"></div></div>
     </div>
 
-    <div id="board-container">
-        <div id="promotion-layer">
-            <div class="promo-box" id="promo-options"></div>
-        </div>
+    <div id="board-wrapper">
+        <div id="board"></div>
     </div>
 
     <div class="controls">
-        <button onclick="toggleMode()" id="mode-btn">MODE: VS BOT</button>
-        <button onclick="resetGame()" class="primary">NEW GAME</button>
+        <button onclick="resetGame()">RESET</button>
         <button onclick="undo()">UNDO</button>
+        <button onclick="changeLvl(1)">NEXT LVL (DEBUG)</button>
+        <button onclick="togglePassPlay()" id="mode-btn">VS BOT</button>
     </div>
 
 <script>
-    // --- INITIALIZATION ---
-    const boardEl = document.getElementById('board-container');
     const game = new Chess();
-    let selectedSquare = null;
-    let isBotMode = true;
-    let isBotThinking = false;
+    const boardEl = document.getElementById('board');
+    let level = 1;
+    let selectedSq = null;
+    let passPlay = false;
 
-    // Piece Assets (Standard Wikipedia Chess Pieces)
     const piecesImg = {
         wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
         wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
@@ -124,158 +137,164 @@
         bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
     };
 
-    function createBoard() {
-        boardEl.querySelectorAll('.square').forEach(s => s.remove());
+    function init() {
+        boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
-                const square = document.createElement('div');
+                const sq = document.createElement('div');
                 const id = String.fromCharCode(97 + c) + (8 - r);
-                square.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
-                square.dataset.id = id;
-                square.onclick = () => onSquareClick(id);
-                boardEl.appendChild(square);
+                sq.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+                sq.dataset.id = id;
+                sq.onclick = () => handleMove(id);
+                boardEl.appendChild(sq);
             }
         }
-        updateBoard();
+        applyTheme();
+        render();
     }
 
-    function updateBoard() {
-        const history = game.history({ verbose: true });
-        const lastMove = history.length > 0 ? history[history.length - 1] : null;
+    function render() {
+        const history = game.history({verbose: true});
+        const lastMove = history[history.length - 1];
 
         document.querySelectorAll('.square').forEach(sq => {
             sq.innerHTML = '';
             sq.classList.remove('selected', 'last-move');
-            
-            const piece = game.get(sq.dataset.id);
-            if (piece) {
+            const p = game.get(sq.dataset.id);
+            if (p) {
                 const img = document.createElement('img');
-                img.src = piecesImg[piece.color + piece.type.toUpperCase()];
-                img.classList.add('piece');
+                img.src = piecesImg[p.color + p.type.toUpperCase()];
+                img.className = 'piece';
                 sq.appendChild(img);
             }
-
             if (lastMove && (sq.dataset.id === lastMove.from || sq.dataset.id === lastMove.to)) {
                 sq.classList.add('last-move');
             }
         });
-
-        // Update Turn UI
-        document.getElementById('p-white').classList.toggle('active', game.turn() === 'w');
-        document.getElementById('p-black').classList.toggle('active', game.turn() === 'b');
-        
-        checkGameStatus();
+        checkStatus();
     }
 
-    function onSquareClick(id) {
-        if (isBotThinking || game.game_over()) return;
+    function handleMove(id) {
+        if (!passPlay && game.turn() === 'b') return;
 
-        // If clicking a legal target for a selected piece
-        if (selectedSquare) {
-            const move = { from: selectedSquare, to: id, promotion: 'q' }; // Default queen promotion
-            
-            // Check if it's a promotion move
-            const moves = game.moves({ square: selectedSquare, verbose: true });
-            const isPromotion = moves.find(m => m.to === id && m.flags.includes('p'));
-
-            if (isPromotion) {
-                showPromotion(selectedSquare, id);
-                return;
-            }
-
-            const result = game.move(move);
-            if (result) {
-                selectedSquare = null;
-                updateBoard();
-                if (isBotMode && game.turn() === 'b') {
-                    setTimeout(makeBotMove, 250);
-                }
+        if (selectedSq) {
+            const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
+            if (move) {
+                if(move.captured) triggerImpact();
+                selectedSq = null;
+                render();
+                if (!passPlay) setTimeout(botMove, 500);
                 return;
             }
         }
 
-        // Selecting a piece
-        const piece = game.get(id);
-        if (piece && piece.color === game.turn()) {
-            selectedSquare = id;
-            updateBoard();
+        const p = game.get(id);
+        if (p && p.color === game.turn()) {
+            selectedSq = id;
+            render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            
-            // Show hints
-            game.moves({ square: id, verbose: true }).forEach(m => {
-                const hint = document.createElement('div');
-                hint.classList.add('hint');
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(hint);
+            game.moves({square: id, verbose: true}).forEach(m => {
+                const h = document.createElement('div'); h.className = 'hint';
+                document.querySelector(`[data-id="${m.to}"]`).appendChild(h);
             });
         } else {
-            selectedSquare = null;
-            updateBoard();
+            selectedSq = null;
+            render();
         }
     }
 
-    // --- BOT LOGIC (Simple Minimax) ---
-    function makeBotMove() {
+    // --- AI BOT (Scales with Level) ---
+    function botMove() {
         if (game.game_over()) return;
-        isBotThinking = true;
-        document.getElementById('game-status').innerText = "BOT IS THINKING...";
         
-        setTimeout(() => {
-            const moves = game.moves();
-            const randomMove = moves[Math.floor(Math.random() * moves.length)];
-            game.move(randomMove);
-            isBotThinking = false;
-            updateBoard();
-        }, 600);
+        let moves = game.moves();
+        let chosenMove;
+
+        // Level-based difficulty logic
+        if (level < 20) {
+            chosenMove = moves[Math.floor(Math.random() * moves.length)];
+        } else {
+            // Basic Material Capture AI
+            let bestScore = -9999;
+            moves.forEach(m => {
+                game.move(m);
+                let score = -evaluateBoard(game.board());
+                game.undo();
+                if(score > bestScore) { bestScore = score; chosenMove = m; }
+            });
+        }
+
+        const mObj = game.move(chosenMove);
+        if(mObj.captured) triggerImpact();
+        render();
     }
 
-    function checkGameStatus() {
-        let status = "YOUR TURN";
-        if (game.in_check()) status = "CHECK!";
-        if (game.in_checkmate()) status = "CHECKMATE!";
-        if (game.in_draw()) status = "DRAW";
-        
-        document.getElementById('game-status').innerText = status;
+    function evaluateBoard(board) {
+        const vals = {p: 10, n: 30, b: 30, r: 50, q: 90, k: 900};
+        let total = 0;
+        board.forEach(row => row.forEach(p => {
+            if(p) total += vals[p.type] * (p.color === 'w' ? 1 : -1);
+        }));
+        return total;
     }
 
-    function showPromotion(from, to) {
-        const layer = document.getElementById('promotion-layer');
-        const box = document.getElementById('promo-options');
-        box.innerHTML = '';
-        layer.style.display = 'flex';
-
-        ['q', 'r', 'b', 'n'].forEach(type => {
-            const img = document.createElement('img');
-            img.src = piecesImg[game.turn() + type.toUpperCase()];
-            img.classList.add('promo-choice');
-            img.onclick = () => {
-                game.move({ from, to, promotion: type });
-                layer.style.display = 'none';
-                updateBoard();
-                if (isBotMode) setTimeout(makeBotMove, 250);
-            };
-            box.appendChild(img);
+    // --- CRAZY EFFECTS ---
+    function applyTheme() {
+        const hue = (level * 137) % 360; // Spread colors evenly
+        const primary = `hsl(${hue}, 100%, 50%)`;
+        document.documentElement.style.setProperty('--primary', primary);
+        document.documentElement.style.setProperty('--glow', `0 0 20px hsl(${hue}, 100%, 50%, 0.5)`);
+        
+        const squares = document.querySelectorAll('.square');
+        squares.forEach(sq => {
+            if(sq.classList.contains('light')) sq.style.backgroundColor = `hsl(${hue}, 20%, 85%)`;
+            else sq.style.backgroundColor = `hsl(${hue}, 40%, 20%)`;
         });
+
+        document.getElementById('lvl-num').innerText = level;
+        document.getElementById('progress-bar').style.width = level + '%';
+        
+        const ranks = ["ROOKIE", "NOVICE", "WARRIOR", "ELITE", "MASTER", "GRANDMASTER", "DEEP BLUE", "GOD MODE"];
+        document.getElementById('bot-rank').innerText = "BOT: " + ranks[Math.floor(level/13)] || "DEITY";
     }
 
-    function resetGame() {
+    function triggerImpact() {
+        const wrapper = document.getElementById('board-wrapper');
+        wrapper.classList.add('shake');
+        setTimeout(() => wrapper.classList.remove('shake'), 200);
+    }
+
+    function flashMsg(txt) {
+        const b = document.getElementById('msg-box');
+        b.innerText = txt; b.style.opacity = 1;
+        setTimeout(() => b.style.opacity = 0, 2000);
+    }
+
+    function checkStatus() {
+        if (game.in_checkmate()) {
+            flashMsg("LEVEL UP!");
+            if(game.turn() === 'b') changeLvl(1); // Player won
+        } else if (game.in_draw()) {
+            flashMsg("STALEMATE");
+        }
+    }
+
+    function changeLvl(n) {
+        level = Math.min(100, level + n);
         game.reset();
-        selectedSquare = null;
-        updateBoard();
+        init();
     }
 
-    function undo() {
-        game.undo();
-        if (isBotMode) game.undo();
-        updateBoard();
-    }
-
-    function toggleMode() {
-        isBotMode = !isBotMode;
-        document.getElementById('mode-btn').innerText = isBotMode ? "MODE: VS BOT" : "MODE: PASS & PLAY";
+    function togglePassPlay() {
+        passPlay = !passPlay;
+        document.getElementById('mode-btn').innerText = passPlay ? "PASS & PLAY" : "VS BOT";
         resetGame();
     }
 
-    createBoard();
+    function resetGame() { game.reset(); render(); }
+    function undo() { game.undo(); if(!passPlay) game.undo(); render(); }
+
+    init();
 </script>
 </body>
 </html>
