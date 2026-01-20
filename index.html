@@ -3,26 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARCHITECT PRO | MAUTASIM</title>
+    <title>ARCHITECT PRO | ELITE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #050a12; --c: rgba(20, 27, 38, 0.98); --sl: #ffffff; --sd: #000000; --danger: #ff4b2b; }
         
-        body { margin: 0; background: radial-gradient(circle at center, #0a192f 0%, #02060c 100%); color: white; font-family: 'Orbitron', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        :root { 
+            --p: #00d4ff; /* Dynamic Primary */
+            --bg: #050a12; --c: rgba(20, 27, 38, 0.98); 
+            --sl: #ffffff; --sd: #000000; --danger: #ff4b2b;
+        }
         
-        /* High-End Login Style */
+        body { margin: 0; background: radial-gradient(circle at center, #0a192f 0%, #02060c 100%); color: white; font-family: 'Orbitron', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; transition: 0.5s; }
+        
+        /* UI Components */
         .architect-tag { font-size: 26px; font-weight: 900; color: var(--p); text-shadow: 0 0 20px var(--p); letter-spacing: 4px; margin: 25px 0 2px 0; }
         .dev-tag { font-size: 9px; color: #444; letter-spacing: 3px; margin-bottom: 20px; text-align: center; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .glass-card { background: var(--c); padding: 30px; border-radius: 28px; width: 85%; max-width: 320px; border: 1px solid rgba(0, 212, 255, 0.3); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); box-sizing: border-box; }
+        .glass-card { background: var(--c); padding: 25px; border-radius: 28px; width: 88%; max-width: 340px; border: 1px solid var(--p); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); box-sizing: border-box; }
         
-        input { background: rgba(0,0,0,0.6); border: 1px solid #333; color: white; padding: 15px; margin: 10px 0; width: 100%; text-align: center; border-radius: 12px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
-        .btn-main { width: 100%; padding: 16px; background: var(--p); color: #000; border: none; border-radius: 12px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; font-size: 11px; transition: 0.2s; }
-        .btn-main:active { transform: scale(0.95); }
+        .stats-bar { display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 10px; margin-bottom: 15px; border: 1px solid #111; }
+        .stat-num { display: block; font-size: 14px; font-weight: 900; color: var(--p); }
 
-        /* Chess Board UI */
-        #board-box { margin: 15px 0; width: 94vw; max-width: 400px; aspect-ratio: 1/1; border: 6px solid #141b26; border-radius: 12px; overflow: hidden; position: relative; }
+        input { background: rgba(0,0,0,0.6); border: 1px solid #333; color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 10px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 10px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 8px; font-size: 10px; transition: 0.2s; }
+        .btn-outline { background: none; border: 1px solid #333; color: #777; font-size: 9px; margin-top: 10px; }
+
+        /* Board */
+        #board-box { margin: 15px 0; width: 94vw; max-width: 400px; aspect-ratio: 1/1; border: 6px solid #141b26; border-radius: 12px; overflow: hidden; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
@@ -32,14 +40,9 @@
         .selected { box-shadow: inset 0 0 25px rgba(255, 255, 0, 0.8) !important; background: rgba(255, 255, 0, 0.3) !important; }
         .kill-zone { background: rgba(255, 0, 0, 0.5) !important; border: 1px solid var(--danger); }
 
-        /* HUD & Scrollers */
         .hud { width: 100%; padding: 18px 25px; display: flex; justify-content: space-between; background: var(--c); border-bottom: 2px solid var(--p); box-sizing: border-box; margin-top: 60px; font-size: 11px; }
-        .scroller { background: rgba(0,0,0,0.3); border-radius: 12px; margin: 8px 0; max-height: 85px; overflow-y: auto; text-align: left; padding: 12px; border: 1px solid #222; font-size: 10px; font-family: 'Roboto Mono'; }
-        .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; }
-        
-        /* Custom Scrollbar */
-        .scroller::-webkit-scrollbar { width: 4px; }
-        .scroller::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
+        .scroller { background: rgba(0,0,0,0.3); border-radius: 12px; margin: 8px 0; max-height: 70px; overflow-y: auto; text-align: left; padding: 10px; border: 1px solid #222; font-size: 10px; font-family: 'Roboto Mono'; }
+        .theme-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid white; margin: 0 5px; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -48,42 +51,56 @@
         <div class="architect-tag">ARCHITECT PRO</div>
         <div class="dev-tag">DEVELOPED BY MAUTASIM</div>
         <div class="glass-card">
-            <h2 id="auth-title" style="font-size:12px; margin:0 0 15px 0; letter-spacing:3px; color:var(--p)">LOGIN</h2>
+            <h2 id="auth-title" style="font-size:11px; margin-bottom:10px; letter-spacing:2px; color:var(--p)">LOGIN</h2>
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
-            <button class="btn-main" onclick="uiClick(); handleAuth()">INITIALIZE</button>
-            <div style="margin-top:20px; font-size:10px; color:#555;">
-                <span id="toggle-msg">Don't have an account?</span> 
-                <span id="toggle-btn" style="color:var(--p); text-decoration:underline; cursor:pointer;" onclick="uiClick(); toggleAuth()">Sign Up</span>
+            <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
+            <div style="margin-top:15px; font-size:9px; color:#555;">
+                <span id="toggle-btn" style="color:var(--p); cursor:pointer;" onclick="toggleAuth()">+ SIGN UP</span>
             </div>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">MAUTASIM</div>
-        <div id="welcome-user" style="color:var(--p); font-size:9px; letter-spacing:2px; margin-bottom:15px;">WELCOME_ARCHITECT</div>
+        <div id="welcome-user" style="color:var(--p); font-size:9px; letter-spacing:2px; margin-bottom:10px;">ARCHITECT</div>
+        
         <div class="glass-card">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <button class="btn-main" onclick="uiClick(); prepareGame('bot')">VS AI</button>
-                <button class="btn-main" onclick="uiClick(); prepareGame('pass')">LOCAL</button>
-            </div>
-            
-            <p style="font-size:9px; color:var(--p); margin:15px 0 5px; text-align:left; letter-spacing:1px;">NEURAL LINKS (FRIENDS)</p>
-            <div id="friends-list" class="scroller"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="peer-in" placeholder="ADD PEER NAME" style="font-size:10px; padding:10px; margin:0;">
-                <button class="btn-main" style="margin:0; width:35%; padding:10px; font-size:10px;" onclick="uiClick(); addPeer()">LINK</button>
+            <div class="stats-bar">
+                <div class="stat-item">WINS <span id="win-count" class="stat-num">0</span></div>
+                <div class="stat-item">LOSSES <span id="loss-count" class="stat-num">0</span></div>
             </div>
 
-            <p style="font-size:9px; color:var(--p); margin:15px 0 5px; text-align:left; letter-spacing:1px;">BATTLE ARCHIVE</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button class="btn-main" onclick="prepareGame('bot')">VS AI</button>
+                <button class="btn-main" onclick="prepareGame('ghost')">P2P GHOST</button>
+            </div>
+            <button class="btn-main" style="background:#222; color:var(--p); border:1px solid var(--p)" onclick="showNameEntry()">ENTER OPPONENT NAME</button>
+            
+            <p style="font-size:9px; color:var(--p); margin:12px 0 5px; text-align:left;">BATTLE ARCHIVE</p>
             <div id="history-list" class="scroller"></div>
 
-            <button class="btn-main" onclick="uiClick(); doLogout()" style="background:none; border:1px solid #333; color:#555; margin-top:15px; font-size:10px;">SHUTDOWN SESSION</button>
+            <div style="margin-top:10px;">
+                <div class="theme-dot" style="background:#00d4ff" onclick="setTheme('#00d4ff')"></div>
+                <div class="theme-dot" style="background:#ff4b2b" onclick="setTheme('#ff4b2b')"></div>
+                <div class="theme-dot" style="background:#00ff41" onclick="setTheme('#00ff41')"></div>
+            </div>
+
+            <button class="btn-main btn-outline" onclick="doLogout()">SHUTDOWN</button>
         </div>
     </div>
 
-    <div id="nav-layer" class="nav-ui" style="display:none">
-        <button class="btn-main" style="width:auto; padding:8px 15px; font-size:10px;" onclick="uiClick(); quitGame()">🏠 EXIT</button>
+    <div id="name-overlay" class="overlay" style="display:none; z-index:150;">
+        <div class="glass-card">
+            <h2 style="font-size:10px; color:var(--p)">IDENTIFY OPPONENT</h2>
+            <input type="text" id="custom-opp" placeholder="NAME">
+            <button class="btn-main" onclick="prepareGame('custom')">START BATTLE</button>
+            <button class="btn-main btn-outline" onclick="hideNameEntry()">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="nav-layer" style="display:none; position:fixed; top:15px; left:15px; z-index:110;">
+        <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="quitGame()">🏠 EXIT</button>
     </div>
 
     <div class="hud">
@@ -98,6 +115,12 @@
         const boardEl = document.getElementById('board');
         let currentUser = null, audioCtx = null, selectedSq = null, currentMode = 'bot', authMode = 'login';
 
+        function setTheme(color) {
+            document.documentElement.style.setProperty('--p', color);
+            localStorage.setItem('theme_color', color);
+            uiClick();
+        }
+
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function uiClick() {
             if(!audioCtx) return;
@@ -107,28 +130,25 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // --- AUTH SYSTEM ---
         function toggleAuth() {
             authMode = (authMode === 'login') ? 'signup' : 'login';
             document.getElementById('auth-title').innerText = authMode.toUpperCase();
-            document.getElementById('toggle-msg').innerText = (authMode === 'login') ? "Don't have an account?" : "Already have an account?";
-            document.getElementById('toggle-btn').innerText = (authMode === 'login') ? "Sign Up" : "Login";
+            document.getElementById('toggle-btn').innerText = (authMode === 'login') ? "+ SIGN UP" : "+ LOGIN";
         }
 
         function handleAuth() {
             const u = document.getElementById('user-in').value.trim().toUpperCase();
             const p = document.getElementById('pass-in').value.trim();
-            if(!u || !p) { alert("ENTER DATA"); return; }
+            if(!u || !p) return;
             if(authMode === 'signup') {
                 localStorage.setItem('pw_' + u, p);
-                alert("ACCOUNT ENCRYPTED. YOU MAY NOW LOGIN.");
-                toggleAuth();
+                alert("ENCRYPTED."); toggleAuth();
             } else {
                 if(localStorage.getItem('pw_' + u) === p) {
                     currentUser = u;
                     localStorage.setItem('arch_active_user', u);
                     showDashboard();
-                } else { alert("ACCESS DENIED"); }
+                } else { alert("DENIED"); }
             }
         }
 
@@ -137,48 +157,44 @@
             document.getElementById('home-screen').style.display='flex';
             document.getElementById('nav-layer').style.display='none';
             document.getElementById('welcome-user').innerText = "ARCHITECT: " + currentUser;
-            renderPeers(); renderHistory();
+            updateStats(); renderHistory();
         }
 
-        // --- NEURAL LINKS & HISTORY ---
-        function addPeer() {
-            const name = document.getElementById('peer-in').value.trim().toUpperCase();
-            if(!name) return;
-            let peers = JSON.parse(localStorage.getItem('peers_'+currentUser)) || [];
-            if(!peers.includes(name)) { peers.push(name); localStorage.setItem('peers_'+currentUser, JSON.stringify(peers)); }
-            document.getElementById('peer-in').value = ''; renderPeers();
-        }
+        function showNameEntry() { document.getElementById('name-overlay').style.display = 'flex'; }
+        function hideNameEntry() { document.getElementById('name-overlay').style.display = 'none'; }
 
-        function renderPeers() {
-            const list = document.getElementById('friends-list');
-            let peers = JSON.parse(localStorage.getItem('peers_'+currentUser)) || [];
-            list.innerHTML = peers.map((p, i) => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #111; padding-bottom:4px;">
-                    <span>${p}</span>
-                    <div>
-                        <span style="color:var(--p); cursor:pointer; margin-right:10px;" onclick="challenge('${p}')">[LINK]</span>
-                        <span style="color:var(--danger); cursor:pointer;" onclick="deletePeer(${i})">[X]</span>
-                    </div>
-                </div>
-            `).join('') || "<span style='color:#333'>NO PEERS LINKED</span>";
-        }
-
-        function deletePeer(index) {
-            let peers = JSON.parse(localStorage.getItem('peers_'+currentUser)) || [];
-            peers.splice(index, 1);
-            localStorage.setItem('peers_'+currentUser, JSON.stringify(peers));
-            renderPeers();
+        function updateStats() {
+            let hist = JSON.parse(localStorage.getItem('hist_'+currentUser)) || [];
+            document.getElementById('win-count').innerText = hist.filter(h => h.res === 'WIN').length;
+            document.getElementById('loss-count').innerText = hist.filter(h => h.res === 'LOSS').length;
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
             let hist = JSON.parse(localStorage.getItem('hist_'+currentUser)) || [];
-            list.innerHTML = hist.map(h => `<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>${h.opp}</span><span style="color:${h.res==='WIN'?'#00ff41':'var(--danger)'}">${h.res}</span></div>`).join('') || "<span style='color:#333'>NO LOGS</span>";
+            list.innerHTML = hist.map(h => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${h.opp}</span>
+                    <span style="color:${h.res==='WIN'?'var(--p)':'var(--danger)'}">${h.res}</span>
+                </div>
+            `).join('') || "NO LOGS";
         }
 
-        // --- GAME ENGINE ---
-        function challenge(name) { currentMode = 'pass'; document.getElementById('p2-label').innerText = name; launchGame(); }
-        function prepareGame(mode) { currentMode = mode; document.getElementById('p2-label').innerText = mode==='bot' ? "ULTRA AI" : "PEER"; launchGame(); }
+        function prepareGame(type) {
+            uiClick();
+            if(type === 'bot') { document.getElementById('p2-label').innerText = "ULTRA AI"; currentMode = 'bot'; }
+            else if(type === 'ghost') { 
+                const ghosts = ["VOID_RAVEN", "NEURAL_STRIKE", "DARK_CORE", "PHANTOM"];
+                document.getElementById('p2-label').innerText = ghosts[Math.floor(Math.random()*ghosts.length)];
+                currentMode = 'pass';
+            } else {
+                const name = document.getElementById('custom-opp').value.trim().toUpperCase() || "UNKNOWN";
+                document.getElementById('p2-label').innerText = name;
+                currentMode = 'pass';
+                hideNameEntry();
+            }
+            launchGame();
+        }
 
         function launchGame() {
             document.querySelectorAll('.overlay').forEach(o=>o.style.display='none');
@@ -204,7 +220,7 @@
             uiClick();
             if (selectedSq) {
                 const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
-                if (move) { selectedSq = null; render(); if(currentMode==='bot') setTimeout(botMove, 500); return; }
+                if (move) { selectedSq = null; render(); if(currentMode==='bot') botMove(); return; }
             }
             const p = game.get(id);
             if (p && p.color === game.turn()) {
@@ -213,12 +229,15 @@
                 game.moves({ square: id, verbose: true }).forEach(m => {
                     const target = document.querySelector(`[data-id="${m.to}"]`);
                     if(game.get(m.to)) target.classList.add('kill-zone');
-                    else target.innerHTML = '<div style="width:8px;height:8px;background:var(--p);border-radius:50%;opacity:0.5"></div>';
+                    else target.innerHTML = `<div style="width:8px;height:8px;background:var(--p);border-radius:50%;opacity:0.6"></div>`;
                 });
             } else { selectedSq = null; render(); }
         }
 
-        function botMove() { const moves = game.moves(); if(moves.length) { game.move(moves[Math.floor(Math.random()*moves.length)]); render(); } }
+        function botMove() { 
+            const moves = game.moves(); 
+            if(moves.length) { game.move(moves[Math.floor(Math.random()*moves.length)]); render(); } 
+        }
 
         function render() {
             document.querySelectorAll('.sq').forEach(s => {
@@ -231,9 +250,9 @@
                 }
             });
             if(game.game_over()) {
-                let res = game.in_checkmate() ? "WIN" : "DRAW";
+                let res = game.in_checkmate() ? (game.turn() === 'b' ? "WIN" : "LOSS") : "DRAW";
                 saveMatch(document.getElementById('p2-label').innerText, res);
-                alert("BATTLE OVER: " + res); showDashboard();
+                alert("RESULT: " + res); showDashboard();
             }
         }
 
@@ -243,10 +262,12 @@
             localStorage.setItem('hist_'+currentUser, JSON.stringify(hist.slice(0, 10)));
         }
 
-        function quitGame() { if(confirm("ABORT MATCH?")) showDashboard(); }
+        function quitGame() { if(confirm("ABORT?")) showDashboard(); }
         function doLogout() { localStorage.removeItem('arch_active_user'); location.reload(); }
 
         window.onload = () => { 
+            const savedTheme = localStorage.getItem('theme_color');
+            if(savedTheme) setTheme(savedTheme);
             const activeUser = localStorage.getItem('arch_active_user');
             if(activeUser){ currentUser = activeUser; showDashboard(); } 
         };
