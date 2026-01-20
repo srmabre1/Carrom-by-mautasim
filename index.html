@@ -3,23 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARCHITECT CHESS PRO | MAUTASIM</title>
+    <meta name="color-scheme" content="light dark">
+    <title>ARCHITECT CHESS PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #b5c3ce; --sd: #4b7399; }
         
+        :root { 
+            --p: #00d4ff; --bg: #0a0e17; --c: #141b26; 
+            /* High-contrast board colors that resist dark-mode inversion */
+            --sl: #dee3e6; --sd: #769656; 
+        }
+
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
-        
-        /* FIX FOR DARK MODE INVERSION */
+
+        /* --- THE ANTI-DARK MODE FIX --- */
         img.piece { 
-            width: 90%; 
-            z-index: 5; 
-            pointer-events: none; 
-            /* This ensures pieces don't invert even if "Force Dark Mode" is on */
-            filter: brightness(1) !important; 
-            mix-blend-mode: normal !important;
+            width: 90%; z-index: 5; pointer-events: none; 
+            /* This 're-inverts' the piece if the browser forced dark mode on it */
+            filter: invert(0) !important;
+        }
+
+        /* If your browser forces an inversion, this media query tries to flip it back */
+        @media (prefers-color-scheme: dark) {
+            img.piece { filter: brightness(1.2) contrast(1.1); }
         }
 
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
@@ -27,9 +35,9 @@
 
         .architect-tag { font-size: 22px; font-weight: 900; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 3px; margin: 15px 0; text-transform: uppercase; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 1px solid #222; text-align: center; }
         
-        input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; outline: none; }
+        .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 1px solid #222; text-align: center; }
+        input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
         .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; position: relative; }
@@ -42,8 +50,8 @@
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
-        .selected { background: rgba(0, 212, 255, 0.6) !important; }
-        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.8); border-radius: 50%; z-index: 10; border: 2px solid white; pointer-events: none; }
+        .selected { background: rgba(255, 255, 0, 0.5) !important; }
+        .move-dot { width: 16px; height: 16px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 2px solid white; pointer-events: none; }
 
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
         .menu-item { background: var(--c); border: 1px solid #333; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
@@ -93,8 +101,8 @@
 
     <div id="online-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2>ONLINE</h2>
-            <p style="font-size:10px;">ID: <span id="my-id" style="color:var(--p)">...</span></p>
+            <h2>ONLINE LINK</h2>
+            <p style="font-size:10px;">YOUR ID: <span id="my-id" style="color:var(--p)">...</span></p>
             <input type="text" id="peer-id-in" placeholder="FRIEND UID">
             <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
             <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
@@ -159,8 +167,8 @@
         vsBot = (m === 'bot'); isOnline = (m === 'online'); isPass = (m === 'pass');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('p1-label').innerText = isPass ? (document.getElementById('p1-local').value || "PLAYER 1") : currentUser.toUpperCase();
-        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "PLAYER 2");
+        document.getElementById('p1-label').innerText = isPass ? (document.getElementById('p1-local').value || "P1") : currentUser.toUpperCase();
+        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "P2");
         game.reset(); initBoard();
     }
 
@@ -187,8 +195,8 @@
                 if(isOnline) conn.send({type: 'move', move: move});
                 playSound('move'); selectedSq = null; render();
                 if (vsBot && !game.game_over()) setTimeout(() => {
-                    const m = game.moves();
-                    game.move(m[Math.floor(Math.random()*m.length)]);
+                    const moves = game.moves();
+                    game.move(moves[Math.floor(Math.random()*moves.length)]);
                     playSound('move'); render();
                 }, 400);
                 return;
@@ -210,6 +218,7 @@
             const p = game.get(s.dataset.id); s.innerHTML = ''; s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
+                // Standard pieces that are bright (White) and dark (Black)
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece'; s.appendChild(img);
             }
