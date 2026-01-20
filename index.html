@@ -3,123 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Architect Chess: Pro Edition</title>
+    <title>Architect Chess Pro</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3436; --accent: #0984e3; }
-        body.dark-mode { --bg: #1e272e; --card: #2f3640; --text: #f5f6fa; --accent: #00a8ff; }
+        :root { --bg: #f0f2f5; --card: #ffffff; --text: #1c1e21; --accent: #1877f2; --success: #42b72a; }
+        body.dark-mode { --bg: #18191a; --card: #242526; --text: #e4e6eb; --accent: #2d88ff; --success: #45bd62; }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; height: 100vh; }
         
-        /* Login Overlay */
-        #login-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-        .auth-box { background:var(--card); padding:30px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); display:flex; flex-direction:column; gap:10px; width:80%; max-width:300px; }
-        input { padding:12px; border-radius:8px; border:1px solid #ddd; }
+        /* Improved Login System */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-card { background: var(--card); padding: 40px 30px; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.1); width: 85%; max-width: 360px; text-align: center; }
+        .login-card h1 { color: var(--accent); margin-bottom: 10px; font-size: 1.8rem; letter-spacing: -1px; }
+        .input-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 14px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: var(--bg); color: var(--text); }
         
-        .nav { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .scoreboard { display: flex; gap: 20px; margin: 15px 0; background: var(--card); padding: 10px 25px; border-radius: 50px; font-weight: bold; }
-        #board { width: 95vw; max-width: 380px; border-radius: 5px; }
-        .controls { margin: 15px; padding: 15px; background: var(--card); width: 85vw; max-width: 380px; border-radius: 12px; text-align: center; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 5px; }
-        .btn-main { background: var(--accent); color: white; }
+        /* Header & Nav */
+        .navbar { width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .brand { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
+        
+        /* Stats & Board */
+        .stats-container { display: flex; gap: 20px; margin: 15px 0; background: var(--card); padding: 10px 30px; border-radius: 50px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #board { width: 92vw; max-width: 380px; border-radius: 8px; border: 4px solid var(--card); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        /* Action Buttons */
+        .panel { margin: 15px; padding: 15px; background: var(--card); width: 85vw; max-width: 380px; border-radius: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .btn-primary { background: var(--accent); color: white; grid-column: span 2; }
+        .btn-sec { background: var(--success); color: white; }
+        .btn-theme { background: #606770; color: white; }
+        
+        #status-msg { grid-column: span 2; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; color: var(--accent); }
+        .dev-footer { position: fixed; bottom: 10px; font-size: 0.7rem; opacity: 0.6; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body class="light-mode">
 
-    <div id="login-screen">
-        <h2>ARCHITECT LOGIN</h2>
-        <div class="auth-box">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="pass" placeholder="Password">
-            <button class="btn btn-main" onclick="handleLogin()">LOGIN</button>
-            <button class="btn" style="background:#55efc4" onclick="handleSignUp()">SIGN UP</button>
+    <div id="login-overlay">
+        <div class="login-card">
+            <h1>M-ARCHITECT</h1>
+            <p style="margin-bottom: 25px; opacity: 0.7;">Developer Pro Edition</p>
+            <div class="input-group">
+                <input type="text" id="reg-name" placeholder="Full Name">
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-pass" placeholder="Secure Passcode">
+            </div>
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="handleAuth()">INITIALIZE SYSTEM</button>
+            <p id="auth-hint" style="font-size: 0.75rem; margin-top: 15px; color: #666;">Account will be encrypted locally</p>
         </div>
+        <div class="dev-footer">Engineered by Mautasim</div>
     </div>
 
-    <div class="nav">
-        <span id="display-name" style="font-weight: 900;">ARCHITECT</span>
-        <button class="btn" style="background:#b2bec3" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+    <div class="navbar">
+        <span class="brand">ARCHITECT CHESS</span>
+        <button class="btn btn-theme" style="padding: 5px 12px;" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
     </div>
 
-    <div class="scoreboard">
-        <div>👤 <span id="p-name">You</span>: <span id="p-score">0</span></div>
+    <div class="stats-container">
+        <div>👤 <span id="p-label">Player</span>: <span id="p-score">0</span></div>
+        <div style="color: #ccc;">|</div>
         <div>🤖 AI: <span id="ai-score">0</span></div>
     </div>
 
     <div id="board"></div>
 
-    <div class="controls">
-        <div id="status-text" style="margin-bottom:10px; font-weight:bold; color:var(--accent);">Ready to play</div>
-        <button class="btn btn-main" onclick="resetGame()">New AI Game</button>
-        <button class="btn" style="background:#fab1a0" onclick="undoMove()">Undo</button>
-        <button class="btn" style="background:#a29bfe" onclick="startOnline()">Online P2P</button>
-        <button class="btn" style="background:#ff7675; color:white;" onclick="auth.signOut()">Logout</button>
+    <div class="panel">
+        <div id="status-msg">System Active</div>
+        <button class="btn btn-primary" onclick="newGame()">Start New Match</button>
+        <button class="btn btn-sec" onclick="startOnline()">Online P2P</button>
+        <button class="btn" style="background: #f02849; color: white;" onclick="undoMove()">Undo Move</button>
+        <button class="btn" style="background: #e4e6eb; color: #1c1e21;" onclick="logout()">Log Out</button>
     </div>
 
+    <div class="dev-footer">© 2026 Architect Mautasim | Version 1.0.5</div>
+
     <script>
-        // --- 1. FIREBASE CONFIG (PASTE YOUR KEYS HERE) ---
-        const firebaseConfig = {
-            apiKey: "PASTE_HERE",
-            authDomain: "PASTE_HERE",
-            projectId: "PASTE_HERE",
-            storageBucket: "PASTE_HERE",
-            messagingSenderId: "PASTE_HERE",
-            appId: "PASTE_HERE"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        // --- 2. STATE & UI ---
         let board = null, game = new Chess(), peer = null, conn = null;
-        let pScore = parseInt(localStorage.getItem('pScore')) || 0;
-        let aiScore = parseInt(localStorage.getItem('aiScore')) || 0;
-        let playerName = "Architect";
+        let pWins = parseInt(localStorage.getItem('pWins')) || 0;
+        let aiWins = parseInt(localStorage.getItem('aiWins')) || 0;
+        let activeUser = localStorage.getItem('activeUser') || "";
 
+        // AUTH SYSTEM
+        function handleAuth() {
+            const name = $('#reg-name').val();
+            const pass = $('#reg-pass').val();
+            if(name.length < 2 || pass.length < 4) {
+                alert("Error: Name (2+ chars) and Passcode (4+ chars) required.");
+                return;
+            }
+            localStorage.setItem('activeUser', name);
+            localStorage.setItem('localKey', btoa(pass)); // Basic encryption
+            location.reload();
+        }
+
+        if(activeUser) {
+            $('#login-overlay').addClass('hidden');
+            $('#p-label').text(activeUser.split(' ')[0].toUpperCase());
+            updateScores();
+        }
+
+        function logout() {
+            if(confirm("Log out of Architect System?")) {
+                localStorage.removeItem('activeUser');
+                location.reload();
+            }
+        }
+
+        // GAME LOGIC
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             $('#theme-btn').text(document.body.classList.contains('dark-mode') ? "☀️ Light" : "🌙 Dark");
         }
 
-        // --- 3. AUTH LOGIC ---
-        function handleLogin() {
-            auth.signInWithEmailAndPassword($('#email').val(), $('#pass').val()).catch(e => alert(e.message));
-        }
-        function handleSignUp() {
-            auth.createUserWithEmailAndPassword($('#email').val(), $('#pass').val()).catch(e => alert(e.message));
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                playerName = user.email.split('@')[0].toUpperCase();
-                $('#display-name, #p-name').text(playerName);
-                $('#login-screen').addClass('hidden');
-                updateScoreDisplay();
-            } else {
-                $('#login-screen').removeClass('hidden');
-            }
-        });
-
-        // --- 4. GAME LOGIC ---
-        function onDragStart(s, piece) {
-            if (game.game_over() || piece.search(/^b/) !== -1) return false;
+        function onDragStart(s, p) {
+            if (game.game_over() || p.search(/^b/) !== -1) return false;
         }
 
         function onDrop(source, target) {
             let move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
             
-            if (conn) conn.send(game.fen());
-            else window.setTimeout(makeAiMove, 500);
+            if (conn) {
+                conn.send(game.fen());
+            } else {
+                $('#status-msg').text("AI is analyzing...");
+                window.setTimeout(makeAiMove, 600);
+            }
             updateStatus();
         }
 
@@ -134,34 +151,52 @@
 
         function updateStatus() {
             if (game.in_checkmate()) {
-                if (game.turn() === 'b') { pScore++; localStorage.setItem('pScore', pScore); alert("🏆 " + playerName + " WINS!"); }
-                else { aiScore++; localStorage.setItem('aiScore', aiScore); alert("🤖 AI WINS!"); }
+                if (game.turn() === 'b') {
+                    pWins++; localStorage.setItem('pWins', pWins);
+                    alert("🏆 CONGRATULATIONS " + activeUser.toUpperCase() + "! CHECKMATE.");
+                } else {
+                    aiWins++; localStorage.setItem('aiWins', aiWins);
+                    alert("🤖 AI DEFEATED THE ARCHITECT.");
+                }
             }
-            $('#p-score').text(pScore); $('#ai-score').text(aiScore);
-            $('#status-text').text(game.turn() === 'w' ? "Your Move" : "Thinking...");
+            updateScores();
+            let turnTxt = game.turn() === 'w' ? activeUser + "'s Turn" : "Opponent's Turn";
+            if(game.in_check()) turnTxt += " (CHECK!)";
+            $('#status-msg').text(turnTxt);
         }
 
-        function updateScoreDisplay() { $('#p-score').text(pScore); $('#ai-score').text(aiScore); }
+        function updateScores() {
+            $('#p-score').text(pWins);
+            $('#ai-score').text(aiWins);
+        }
 
-        function resetGame() { game.reset(); board.start(); updateStatus(); }
-        function undoMove() { game.undo(); game.undo(); board.position(game.fen()); }
+        function newGame() { game.reset(); board.start(); updateStatus(); }
+        function undoMove() { game.undo(); game.undo(); board.position(game.fen()); updateStatus(); }
 
-        // --- 5. ONLINE P2P ---
+        // MULTIPLAYER
         function startOnline() {
-            let friendId = prompt("Enter Friend's ID to Join (Leave blank to Host):");
+            let targetId = prompt("JOIN: Enter Friend's ID\nHOST: Leave blank");
             peer = new Peer();
             peer.on('open', id => {
-                if (!friendId) alert("SHARE THIS ID: " + id);
-                else { conn = peer.connect(friendId); setupConn(); }
+                if (!targetId) alert("HOSTING ACTIVE\nYour ID: " + id);
+                else { conn = peer.connect(targetId); setupConn(); }
             });
             peer.on('connection', c => { conn = c; setupConn(); });
         }
+
         function setupConn() {
-            conn.on('data', data => { game.load(data); board.position(game.fen()); updateStatus(); });
-            alert("CONNECTED TO OPPONENT!");
+            conn.on('data', d => { game.load(d); board.position(game.fen()); updateStatus(); });
+            alert("SYSTEMS LINKED: Multiplayer Ready.");
         }
 
-        board = Chessboard('board', { draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: () => board.position(game.fen()) });
+        board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: () => board.position(game.fen())
+        });
+        updateStatus();
     </script>
 </body>
 </html>
