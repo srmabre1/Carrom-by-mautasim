@@ -3,208 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS DEITY | ARCHITECT: MAUTASIM</title>
+    <title>CHESS DEITY | BY MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono&display=swap');
 
         :root {
-            --primary: #00f2ff;
-            --gold: #ffcc00;
-            --danger: #ff0055;
-            --bg: #050508;
-            --sq-l: #1e1e26;
-            --sq-d: #121217;
+            --primary: #00d4ff;
+            --accent: #ffffff;
+            --danger: #ff3e3e;
+            --bg: #0a0e17; /* Deep Navy, not Black */
+            --sq-l: #ced4da; /* Silver */
+            --sq-d: #495057; /* Steel */
         }
 
         body {
             margin: 0; background: var(--bg); color: white;
-            font-family: 'JetBrains Mono', monospace;
-            display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; overflow: hidden; touch-action: manipulation;
         }
 
-        /* OVERLAYS */
+        /* APK NAVIGATION */
         .overlay {
             position: fixed; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
-            transition: opacity 0.5s;
         }
-        .logo { font-family: 'Orbitron'; font-size: 32px; color: var(--primary); text-shadow: 0 0 15px var(--primary); margin-bottom: 5px; }
-        .dev-tag { font-size: 9px; color: #444; letter-spacing: 5px; margin-bottom: 40px; }
+        .logo { font-size: 32px; color: var(--primary); text-shadow: 0 0 10px rgba(0,212,255,0.5); margin: 0; }
+        .dev-credit { font-size: 10px; color: var(--primary); letter-spacing: 4px; margin-bottom: 30px; opacity: 0.7; }
         
         .btn {
-            width: 250px; padding: 15px; margin: 10px; background: none; 
-            border: 2px solid var(--primary); color: var(--primary);
-            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; border-radius: 5px; font-weight: bold;
+            width: 260px; padding: 18px; margin: 10px; background: rgba(255,255,255,0.05); 
+            border: 1px solid var(--primary); color: var(--primary);
+            font-family: 'Orbitron'; border-radius: 12px; font-weight: bold;
         }
-        .btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
-        .btn-small { width: 100px; padding: 8px; font-size: 10px; border-width: 1px; margin-top: 20px; }
+        .mute-btn {
+            position: absolute; top: 20px; right: 20px; 
+            background: none; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px;
+        }
 
         input {
-            background: #111; border: 1px solid var(--primary); color: white;
-            padding: 12px; margin: 5px; width: 220px; text-align: center; border-radius: 4px;
-            font-family: 'JetBrains Mono';
+            background: #1a222f; border: 1px solid var(--primary); color: white;
+            padding: 15px; margin: 8px; width: 230px; text-align: center; border-radius: 8px;
+            font-family: 'Roboto Mono';
         }
 
-        /* HUD */
+        /* GAME HUD */
         .hud {
-            width: 100%; max-width: 400px; padding: 15px;
-            display: flex; justify-content: space-between; border-bottom: 1px solid #222;
+            width: 100%; max-width: 400px; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #141b26; border-bottom: 1px solid #222;
         }
-        .stat-val { font-family: 'Orbitron'; font-size: 14px; color: var(--primary); }
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 9px; color: #888; }
+        .stat-val { font-size: 14px; color: var(--primary); }
 
-        /* BOARD */
+        /* CHESSBOARD */
         #board-box {
-            position: relative; margin: 15px 0;
-            width: 92vw; max-width: 380px; aspect-ratio: 1/1;
-            border: 2px solid var(--primary);
+            position: relative; margin: 20px 0;
+            width: 94vw; max-width: 380px; aspect-ratio: 1/1;
+            border: 5px solid #141b26; border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sq-l); }
         .sq.d { background: var(--sq-d); }
         
-        .piece { width: 90%; height: 90%; z-index: 5; filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
-        .piece.black { filter: drop-shadow(0 0 6px #7000ff); }
-        
-        .move-dot { width: 14px; height: 14px; background: rgba(0, 242, 255, 0.5); border-radius: 50%; z-index: 2; position: absolute; }
-        .threatened { background: radial-gradient(circle, var(--danger) 0%, transparent 80%) !important; animation: pulse 0.6s infinite; }
-        .selected { background: rgba(0, 242, 255, 0.3) !important; }
+        .piece { width: 90%; height: 90%; z-index: 5; transition: transform 0.1s; }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.5); border-radius: 50%; z-index: 2; position: absolute; }
+        .threatened { background: radial-gradient(circle, var(--danger) 0%, transparent 80%) !important; animation: pulse 0.8s infinite; }
+        .selected { background: rgba(0, 212, 255, 0.4) !important; }
 
-        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-        .win-shake { animation: shake 0.4s infinite; }
-        @keyframes shake { 0% {transform:translate(0,0)} 25% {transform:translate(4px,4px)} 50% {transform:translate(-4px,-4px)} }
+        @keyframes pulse { 0% {opacity: 0.4} 50% {opacity: 1} 100% {opacity: 0.4} }
+        .win-shake { animation: shake 0.4s 3; }
+        @keyframes shake { 0%, 100% {transform:translateX(0)} 25% {transform:translateX(5px)} 75% {transform:translateX(-5px)} }
     </style>
 </head>
 <body>
 
-    <div id="start-menu" class="overlay">
+    <div id="home-screen" class="overlay">
+        <button id="mute-btn" class="mute-btn" onclick="toggleMute()">MUSIC: ON</button>
         <h1 class="logo">CHESS DEITY</h1>
-        <div class="dev-tag">ARCHITECT: MAUTASIM</div>
-        <button class="btn" onclick="startApp(); showNameInput('bot')">VS GRANDMASTER AI</button>
-        <button class="btn" onclick="startApp(); showNameInput('pass')">PASS & PLAY</button>
+        <p class="dev-credit">ENGINE BY MAUTASIM</p>
+        <button class="btn" onclick="enterNames('bot')">PLAYER VS AI</button>
+        <button class="btn" onclick="enterNames('pass')">PASS & PLAY</button>
     </div>
 
-    <div id="name-menu" class="overlay" style="display:none">
-        <h2 class="logo" style="font-size:20px;">IDENTIFY IDENTITY</h2>
-        <input type="text" id="p1-in" placeholder="PLAYER 1 NAME">
-        <div id="p2-container">
-            <input type="text" id="p2-in" placeholder="PLAYER 2 NAME">
-        </div>
-        <button class="btn" onclick="startBattle()">ENGAGE BATTLE</button>
-        <button class="btn btn-small" onclick="backToHome()">BACK</button>
-    </div>
-
-    <div id="win-screen" class="overlay" style="display:none">
-        <h1 id="win-text" class="logo"></h1>
-        <p id="lvl-msg" style="color:var(--primary); font-family:Orbitron;"></p>
-        <button class="btn" onclick="location.reload()">REBOOT SYSTEM</button>
+    <div id="name-screen" class="overlay" style="display:none">
+        <h2 style="font-size:18px; margin-bottom:20px;">CORE REGISTRATION</h2>
+        <input type="text" id="p1-name" placeholder="YOUR NAME">
+        <div id="p2-box"><input type="text" id="p2-name" placeholder="PLAYER 2 NAME"></div>
+        <button class="btn" onclick="startMatch()">ENGAGE BATTLE</button>
+        <button class="btn" style="border-color:#444; color:#888;" onclick="goHome()">BACK</button>
     </div>
 
     <div class="hud">
-        <div>LVL: <span id="lvl-val" class="stat-val">01</span></div>
-        <div id="turn-display" class="stat-val" style="font-size:10px;">SYSTEM STANDBY</div>
-        <div>STREAK: <span id="streak-val" class="stat-val">0</span></div>
+        <div class="stat-box">
+            <div class="stat-label">TURN</div>
+            <div id="turn-name" class="stat-val">...</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">LEVEL</div>
+            <div id="lvl-val" class="stat-val">01</div>
+        </div>
+        <button style="background:none; border:1px solid #333; color:#555; padding:5px; font-size:10px;" onclick="location.reload()">HOME</button>
     </div>
 
     <div id="board-box">
         <div id="board"></div>
     </div>
 
-    <button class="btn btn-small" id="home-btn" style="display:none;" onclick="location.reload()">HOME</button>
-
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let vsBot = true, selectedSq = null, audioCtx = null, bgNodes = [];
-    let p1Name = "White", p2Name = "Black";
-    
-    let level = parseInt(localStorage.getItem('m_lvl')) || 1;
-    let streak = parseInt(localStorage.getItem('m_streak')) || 0;
+    let vsBot = true, selectedSq = null, audioCtx = null, music = null;
+    let p1 = "Player 1", p2 = "AI";
+    let isMuted = false;
+    let level = parseInt(localStorage.getItem('mautasim_lvl')) || 1;
 
-    // --- IMPROVED MUSIC SYSTEM ---
-    function startApp() {
+    // --- SOUND ENGINE ---
+    function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            playAmbientMusic();
+            if(!isMuted) startMusic();
         }
-        uiClick();
     }
 
-    function playAmbientMusic() {
-        if (bgNodes.length > 0) return;
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-        
-        // Layer 1: The Bass Pulse
-        const osc1 = audioCtx.createOscillator();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(55, audioCtx.currentTime); 
-        
-        // Layer 2: The Ethereal Lead
-        const osc2 = audioCtx.createOscillator();
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(220, audioCtx.currentTime);
-        
-        // Modulator for the lead (Vibrato)
-        const lfo = audioCtx.createOscillator();
-        const lfoGain = audioCtx.createGain();
-        lfo.frequency.value = 0.5;
-        lfoGain.gain.value = 5;
-        lfo.connect(lfoGain); lfoGain.connect(osc2.frequency);
-
-        osc1.connect(gain); osc2.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        osc1.start(); osc2.start(); lfo.start();
-        bgNodes = [osc1, osc2, lfo, gain];
+    function startMusic() {
+        if(music || isMuted) return;
+        music = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        music.type = 'triangle';
+        music.frequency.setValueAtTime(110, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        music.connect(g); g.connect(audioCtx.destination);
+        music.start();
     }
 
-    function stopMusic() {
-        bgNodes.forEach(node => { try { node.stop(); } catch(e){} });
-        bgNodes = [];
+    function stopMusic() { if(music) { music.stop(); music = null; } }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        document.getElementById('mute-btn').innerText = isMuted ? "MUSIC: OFF" : "MUSIC: ON";
+        isMuted ? stopMusic() : startMusic();
     }
 
-    function sfx(freq, type, dur, vol) {
+    function playSfx(f, t, d, v) {
         if(!audioCtx) return;
         const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(vol, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        o.type = t; o.frequency.value = f;
+        g.gain.setValueAtTime(v, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
         o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + dur);
+        o.start(); o.stop(audioCtx.currentTime + d);
     }
-    function uiClick() { sfx(600, 'sine', 0.1, 0.08); }
 
-    // --- UI FLOW ---
-    function showNameInput(mode) {
+    // --- NAVIGATION ---
+    function enterNames(mode) {
+        initAudio();
         vsBot = (mode === 'bot');
-        document.getElementById('start-menu').style.display = 'none';
-        document.getElementById('name-menu').style.display = 'flex';
-        document.getElementById('p2-container').style.display = vsBot ? 'none' : 'block';
-        document.getElementById('p1-in').placeholder = vsBot ? "YOUR NAME" : "PLAYER 1 NAME";
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('name-screen').style.display = 'flex';
+        document.getElementById('p2-box').style.display = vsBot ? 'none' : 'block';
     }
 
-    function backToHome() {
-        uiClick();
-        document.getElementById('name-menu').style.display = 'none';
-        document.getElementById('start-menu').style.display = 'flex';
-    }
+    function goHome() { location.reload(); }
 
-    function startBattle() {
-        uiClick();
-        p1Name = document.getElementById('p1-in').value || (vsBot ? "Mautasim" : "P1");
-        p2Name = vsBot ? "DEITY BOT" : (document.getElementById('p2-in').value || "P2");
-        
-        document.getElementById('name-menu').style.display = 'none';
-        document.getElementById('home-btn').style.display = 'block';
+    function startMatch() {
+        p1 = document.getElementById('p1-name').value || "Mautasim";
+        p2 = vsBot ? "DEITY AI" : (document.getElementById('p2-name').value || "P2");
+        document.getElementById('name-screen').style.display = 'none';
         document.getElementById('lvl-val').innerText = level.toString().padStart(2, '0');
-        document.getElementById('streak-val').innerText = streak;
         initBoard();
-        // Music continues in menus, stops only when game state is active
     }
 
-    // --- GAME LOGIC ---
+    // --- CHESS ENGINE ---
     function initBoard() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
@@ -212,28 +186,45 @@
                 const sq = document.createElement('div');
                 sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
                 sq.dataset.id = String.fromCharCode(97 + c) + (8 - r);
-                sq.onclick = () => onTileClick(sq.dataset.id);
+                sq.onclick = () => handleInput(sq.dataset.id);
                 boardEl.appendChild(sq);
             }
         }
         render();
     }
 
-    function onTileClick(id) {
-        if (vsBot && game.turn() === 'b') return;
-        if (selectedSq) {
+    function render() {
+        const threats = getQueenThreats();
+        document.querySelectorAll('.sq').forEach(s => {
+            const id = s.dataset.id; const p = game.get(id);
+            s.innerHTML = ''; s.classList.remove('selected', 'threatened');
+            if (p) {
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
+                img.className = 'piece';
+                if(p.color === 'b') img.style.filter = "drop-shadow(0 0 5px #000)";
+                s.appendChild(img);
+                if (p.type === 'q' && threats.includes(id)) s.classList.add('threatened');
+            }
+        });
+        document.getElementById('turn-name').innerText = (game.turn()==='w'?p1:p2).toUpperCase();
+        if(game.game_over()) alert("GAME OVER: " + (game.in_checkmate() ? "WINNER!" : "DRAW"));
+    }
+
+    function handleInput(id) {
+        if(vsBot && game.turn() === 'b') return;
+        if(selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
-            if (move) {
-                stopMusic(); // STOP MUSIC ON FIRST MOVE
-                move.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
+            if(move) {
+                stopMusic(); // Mutes music when battle starts
+                move.captured ? playSfx(100, 'sawtooth', 0.3, 0.1) : playSfx(400, 'sine', 0.1, 0.1);
                 selectedSq = null; render();
-                if (vsBot) setTimeout(masterAI, 400);
+                if(vsBot) setTimeout(aiMove, 500);
                 return;
             }
         }
         const p = game.get(id);
-        if (p && p.color === game.turn()) {
-            sfx(700, 'sine', 0.05, 0.05);
+        if(p && p.color === game.turn()) {
             selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({square: id, verbose: true}).forEach(m => {
@@ -243,83 +234,42 @@
         } else { selectedSq = null; render(); }
     }
 
-    function masterAI() {
-        if (game.game_over()) return;
-        let moves = game.moves();
-        let bestMove = moves[Math.floor(Math.random() * moves.length)];
-        let bestVal = -Infinity;
-        for (let m of moves) {
+    function aiMove() {
+        const moves = game.moves();
+        if(moves.length === 0) return;
+        // Serious AI logic
+        let bestMove = null;
+        let bestScore = -Infinity;
+        for(let m of moves) {
             game.move(m);
-            let v = -evaluate(2, -10000, 10000);
+            let score = -evaluate();
             game.undo();
-            if (v > bestVal) { bestVal = v; bestMove = m; }
+            if(score > bestScore) { bestScore = score; bestMove = m; }
         }
-        const mObj = game.move(bestMove);
-        mObj.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
+        game.move(bestMove);
         render();
     }
 
-    function evaluate(depth, alpha, beta) {
-        if (depth === 0) {
-            let s = 0; const w = {p:10, n:32, b:33, r:50, q:90, k:900};
-            game.board().forEach(r => r.forEach(p => { if(p) s += w[p.type] * (p.color==='b'?1:-1); }));
-            return s;
-        }
-        let moves = game.moves(); let best = -10000;
-        for (let m of moves) {
-            game.move(m);
-            best = Math.max(best, -evaluate(depth-1, -beta, -alpha));
-            game.undo(); alpha = Math.max(alpha, best); if (beta <= alpha) break;
-        }
-        return best;
-    }
-
-    function render() {
-        const qt = getQueenThreats();
-        document.querySelectorAll('.sq').forEach(s => {
-            const id = s.dataset.id; const p = game.get(id);
-            s.innerHTML = ''; s.classList.remove('selected', 'threatened');
-            if (p) {
-                const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
-                img.className = `piece ${p.color === 'b' ? 'black' : ''}`;
-                s.appendChild(img);
-                if (p.type === 'q' && qt.includes(id)) s.classList.add('threatened');
-            }
-        });
-        document.getElementById('turn-display').innerText = (game.turn() === 'w' ? p1Name : p2Name).toUpperCase();
-        if (game.game_over()) handleEnd();
-    }
-
-    function handleEnd() {
-        const overlay = document.getElementById('win-screen');
-        overlay.style.display = 'flex';
-        playAmbientMusic(); // Music resumes on win screen
-        const isWin = game.in_checkmate() && game.turn() === 'b';
-        if(isWin && vsBot) {
-            level++; streak++;
-            localStorage.setItem('m_lvl', level); localStorage.setItem('m_streak', streak);
-            document.getElementById('board-box').classList.add('win-shake');
-            sfx(523, 'square', 0.5, 0.1);
-        }
-        document.getElementById('win-text').innerText = isWin ? p1Name.toUpperCase() + " WINS" : "SYSTEM FAILURE";
-        document.getElementById('lvl-msg').innerText = "LEVEL: " + level;
+    function evaluate() {
+        let s = 0; const w = {p:10, n:30, b:30, r:50, q:90, k:900};
+        game.board().forEach(r => r.forEach(p => { if(p) s += w[p.type] * (p.color==='b'?1:-1); }));
+        return s;
     }
 
     function getQueenThreats() {
-        const threats = []; const fen = game.fen();
+        const t = []; const fen = game.fen();
         ['w', 'b'].forEach(c => {
             let qPos = null;
             game.board().forEach((row, r) => row.forEach((p, col) => {
                 if(p && p.type === 'q' && p.color === c) qPos = String.fromCharCode(97+col) + (8-r);
             }));
-            if (qPos) {
+            if(qPos) {
                 const temp = new Chess(fen); const tokens = temp.fen().split(' ');
                 tokens[1] = c === 'w' ? 'b' : 'w'; temp.load(tokens.join(' '));
-                if (temp.moves({verbose:true}).some(m => m.to === qPos)) threats.push(qPos);
+                if (temp.moves({verbose:true}).some(m => m.to === qPos)) t.push(qPos);
             }
         });
-        return threats;
+        return t;
     }
 </script>
 </body>
