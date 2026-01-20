@@ -14,15 +14,15 @@
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
 
-        .architect-tag { font-size: 22px; font-weight: 900; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 3px; margin: 20px 0; text-transform: uppercase; }
+        .architect-tag { font-size: 22px; font-weight: 900; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 3px; margin: 15px 0; text-transform: uppercase; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 1px solid #222; text-align: center; }
         
-        input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; }
+        input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; outline: none; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
         .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; position: relative; }
-        .xp-fill { height: 100%; background: var(--p); width: 0%; transition: 1s cubic-bezier(0.17, 0.67, 0.83, 0.67); box-shadow: 0 0 15px var(--p); }
+        .xp-fill { height: 100%; background: var(--p); width: 0%; transition: 1s ease; box-shadow: 0 0 15px var(--p); }
 
         .hud { width: 100%; background: var(--c); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); box-sizing: border-box; margin-top: 55px; }
         .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--p); width: 45%; }
@@ -34,7 +34,7 @@
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .piece { width: 90%; z-index: 5; pointer-events: none; }
         .selected { background: rgba(0, 212, 255, 0.4) !important; }
-        .move-dot { width: 12px; height: 12px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 1px solid white; box-shadow: 0 0 5px var(--p); }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 2px solid white; }
 
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
         .menu-item { background: var(--c); border: 1px solid #333; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
@@ -55,22 +55,30 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">SIGN UP</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">MAUTASIM</div>
-        <div id="lvl-status" style="font-size: 12px; color: var(--p); margin-bottom: 5px; font-weight: bold;">LVL 1</div>
+        <div id="lvl-status" style="font-size: 12px; color: var(--p);">LVL 1</div>
         <div class="xp-bar-container"><div id="xp-visual" class="xp-fill"></div></div>
         <div id="xp-text" style="font-size: 10px; color: #888; margin-bottom: 20px;">0 / 100 XP</div>
-        
         <div class="dashboard">
             <div class="menu-item" onclick="startGame('bot')"><span>ULTRA AI</span></div>
-            <div class="menu-item" onclick="showOnlineSetup()"><span>ONLINE P2P</span></div>
+            <div class="menu-item" onclick="showOnlineSetup()"><span>ONLINE</span></div>
             <div class="menu-item" onclick="showLocalSetup()"><span>LOCAL PASS</span></div>
             <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
-            <div class="menu-item" onclick="forceAddXP()" style="grid-column: span 2; background: rgba(0,212,255,0.1);"><span>TEST: ADD 50 XP</span></div>
+        </div>
+    </div>
+
+    <div id="local-setup" class="overlay" style="display:none">
+        <div class="auth-card">
+            <h2>LOCAL PASS</h2>
+            <input type="text" id="p1-local" placeholder="PLAYER 1 (White)">
+            <input type="text" id="p2-local" placeholder="PLAYER 2 (Black)">
+            <button class="btn-main" onclick="startGame('pass')">START BATTLE</button>
+            <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
@@ -99,46 +107,30 @@
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null, selectedSq = null, audioCtx = null, authMode = 'login';
+    let currentUser = null, vsBot = true, isOnline = false, isPass = false, myColor = 'w', peer = null, conn = null, selectedSq = null, audioCtx = null, authMode = 'login';
 
-    // --- UPDATED LEVEL & XP ENGINE ---
     function getStats() {
         let l = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
         let x = parseInt(localStorage.getItem(`xp_${currentUser}`)) || 0;
         return { lvl: l, xp: x, next: 100 };
     }
 
-    function saveWinXP() {
-        if(!currentUser) return;
+    function addXP() {
         let s = getStats();
-        s.xp += 50; // 50 XP per win
-        if (s.xp >= s.next) {
-            s.lvl += 1;
-            s.xp = 0;
-            localStorage.setItem(`lvl_${currentUser}`, s.lvl);
-            localStorage.setItem(`xp_${currentUser}`, s.xp);
-            return "LEVEL UP! REACHED LEVEL " + s.lvl;
-        }
-        localStorage.setItem(`xp_${currentUser}`, s.xp);
-        return "+50 XP GAINED";
-    }
-
-    function forceAddXP() {
-        let s = getStats(); s.xp += 50;
+        s.xp += 50;
         if(s.xp >= 100) { s.lvl++; s.xp = 0; }
         localStorage.setItem(`lvl_${currentUser}`, s.lvl);
         localStorage.setItem(`xp_${currentUser}`, s.xp);
-        showDashboard();
+        return s.xp === 0 ? "LEVEL UP!" : "+50 XP SECURED";
     }
 
-    // --- CORE UI ---
     function handleAuth() {
         const u = document.getElementById('user-in').value.trim().toLowerCase();
         const p = document.getElementById('pass-in').value.trim();
         if(!u || !p) return;
         if(authMode === 'signup') {
             localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
-            alert("Registered."); toggleAuth();
+            toggleAuth();
         } else {
             if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
             else alert("Error");
@@ -150,23 +142,33 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('global-nav').style.display = 'none';
         let s = getStats();
-        document.getElementById('lvl-status').innerText = `LEVEL ${s.lvl} ARCHITECT`;
+        document.getElementById('lvl-status').innerText = `LEVEL ${s.lvl}`;
         document.getElementById('xp-visual').style.width = (s.xp / s.next * 100) + "%";
         document.getElementById('xp-text').innerText = `${s.xp} / ${s.next} XP`;
     }
 
+    function showLocalSetup() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        document.getElementById('local-setup').style.display = 'flex';
+    }
+
     function startGame(m) {
-        vsBot = (m === 'bot'); isOnline = (m === 'online');
+        vsBot = (m === 'bot'); isOnline = (m === 'online'); isPass = (m === 'pass');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('p1-label').innerText = currentUser.toUpperCase();
-        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "GUEST");
+        
+        let p1 = currentUser.toUpperCase(), p2 = "ULTRA AI";
+        if(isPass) {
+            p1 = document.getElementById('p1-local').value || "PLAYER 1";
+            p2 = document.getElementById('p2-local').value || "PLAYER 2";
+        }
+        document.getElementById('p1-label').innerText = p1;
+        document.getElementById('p2-label').innerText = p2;
         document.getElementById('p1-lvl-icon').innerText = "L" + getStats().lvl;
         document.getElementById('p2-lvl-icon').innerText = vsBot ? "L99" : "L1";
         game.reset(); initBoard();
     }
 
-    // --- CHESS ENGINE ---
     function initBoard() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
@@ -189,7 +191,11 @@
             if (move) {
                 if(isOnline) conn.send({type: 'move', move: move});
                 playSound('move'); selectedSq = null; render();
-                if (vsBot && !game.game_over()) setTimeout(masterAI, 500);
+                if (vsBot && !game.game_over()) setTimeout(() => {
+                    const m = game.moves();
+                    game.move(m[Math.floor(Math.random()*m.length)]);
+                    playSound('move'); render();
+                }, 500);
                 return;
             }
         }
@@ -215,22 +221,13 @@
         });
         if (game.game_over()) {
             let msg = "DRAW";
-            if (game.in_checkmate()) {
-                const winnerColor = game.turn() === 'w' ? 'Black' : 'White';
-                // IF YOU ARE WHITE AND WHITE WINS, OR YOU ARE BLACK AND BLACK WINS
-                if ((myColor === 'w' && winnerColor === 'White') || (myColor === 'b' && winnerColor === 'Black') || vsBot && winnerColor === 'White') {
-                   msg = saveWinXP();
-                } else {
-                   msg = "MISSION FAILED";
-                }
-            }
+            if (game.in_checkmate()) msg = addXP();
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = "GAME OVER";
+            document.getElementById('winner-text').innerText = "CHECKMATE";
             document.getElementById('lvl-up-alert').innerText = msg;
         }
     }
 
-    function masterAI() { const m = game.moves(); if(m.length) game.move(m[Math.floor(Math.random()*m.length)]); playSound('move'); render(); }
     function playSound(t) { if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = t === 'move' ? 200 : 800; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
