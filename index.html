@@ -3,121 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS DEITY: LEVEL 100 START</title>
+    <title>CHESS DEITY | DEV: MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Mono&display=swap');
 
         :root {
-            --neon: #ff003c;
-            --bg: #050508;
-            --panel: rgba(255, 255, 255, 0.03);
+            --neon: #00ffcc;
+            --danger: #ff003c;
+            --bg: #0a0a0c;
+            --sq-l: #1e1e24;
+            --sq-d: #0d0d0f;
         }
 
         body {
             margin: 0; background: var(--bg); color: white;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Space Mono', monospace;
             display: flex; flex-direction: column; align-items: center;
-            height: 100vh; overflow: hidden;
+            height: 100vh; overflow: hidden; touch-action: manipulation;
         }
 
-        /* --- EXTREME HUD --- */
-        .cyber-header {
+        /* --- DEVELOPER HEADER --- */
+        .header {
             width: 100%; max-width: 450px; padding: 15px;
-            text-align: center; border-bottom: 2px solid var(--neon);
-            background: linear-gradient(to bottom, #1a0006, transparent);
+            text-align: center; border-bottom: 1px solid rgba(0,255,204,0.2);
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
         }
-        .lvl-badge {
-            font-family: 'Orbitron', sans-serif; font-size: 24px;
-            color: var(--neon); text-shadow: 0 0 20px var(--neon);
-            letter-spacing: 4px;
+        .dev-name {
+            font-family: 'Syncopate', sans-serif; font-size: 10px;
+            letter-spacing: 3px; color: var(--neon); opacity: 0.8;
         }
-        .ai-status {
-            font-size: 11px; color: #ff003c; margin-top: 5px; 
-            text-transform: uppercase; animate: blink 1s infinite;
+        .game-title {
+            font-family: 'Syncopate', sans-serif; font-size: 18px;
+            margin: 5px 0; text-shadow: 0 0 10px var(--neon);
         }
 
-        /* --- THE BOARD --- */
-        #game-container {
-            position: relative; margin: 15px 0;
-            width: 94vw; max-width: 420px; aspect-ratio: 1/1;
-            padding: 5px; background: #111;
-            border: 2px solid var(--neon); box-shadow: 0 0 30px rgba(255,0,60,0.2);
+        /* --- THE GRID --- */
+        #board-box {
+            position: relative; margin: 10px 0;
+            width: 92vw; max-width: 400px; aspect-ratio: 1/1;
+            border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0,255,204,0.1);
         }
         #board {
             display: grid; grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%;
+            grid-template-rows: repeat(8, 1fr); height: 100%;
         }
-        .sq { display: flex; justify-content: center; align-items: center; position: relative; }
-        .sq.l { background: #1a1a1a; }
-        .sq.d { background: #0a0a0a; }
+        .sq { display: flex; justify-content: center; align-items: center; transition: 0.1s; }
+        .sq.l { background: var(--sq-l); }
+        .sq.d { background: var(--sq-d); }
         
         .piece {
-            width: 88%; height: 88%; z-index: 10;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 85%; height: 85%; z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+            pointer-events: none;
         }
-        
-        /* EFFECTS */
-        .selected { background: rgba(255, 0, 60, 0.4) !important; }
-        .hint-sq { width: 14px; height: 14px; background: var(--neon); border-radius: 50%; box-shadow: 0 0 15px var(--neon); opacity: 0.7; }
-        .ai-hint-move { border: 3px solid #00ffcc !important; box-shadow: inset 0 0 15px #00ffcc; }
 
-        /* --- CONTROLS --- */
+        /* --- EFFECTS --- */
+        .selected { background: rgba(0, 255, 204, 0.3) !important; }
+        .last-move { background: rgba(255, 255, 255, 0.05) !important; border: 1px inset var(--neon); }
+        .dot { width: 12px; height: 12px; background: var(--neon); border-radius: 50%; opacity: 0.5; }
+        
+        /* EXTREME SHAKE */
+        .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        /* --- HUD CONTROLS --- */
         .controls {
-            width: 95%; max-width: 420px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            width: 95%; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-bottom: 20px;
         }
         button {
-            background: #000; border: 1px solid var(--neon); color: var(--neon);
-            padding: 10px; cursor: pointer; font-family: 'Orbitron'; font-size: 10px;
-            transition: 0.2s;
+            background: transparent; border: 1px solid var(--neon); color: var(--neon);
+            padding: 12px; cursor: pointer; font-family: 'Syncopate'; font-size: 9px;
+            transition: 0.3s;
         }
-        button:hover { background: var(--neon); color: white; box-shadow: 0 0 15px var(--neon); }
-        .hint-btn { border-color: #00ffcc; color: #00ffcc; }
-        .hint-btn:hover { background: #00ffcc; color: black; box-shadow: 0 0 15px #00ffcc; }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        button:hover { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
+        .ai-thinking { color: var(--danger); border-color: var(--danger); animation: pulse 1s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="cyber-header">
-        <div class="lvl-badge">DEITY LEVEL: <span id="lvl">01</span></div>
-        <div class="ai-status" id="status">AI BRAIN: AGGRESSIVE</div>
+    <div class="header">
+        <div class="dev-name">DEVELOPED BY MAUTASIM</div>
+        <div class="game-title">CHESS DEITY: LVL 01</div>
+        <div id="ai-status" style="font-size: 10px; color: #555;">SYSTEM: STABLE</div>
     </div>
 
-    <div id="game-container">
+    <div id="board-box">
         <div id="board"></div>
     </div>
 
     <div class="controls">
-        <button onclick="resetGame()">SYSTEM REBOOT</button>
-        <button onclick="undo()">UNDO TIME</button>
-        <button class="hint-btn" onclick="getHint()">GET AI ADVICE</button>
-        <button id="mode-btn" onclick="toggleMode()">MOD: VS DEITY</button>
+        <button onclick="resetGame()">RESET SYSTEM</button>
+        <button onclick="undo()">UNDO PHASE</button>
+        <button style="border-color: #f1c40f; color: #f1c40f;" onclick="getHint()">GET ADVICE</button>
+        <button id="mode-btn" onclick="toggleMode()">MOD: VS BOT</button>
     </div>
 
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let level = 1;
     let selectedSq = null;
     let vsBot = true;
 
-    // Piece-Square Tables for positional intelligence
-    const pst = {
-        p: [ [0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0] ],
-        n: [ [-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5] ]
-    };
-
-    const assets = {
-        wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-        wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-        wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
-        bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-        bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-        bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
-    };
+    // Optimized Piece Weights for Aggressive AI
+    const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
     function init() {
         boardEl.innerHTML = '';
@@ -127,47 +123,61 @@
                 const id = String.fromCharCode(97 + c) + (8 - r);
                 sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
                 sq.dataset.id = id;
-                sq.onclick = () => onSelect(id);
+                sq.onclick = () => handleInput(id);
                 boardEl.appendChild(sq);
             }
         }
         updateBoard();
-        document.getElementById('lvl').innerText = level.toString().padStart(2, '0');
     }
 
     function updateBoard() {
+        const history = game.history({verbose: true});
+        const last = history[history.length - 1];
+
         document.querySelectorAll('.sq').forEach(s => {
             s.innerHTML = '';
-            s.classList.remove('selected', 'ai-hint-move');
+            s.classList.remove('selected', 'last-move');
             const p = game.get(s.dataset.id);
             if (p) {
                 const img = document.createElement('img');
-                img.src = assets[p.color + p.type.toUpperCase()];
+                img.src = `https://upload.wikimedia.org/wikipedia/commons/${getIcon(p.color, p.type)}.svg`;
                 img.className = 'piece';
                 s.appendChild(img);
             }
+            if(last && (s.dataset.id === last.from || s.dataset.id === last.to)) s.classList.add('last-move');
         });
     }
 
-    function onSelect(id) {
+    function getIcon(c, t) {
+        const map = {
+            wp:'45/Chess_plt45', wr:'72/Chess_rlt45', wn:'70/Chess_nlt45', wb:'b1/Chess_blt45', wq:'15/Chess_qlt45', wk:'42/Chess_klt45',
+            bp:'c7/Chess_pdt45', br:'f1/Chess_rdt45', bn:'e1/Chess_ndt45', bb:'98/Chess_bdt45', bq:'47/Chess_qdt45', bk:'f0/Chess_kdt45'
+        };
+        return map[c+t];
+    }
+
+    function handleInput(id) {
         if (vsBot && game.turn() === 'b') return;
+
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
+                if(move.captured) triggerShake();
                 selectedSq = null;
                 updateBoard();
-                if(vsBot) setTimeout(botThink, 250);
+                if(vsBot) setTimeout(botMove, 250);
                 return;
             }
         }
+
         const p = game.get(id);
         if (p && p.color === game.turn()) {
             selectedSq = id;
             updateBoard();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({square: id, verbose: true}).forEach(m => {
-                const h = document.createElement('div'); h.className = 'hint-sq';
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(h);
+                const d = document.createElement('div'); d.className = 'dot';
+                document.querySelector(`[data-id="${m.to}"]`).appendChild(d);
             });
         } else {
             selectedSq = null;
@@ -175,97 +185,85 @@
         }
     }
 
-    // --- DEITY BRAIN (Minimax + Alpha-Beta + PST) ---
-    function botThink() {
+    // --- AI BRAIN (Optimized Minimax Depth 3 for No Lag) ---
+    function botMove() {
         if (game.game_over()) return;
-        document.getElementById('status').innerText = "AI BRAIN: CRUSHING...";
-        
-        // Start at Depth 4 (Extreme) immediately
-        const bestMove = getBestMove(game, 4);
-        game.move(bestMove);
-        updateBoard();
-        document.getElementById('status').innerText = "AI BRAIN: READY";
-    }
+        const status = document.getElementById('ai-status');
+        status.innerText = "AI BRAIN: CALCULATING...";
+        status.className = "ai-thinking";
 
-    function getHint() {
-        if (game.turn() === 'b' && vsBot) return;
-        const hint = getBestMove(game, 3);
-        const fromSq = document.querySelector(`[data-id="${hint.from}"]`);
-        const toSq = document.querySelector(`[data-id="${hint.to}"]`);
-        fromSq.classList.add('ai-hint-move');
-        toSq.classList.add('ai-hint-move');
-        document.getElementById('status').innerText = `ADVICE: ${hint.from} -> ${hint.to}`;
-    }
+        // Use a timeout to prevent UI freeze
+        setTimeout(() => {
+            const moves = game.moves();
+            let bestMove = null;
+            let bestValue = -Infinity;
 
-    function getBestMove(game, depth) {
-        let moves = game.moves({verbose: true});
-        let bestMove = null;
-        let bestValue = -Infinity;
+            // Sort moves to find captures first (speeds up AI)
+            moves.sort((a, b) => b.includes('x') - a.includes('x'));
 
-        moves.sort(() => Math.random() - 0.5); // Randomize same-value moves
-
-        for (let move of moves) {
-            game.move(move);
-            let val = -minimax(depth - 1, game, -10000, 10000, true);
-            game.undo();
-            if (val > bestValue) {
-                bestValue = val;
-                bestMove = move;
+            for (let m of moves) {
+                game.move(m);
+                let boardVal = -evaluate(3, -10000, 10000);
+                game.undo();
+                if (boardVal > bestValue) {
+                    bestValue = boardVal;
+                    bestMove = m;
+                }
             }
-        }
-        return bestMove;
+
+            const mObj = game.move(bestMove);
+            if(mObj.captured) triggerShake();
+            updateBoard();
+            status.innerText = "SYSTEM: STABLE";
+            status.className = "";
+        }, 50);
     }
 
-    function minimax(depth, game, alpha, beta, isMax) {
-        if (depth === 0) return evaluate(game.board());
+    function evaluate(depth, alpha, beta) {
+        if (depth === 0) return calcMaterial();
         let moves = game.moves();
-        if (isMax) {
-            let best = -9999;
-            for (let move of moves) {
-                game.move(move);
-                best = Math.max(best, minimax(depth - 1, game, alpha, beta, false));
-                game.undo();
-                alpha = Math.max(alpha, best);
-                if (beta <= alpha) return best;
-            }
-            return best;
-        } else {
-            let best = 9999;
-            for (let move of moves) {
-                game.move(move);
-                best = Math.min(best, minimax(depth - 1, game, alpha, beta, true));
-                game.undo();
-                beta = Math.min(beta, best);
-                if (beta <= alpha) return best;
-            }
-            return best;
+        let best = -9999;
+        for (let m of moves) {
+            game.move(m);
+            best = Math.max(best, -evaluate(depth - 1, -beta, -alpha));
+            game.undo();
+            alpha = Math.max(alpha, best);
+            if (beta <= alpha) return best;
         }
+        return best;
     }
 
-    function evaluate(board) {
-        const vals = {p: 10, n: 30, b: 30, r: 50, q: 90, k: 900};
+    function calcMaterial() {
         let score = 0;
+        const board = game.board();
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const p = board[r][c];
-                if (p) {
-                    let pScore = vals[p.type];
-                    // Add positional bonus from PST
-                    if(pst[p.type]) pScore += pst[p.type][r][c];
-                    score += pScore * (p.color === 'w' ? -1 : 1);
-                }
+                if (p) score += weights[p.type] * (p.color === 'w' ? -1 : 1);
             }
         }
         return score;
     }
 
-    function toggleMode() {
-        vsBot = !vsBot;
-        document.getElementById('mode-btn').innerText = vsBot ? "MOD: VS DEITY" : "MOD: PASS & PLAY";
-        resetGame();
+    function triggerShake() {
+        const b = document.getElementById('board-box');
+        b.classList.add('shake');
+        setTimeout(() => b.classList.remove('shake'), 300);
     }
 
-    function resetGame() { game.reset(); init(); }
+    function getHint() {
+        const moves = game.moves();
+        const hint = moves[Math.floor(Math.random() * moves.length)];
+        document.getElementById('ai-status').innerText = `MAUTASIM'S AI ADVICE: ${hint}`;
+    }
+
+    function toggleMode() {
+        vsBot = !vsBot;
+        document.getElementById('mode-btn').innerText = vsBot ? "MOD: VS BOT" : "MOD: PASS-PLAY";
+        game.reset(); updateBoard();
+    }
+
+    function resetGame() { game.reset(); updateBoard(); }
     function undo() { game.undo(); if(vsBot) game.undo(); updateBoard(); }
 
     init();
