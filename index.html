@@ -18,12 +18,13 @@
         input { background: #050505; border: 1px solid var(--primary); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        .back-btn { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 5px; font-size: 10px; z-index: 110; cursor: pointer; font-weight: bold; }
-
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
         .menu-item { background: var(--card); border: 1px solid #333; padding: 20px 10px; border-radius: 15px; text-align: center; cursor: pointer; }
         .menu-item svg { width: 30px; fill: var(--primary); margin-bottom: 10px; }
         .menu-item span { display: block; font-size: 10px; font-weight: bold; }
+
+        .xp-bar-container { width: 80%; height: 6px; background: #222; border-radius: 10px; margin: 10px 0; overflow: hidden; border: 1px solid #333; }
+        .xp-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.5s; box-shadow: 0 0 10px var(--primary); }
 
         .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; }
         .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--primary); width: 45%; }
@@ -34,202 +35,125 @@
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sq-l); } .sq.d { background: var(--sq-d); }
         .piece { width: 90%; z-index: 5; pointer-events: none; }
-        .move-intel { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.5); border-radius: 50%; z-index: 10; pointer-events: none; border: 1px solid var(--primary); }
         .selected { background: rgba(0, 212, 255, 0.4) !important; }
-
-        #win-screen { display: none; z-index: 200; text-align: center; }
-        #win-screen h1 { font-size: 35px; color: var(--primary); text-shadow: 0 0 20px var(--primary); }
+        .move-intel { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.5); border-radius: 50%; z-index: 10; pointer-events: none; border: 1px solid var(--primary); }
     </style>
 </head>
 <body onclick="initAudio()">
 
-    <div id="btn-back-ui" class="back-btn" style="display:none" onclick="location.reload()">← BACK</div>
-
-    <div id="win-screen" class="overlay">
-        <div class="architect-tag">LEVEL COMPLETE</div>
-        <h1 id="winner-text">NEURAL LINK RESTORED</h1>
-        <p id="winner-name" style="font-family: 'Roboto Mono'; color: white; font-size: 18px; margin-bottom: 5px;"></p>
-        <p id="level-up-msg" style="color: var(--primary); font-size: 12px; margin-bottom: 20px;"></p>
-        <button class="btn-main" style="width: 200px;" onclick="location.reload()">RE-INITIALIZE</button>
-    </div>
-
     <div id="auth-screen" class="overlay">
         <div class="architect-tag">ARCHITECT PRO</div>
         <div class="auth-card">
-            <h2 id="auth-title" style="font-size:16px; margin-bottom:15px;">SECURE LOGIN</h2>
+            <h2 id="auth-title" style="font-size:14px; margin-bottom:15px;">SECURE INTERFACE</h2>
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #888; margin-top: 15px; cursor: pointer;" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
+            <p style="font-size: 9px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">MAUTASIM</div>
-        <div style="margin-bottom: 20px; font-size: 12px; color: var(--primary);">ARCHITECT STATUS: <span id="user-level-disp">LVL 1</span></div>
+        <div id="lvl-status" style="font-size: 11px; color: var(--primary); margin-bottom: 5px;">LEVEL 1 ARCHITECT</div>
+        <div class="xp-bar-container"><div id="xp-visual" class="xp-fill"></div></div>
+        <div id="xp-text" style="font-size: 8px; color: #555; margin-bottom: 20px;">0 / 100 XP TO NEXT LEVEL</div>
+        
         <div class="dashboard">
             <div class="menu-item" onclick="startGame('bot')">
                 <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
                 <span>ULTRA AI</span>
             </div>
-            <div class="menu-item" onclick="showOnlineSetup()">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93z"/></svg>
-                <span>ONLINE P2P</span>
-            </div>
             <div class="menu-item" onclick="showLocalSetup()">
                 <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3z"/></svg>
-                <span>LOCAL PASS</span>
+                <span>LOCAL BATTLE</span>
             </div>
-            <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
+            <div class="menu-item" onclick="doLogout()" style="grid-column: span 2;"><span>LOGOUT SYSTEM</span></div>
         </div>
+    </div>
+
+    <div id="win-screen" class="overlay" style="display:none; text-align:center;">
+        <h1 id="winner-text" style="color:var(--primary); font-size:30px;">VICTORY</h1>
+        <p id="lvl-up-alert" style="color:white; font-family:'Roboto Mono'; margin-bottom:20px;"></p>
+        <button class="btn-main" style="width:200px" onclick="location.reload()">CONTINUE</button>
     </div>
 
     <div id="local-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2>LOCAL BATTLE</h2>
-            <input type="text" id="p1-local" placeholder="PLAYER 1 NAME">
-            <input type="text" id="p2-local" placeholder="PLAYER 2 NAME">
+            <h2>LOCAL CONFIG</h2>
+            <input type="text" id="p1-local" placeholder="PLAYER 1">
+            <input type="text" id="p2-local" placeholder="PLAYER 2">
             <button class="btn-main" onclick="startGame('pass')">START</button>
-            <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
-        </div>
-    </div>
-
-    <div id="online-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h2>ONLINE</h2>
-            <p style="font-size:10px; color:var(--primary)">UID: <span id="my-id">...</span></p>
-            <input type="text" id="peer-id-in" placeholder="FRIEND UID">
-            <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
-            <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
     <div class="hud">
-        <div class="player-tag"><span class="lvl-badge" id="p1-lvl">L1</span><span id="p1-label">---</span></div>
-        <div style="font-weight:900; color:#444; font-size: 10px;">VS</div>
-        <div class="player-tag" style="text-align:right"><span id="p2-label">---</span><span class="lvl-badge" id="p2-lvl" style="margin-left:5px; margin-right:0;">L1</span></div>
+        <div class="player-tag"><span class="lvl-badge" id="p1-lvl-icon">L1</span><span id="p1-label">---</span></div>
+        <div class="player-tag" style="text-align:right"><span id="p2-label">---</span><span class="lvl-badge" id="p2-lvl-icon" style="margin-left:5px;">L1</span></div>
     </div>
     <div id="board-box"><div id="board"></div></div>
 
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null;
-    let selectedSq = null, audioCtx = null, authMode = 'login';
-    let p1Name = "PLAYER 1", p2Name = "PLAYER 2";
+    let currentUser = null, vsBot = true, audioCtx = null, authMode = 'login', selectedSq = null;
 
-    // --- LEVELING SYSTEM LOGIC ---
-    function getLevel(user) { return parseInt(localStorage.getItem(`lvl_${user}`)) || 1; }
-    function getXP(user) { return parseInt(localStorage.getItem(`xp_${user}`)) || 0; }
-    
-    function addWin(user) {
-        if (!user) return;
-        let xp = getXP(user) + 50;
-        let lvl = getLevel(user);
-        let leveledUp = false;
-        
-        if (xp >= lvl * 100) {
-            xp = 0;
-            lvl++;
-            leveledUp = true;
-            localStorage.setItem(`lvl_${user}`, lvl);
-        }
-        localStorage.setItem(`xp_${user}`, xp);
-        return leveledUp;
+    // --- LEVEL LOGIC ---
+    function getStats() {
+        let lvl = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
+        let xp = parseInt(localStorage.getItem(`xp_${currentUser}`)) || 0;
+        return { lvl, xp, next: lvl * 100 };
     }
 
-    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-
-    function playSound(type) {
-        if (!audioCtx) return;
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.connect(g); g.connect(audioCtx.destination);
-        if (type === 'select') {
-            o.frequency.setValueAtTime(800, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-            o.start(); o.stop(audioCtx.currentTime + 0.05);
-        } else if (type === 'move') {
-            o.type = 'triangle'; o.frequency.setValueAtTime(200, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            o.start(); o.stop(audioCtx.currentTime + 0.1);
+    function addWin() {
+        let stats = getStats();
+        stats.xp += 100; // Giving 100 XP per win for instant level up at start
+        if (stats.xp >= stats.next) {
+            stats.lvl++;
+            stats.xp = 0;
+            localStorage.setItem(`lvl_${currentUser}`, stats.lvl);
+            localStorage.setItem(`xp_${currentUser}`, stats.xp);
+            return true; // Leveled up
         }
+        localStorage.setItem(`xp_${currentUser}`, stats.xp);
+        return false;
     }
 
-    function toggleAuth() { authMode = (authMode === 'login' ? 'signup' : 'login'); document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
-    
+    // --- AUTH ---
     function handleAuth() {
-        const u = document.getElementById('user-in').value.trim(), p = document.getElementById('pass-in').value.trim();
+        const u = document.getElementById('user-in').value.trim().toLowerCase();
+        const p = document.getElementById('pass-in').value.trim();
         if(!u || !p) return;
         if(authMode === 'signup') {
-            localStorage.setItem(`pw_${u.toLowerCase()}`, p); 
-            localStorage.setItem(`lvl_${u.toLowerCase()}`, 1);
-            localStorage.setItem(`xp_${u.toLowerCase()}`, 0);
-            alert("Identity Created!"); toggleAuth();
+            localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
+            alert("Account Linked."); toggleAuth();
         } else {
-            if(localStorage.getItem(`pw_${u.toLowerCase()}`) === p) { 
-                currentUser = u.toLowerCase(); 
-                localStorage.setItem('active_session', currentUser); 
-                showDashboard(); 
-            } else alert("Invalid Credentials");
+            if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
+            else alert("Auth Failed");
         }
     }
 
-    window.onload = () => { 
-        const s = localStorage.getItem('active_session'); 
-        if(s) { currentUser = s; showDashboard(); } 
-    };
-
-    function showDashboard() { 
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); 
+    function showDashboard() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-level-disp').innerText = "LVL " + getLevel(currentUser);
+        let stats = getStats();
+        document.getElementById('lvl-status').innerText = `LEVEL ${stats.lvl} ARCHITECT`;
+        document.getElementById('xp-visual').style.width = (stats.xp / stats.next * 100) + "%";
+        document.getElementById('xp-text').innerText = `${stats.xp} / ${stats.next} XP TO NEXT LEVEL`;
     }
-
-    function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
-    function showLocalSetup() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('local-setup').style.display = 'flex'; }
-    
-    function showOnlineSetup() {
-        document.getElementById('home-screen').style.display = 'none';
-        document.getElementById('online-setup').style.display = 'flex';
-        if(!peer) {
-            peer = new Peer('ARCH-' + currentUser.substring(0,3) + "-" + Math.floor(Math.random()*99));
-            peer.on('open', id => document.getElementById('my-id').innerText = id);
-            peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); });
-        }
-    }
-
-    function connectToPeer() {
-        const id = document.getElementById('peer-id-in').value;
-        if(!id) return; conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online');
-    }
-
-    function setupConn() { conn.on('data', data => { if(data.type === 'move') { game.move(data.move); playSound('move'); renderPieces(); } }); }
 
     function startGame(m) {
-        vsBot = (m === 'bot'); isOnline = (m === 'online');
+        vsBot = (m === 'bot');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        document.getElementById('btn-back-ui').style.display = 'block';
-        
-        p1Name = currentUser;
-        p2Name = "ULTRA AI";
-        
-        let p1Lvl = getLevel(currentUser);
-        let p2Lvl = vsBot ? 99 : 1;
-
-        if(m === 'pass') { 
-            p1Name = document.getElementById('p1-local').value || "PLAYER 1"; 
-            p2Name = document.getElementById('p2-local').value || "PLAYER 2"; 
-            p1Lvl = 1; p2Lvl = 1;
-        }
-        
-        document.getElementById('p1-label').innerText = p1Name.toUpperCase();
-        document.getElementById('p2-label').innerText = p2Name.toUpperCase();
-        document.getElementById('p1-lvl').innerText = "L" + p1Lvl;
-        document.getElementById('p2-lvl').innerText = "L" + p2Lvl;
+        let p1 = currentUser.toUpperCase(), p2 = "ULTRA AI";
+        if(m === 'pass') { p1 = document.getElementById('p1-local').value || "P1"; p2 = document.getElementById('p2-local').value || "P2"; }
+        document.getElementById('p1-label').innerText = p1;
+        document.getElementById('p2-label').innerText = p2;
+        document.getElementById('p1-lvl-icon').innerText = "L" + getStats().lvl;
+        document.getElementById('p2-lvl-icon').innerText = vsBot ? "L99" : "L1";
         initBoard();
     }
 
+    // --- GAME CORE ---
     function initBoard() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
@@ -241,72 +165,56 @@
                 boardEl.appendChild(sq);
             }
         }
-        renderPieces();
+        render();
     }
 
     function handleInput(id) {
-        if(isOnline && game.turn() !== myColor) return;
-        if(vsBot && game.turn() === 'b') return;
-
+        if (vsBot && game.turn() === 'b') return;
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
-                playSound('move'); 
-                if(isOnline) conn.send({type: 'move', move: move});
-                selectedSq = null; renderPieces();
+                playSound('move'); selectedSq = null; render();
                 if (vsBot && !game.game_over()) setTimeout(masterAI, 500);
                 return;
             }
         }
-
         const p = game.get(id);
         if (p && p.color === game.turn()) {
-            playSound('select'); selectedSq = id; renderPieces();
+            selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            game.moves({ square: id, verbose: true }).forEach(m => {
-                const dot = document.createElement('div'); dot.className = 'move-intel';
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(dot);
-            });
-        } else { selectedSq = null; renderPieces(); }
+        } else { selectedSq = null; render(); }
     }
 
-    function renderPieces() {
+    function render() {
         document.querySelectorAll('.sq').forEach(s => {
-            const id = s.dataset.id; const p = game.get(id);
-            s.innerHTML = ''; s.classList.remove('selected');
+            const p = game.get(s.dataset.id); s.innerHTML = ''; s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece'; s.appendChild(img);
             }
         });
-
         if (game.game_over()) {
-            let winner = "DRAW";
+            let win = game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText;
             let up = false;
-            if (game.in_checkmate()) {
-                winner = (game.turn() === 'w' ? p2Name : p1Name);
-                if(winner.toLowerCase() === currentUser) up = addWin(currentUser);
-            }
-            showWinner(winner, up);
-        }
-    }
-
-    function showWinner(name, isLvlUp) {
-        document.getElementById('win-screen').style.display = 'flex';
-        document.getElementById('winner-name').innerText = name.toUpperCase() + " WINS";
-        if(isLvlUp) {
-            document.getElementById('level-up-msg').innerText = "SYSTEM UPGRADE COMPLETE: LEVEL " + getLevel(currentUser);
-        } else {
-            document.getElementById('level-up-msg').innerText = "+50 XP GAINED";
+            if (win === currentUser.toUpperCase()) up = addWin();
+            document.getElementById('win-screen').style.display = 'flex';
+            document.getElementById('winner-text').innerText = win + " VICTORIOUS";
+            document.getElementById('lvl-up-alert').innerText = up ? "ARCHITECT LEVEL INCREASED!" : "+100 XP SECURED";
         }
     }
 
     function masterAI() {
-        const moves = game.moves(); if(!moves.length) return;
-        game.move(moves[Math.floor(Math.random()*moves.length)]);
-        playSound('move'); renderPieces();
+        const m = game.moves(); if(m.length) game.move(m[Math.floor(Math.random()*m.length)]);
+        playSound('move'); render();
     }
+
+    function playSound(t) { if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = t === 'move' ? 200 : 800; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
+    function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
+    function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
+    function showLocalSetup() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('local-setup').style.display = 'flex'; }
+    window.onload = () => { const s = localStorage.getItem('active_session'); if(s) { currentUser = s; showDashboard(); } };
 </script>
 </body>
 </html>
