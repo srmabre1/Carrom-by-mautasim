@@ -23,24 +23,26 @@
             display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
         }
 
-        /* MENU & NAME INPUT */
+        /* OVERLAYS */
         .overlay {
             position: fixed; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
         }
         .logo { font-family: 'Orbitron'; font-size: 32px; color: var(--primary); text-shadow: 0 0 15px var(--primary); margin-bottom: 5px; }
-        .dev-tag { font-size: 10px; color: #444; letter-spacing: 5px; margin-bottom: 40px; }
+        .dev-tag { font-size: 9px; color: #444; letter-spacing: 5px; margin-bottom: 40px; }
         
         .btn {
             width: 250px; padding: 15px; margin: 10px; background: none; 
             border: 2px solid var(--primary); color: var(--primary);
-            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; border-radius: 5px;
+            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; border-radius: 5px; font-weight: bold;
         }
         .btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
+        .btn-small { width: 100px; padding: 8px; font-size: 10px; border-width: 1px; margin-top: 20px; }
 
         input {
             background: #111; border: 1px solid var(--primary); color: white;
             padding: 12px; margin: 5px; width: 220px; text-align: center; border-radius: 4px;
+            font-family: 'JetBrains Mono';
         }
 
         /* HUD */
@@ -77,16 +79,19 @@
 
     <div id="start-menu" class="overlay">
         <h1 class="logo">CHESS DEITY</h1>
-        <div class="dev-tag">ENGINE BY MAUTASIM</div>
-        <button class="btn" onclick="initAudio(); startMode('bot')">VS GRANDMASTER AI</button>
-        <button class="btn" onclick="initAudio(); showNameInput()">PASS & PLAY</button>
+        <div class="dev-tag">ARCHITECT: MAUTASIM</div>
+        <button class="btn" onclick="uiClick(); showNameInput('bot')">VS GRANDMASTER AI</button>
+        <button class="btn" onclick="uiClick(); showNameInput('pass')">PASS & PLAY</button>
     </div>
 
     <div id="name-menu" class="overlay" style="display:none">
-        <h2 class="logo" style="font-size:20px;">IDENTIFY PLAYERS</h2>
-        <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
-        <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
-        <button class="btn" onclick="startMode('pass')">ENGAGE BATTLE</button>
+        <h2 class="logo" style="font-size:20px;">IDENTIFY IDENTITY</h2>
+        <input type="text" id="p1-in" placeholder="YOUR NAME">
+        <div id="p2-container">
+            <input type="text" id="p2-in" placeholder="PLAYER 2 NAME">
+        </div>
+        <button class="btn" onclick="startBattle()">ENGAGE BATTLE</button>
+        <button class="btn btn-small" onclick="backToHome()">BACK</button>
     </div>
 
     <div id="win-screen" class="overlay" style="display:none">
@@ -97,13 +102,15 @@
 
     <div class="hud">
         <div>LVL: <span id="lvl-val" class="stat-val">01</span></div>
-        <div id="turn-display" class="stat-val" style="font-size:10px;">MAUTASIM CORE</div>
+        <div id="turn-display" class="stat-val" style="font-size:10px;">SYSTEM READY</div>
         <div>STREAK: <span id="streak-val" class="stat-val">0</span></div>
     </div>
 
     <div id="board-box">
         <div id="board"></div>
     </div>
+
+    <button class="btn btn-small" id="home-btn" style="display:none;" onclick="location.reload()">HOME</button>
 
 <script>
     const game = new Chess();
@@ -114,60 +121,61 @@
     let level = parseInt(localStorage.getItem('m_lvl')) || 1;
     let streak = parseInt(localStorage.getItem('m_streak')) || 0;
 
-    // --- AUDIO SYSTEM ---
+    // --- AUDIO ---
     function initAudio() { 
         if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
         playHomeMusic();
     }
-
     function playHomeMusic() {
         if(musicOsc) return;
         musicOsc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        musicOsc.type = 'triangle';
-        musicOsc.frequency.setValueAtTime(110, audioCtx.currentTime); // Low bass hum
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        musicOsc.connect(gain);
-        gain.connect(audioCtx.destination);
+        musicOsc.type = 'triangle'; musicOsc.frequency.setValueAtTime(110, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        musicOsc.connect(gain); gain.connect(audioCtx.destination);
         musicOsc.start();
     }
-
-    function stopHomeMusic() {
-        if(musicOsc) { musicOsc.stop(); musicOsc = null; }
-    }
-
+    function stopHomeMusic() { if(musicOsc) { musicOsc.stop(); musicOsc = null; } }
     function sfx(freq, type, dur, vol) {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        if(!audioCtx) return;
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
         g.gain.setValueAtTime(vol, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + dur);
     }
+    function uiClick() { initAudio(); sfx(600, 'sine', 0.1, 0.1); }
 
-    // --- GAME FLOW ---
-    function showNameInput() {
+    // --- NAVIGATION ---
+    function showNameInput(mode) {
+        vsBot = (mode === 'bot');
         document.getElementById('start-menu').style.display = 'none';
         document.getElementById('name-menu').style.display = 'flex';
-        sfx(600, 'sine', 0.1, 0.1);
+        document.getElementById('p2-container').style.display = vsBot ? 'none' : 'block';
+        document.getElementById('p1-in').placeholder = vsBot ? "YOUR NAME" : "PLAYER 1 NAME";
     }
 
-    function startMode(mode) {
-        stopHomeMusic(); // Music stops during play
-        sfx(800, 'sine', 0.2, 0.1);
-        vsBot = (mode === 'bot');
-        if(!vsBot) {
-            p1Name = document.getElementById('p1-in').value || "P1";
-            p2Name = document.getElementById('p2-in').value || "P2";
-        }
-        document.getElementById('start-menu').style.display = 'none';
+    function backToHome() {
+        uiClick();
         document.getElementById('name-menu').style.display = 'none';
+        document.getElementById('start-menu').style.display = 'flex';
+    }
+
+    function startBattle() {
+        stopHomeMusic();
+        uiClick();
+        p1Name = document.getElementById('p1-in').value || (vsBot ? "Mautasim" : "P1");
+        p2Name = vsBot ? "DEITY BOT" : (document.getElementById('p2-in').value || "P2");
+        
+        document.getElementById('name-menu').style.display = 'none';
+        document.getElementById('home-btn').style.display = 'block';
         document.getElementById('lvl-val').innerText = level.toString().padStart(2, '0');
         document.getElementById('streak-val').innerText = streak;
         initBoard();
     }
 
+    // --- GAME ENGINE ---
     function initBoard() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
@@ -185,8 +193,7 @@
     function render() {
         const queenThreats = getQueenThreats();
         document.querySelectorAll('.sq').forEach(s => {
-            const id = s.dataset.id;
-            const p = game.get(id);
+            const id = s.dataset.id; const p = game.get(id);
             s.innerHTML = ''; s.classList.remove('selected', 'threatened');
             if (p) {
                 const img = document.createElement('img');
@@ -207,13 +214,13 @@
             if (move) {
                 move.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
                 selectedSq = null; render();
-                if (vsBot) setTimeout(grandmasterAI, 400);
+                if (vsBot) setTimeout(masterAI, 400);
                 return;
             }
         }
         const p = game.get(id);
         if (p && p.color === game.turn()) {
-            sfx(700, 'sine', 0.05, 0.05); // Button sound on piece tap
+            sfx(700, 'sine', 0.05, 0.05);
             selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({square: id, verbose: true}).forEach(m => {
@@ -223,44 +230,39 @@
         } else { selectedSq = null; render(); }
     }
 
-    // --- SUPER-BRAIN AI (Grandmaster Evaluation) ---
-    function grandmasterAI() {
+    function masterAI() {
         if (game.game_over()) return;
-        let bestMove = null;
-        let bestValue = -Infinity;
-        const moves = game.moves();
-
+        let moves = game.moves();
+        let bestMove = moves[Math.floor(Math.random() * moves.length)];
+        let bestVal = -Infinity;
+        
         for (let m of moves) {
             game.move(m);
-            let val = -minimax(2, -10000, 10000, false);
+            let v = -evaluate(2, -10000, 10000);
             game.undo();
-            if (val > bestValue) { bestValue = val; bestMove = m; }
+            if (v > bestVal) { bestVal = v; bestMove = m; }
         }
         const mObj = game.move(bestMove);
         mObj.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
         render();
     }
 
-    function minimax(depth, alpha, beta, isMax) {
-        if (depth === 0) return evaluateBoard();
-        const moves = game.moves();
-        let best = isMax ? -10000 : 10000;
+    function evaluate(depth, alpha, beta) {
+        if (depth === 0) {
+            let s = 0; const w = {p:10, n:32, b:33, r:50, q:90, k:900};
+            game.board().forEach(r => r.forEach(p => { if(p) s += w[p.type] * (p.color==='b'?1:-1); }));
+            return s;
+        }
+        let moves = game.moves();
+        let best = -10000;
         for (let m of moves) {
             game.move(m);
-            const score = minimax(depth - 1, alpha, beta, !isMax);
+            best = Math.max(best, -evaluate(depth-1, -beta, -alpha));
             game.undo();
-            if (isMax) { best = Math.max(best, score); alpha = Math.max(alpha, best); }
-            else { best = Math.min(best, score); beta = Math.min(beta, best); }
+            alpha = Math.max(alpha, best);
             if (beta <= alpha) break;
         }
         return best;
-    }
-
-    function evaluateBoard() {
-        let score = 0;
-        const weights = {p: 10, n: 32, b: 33, r: 50, q: 90, k: 900};
-        game.board().forEach(r => r.forEach(p => { if(p) score += weights[p.type] * (p.color === 'b' ? 1 : -1); }));
-        return score;
     }
 
     function handleEnd() {
@@ -269,27 +271,24 @@
         const isWin = game.in_checkmate() && game.turn() === 'b';
         if(isWin && vsBot) {
             level++; streak++;
-            localStorage.setItem('m_lvl', level);
-            localStorage.setItem('m_streak', streak);
+            localStorage.setItem('m_lvl', level); localStorage.setItem('m_streak', streak);
             document.getElementById('board-box').classList.add('win-shake');
-            sfx(523, 'square', 0.5, 0.1); // Victory Sound
+            sfx(523, 'square', 0.5, 0.1);
         }
-        document.getElementById('win-text').innerText = isWin ? "MAUTASIM WINS" : "DEFEAT / DRAW";
+        document.getElementById('win-text').innerText = isWin ? p1Name.toUpperCase() + " WINS" : "DEFEAT / DRAW";
         document.getElementById('lvl-msg').innerText = "PHASE: " + level;
     }
 
     function getQueenThreats() {
-        const threats = [];
+        const threats = []; const fen = game.fen();
         ['w', 'b'].forEach(c => {
             let qPos = null;
             game.board().forEach((row, r) => row.forEach((p, col) => {
                 if(p && p.type === 'q' && p.color === c) qPos = String.fromCharCode(97+col) + (8-r);
             }));
             if (qPos) {
-                const temp = new Chess(game.fen());
-                const tokens = temp.fen().split(' ');
-                tokens[1] = c === 'w' ? 'b' : 'w';
-                temp.load(tokens.join(' '));
+                const temp = new Chess(fen); const tokens = temp.fen().split(' ');
+                tokens[1] = c === 'w' ? 'b' : 'w'; temp.load(tokens.join(' '));
                 if (temp.moves({verbose:true}).some(m => m.to === qPos)) threats.push(qPos);
             }
         });
