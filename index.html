@@ -3,116 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS 100: THE GAUNTLET</title>
+    <title>CHESS DEITY: LEVEL 100 START</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=JetBrains+Mono&display=swap');
 
         :root {
-            --bg: #050505;
-            --primary: #00ffcc;
-            --sq-light: #e0e0e0;
-            --sq-dark: #333;
-            --glow: 0 0 20px rgba(0,255,204,0.5);
+            --neon: #ff003c;
+            --bg: #050508;
+            --panel: rgba(255, 255, 255, 0.03);
         }
 
         body {
             margin: 0; background: var(--bg); color: white;
-            font-family: 'Orbitron', sans-serif; display: flex;
-            flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
-            transition: background 0.5s;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden;
         }
 
-        /* --- Level Progress --- */
-        .level-header {
-            width: 100%; max-width: 500px; padding: 20px;
-            text-align: center; z-index: 10;
+        /* --- EXTREME HUD --- */
+        .cyber-header {
+            width: 100%; max-width: 450px; padding: 15px;
+            text-align: center; border-bottom: 2px solid var(--neon);
+            background: linear-gradient(to bottom, #1a0006, transparent);
         }
-        .progress-container {
-            width: 100%; height: 8px; background: #222; border-radius: 4px; margin-top: 10px;
+        .lvl-badge {
+            font-family: 'Orbitron', sans-serif; font-size: 24px;
+            color: var(--neon); text-shadow: 0 0 20px var(--neon);
+            letter-spacing: 4px;
         }
-        #progress-bar {
-            width: 1%; height: 100%; background: var(--primary);
-            box-shadow: var(--glow); transition: 0.5s;
+        .ai-status {
+            font-size: 11px; color: #ff003c; margin-top: 5px; 
+            text-transform: uppercase; animate: blink 1s infinite;
         }
 
-        /* --- Chess Board --- */
-        #board-wrapper {
-            position: relative; width: 95vw; max-width: 450px;
-            aspect-ratio: 1/1; border: 4px solid var(--primary);
-            box-shadow: var(--glow); transition: transform 0.1s;
+        /* --- THE BOARD --- */
+        #game-container {
+            position: relative; margin: 15px 0;
+            width: 94vw; max-width: 420px; aspect-ratio: 1/1;
+            padding: 5px; background: #111;
+            border: 2px solid var(--neon); box-shadow: 0 0 30px rgba(255,0,60,0.2);
         }
         #board {
             display: grid; grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr); height: 100%;
+            grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%;
         }
-        .square {
-            display: flex; justify-content: center; align-items: center;
-            position: relative; transition: background 0.3s;
-        }
+        .sq { display: flex; justify-content: center; align-items: center; position: relative; }
+        .sq.l { background: #1a1a1a; }
+        .sq.d { background: #0a0a0a; }
+        
         .piece {
-            width: 90%; height: 90%; z-index: 5;
-            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
-            transition: transform 0.2s;
+            width: 88%; height: 88%; z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .piece:active { transform: scale(1.2); }
+        
+        /* EFFECTS */
+        .selected { background: rgba(255, 0, 60, 0.4) !important; }
+        .hint-sq { width: 14px; height: 14px; background: var(--neon); border-radius: 50%; box-shadow: 0 0 15px var(--neon); opacity: 0.7; }
+        .ai-hint-move { border: 3px solid #00ffcc !important; box-shadow: inset 0 0 15px #00ffcc; }
 
-        /* --- Indicators --- */
-        .hint { width: 12px; height: 12px; background: var(--primary); border-radius: 50%; opacity: 0.6; }
-        .last-move { background: rgba(255,255,255,0.2) !important; }
-        .selected { box-shadow: inset 0 0 15px var(--primary) !important; }
-
-        /* --- HUD --- */
+        /* --- CONTROLS --- */
         .controls {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-            width: 95%; max-width: 450px; padding: 20px;
+            width: 95%; max-width: 420px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
         }
         button {
-            background: #111; border: 1px solid var(--primary); color: var(--primary);
-            padding: 12px; border-radius: 5px; font-family: 'Orbitron'; font-weight: bold;
-            cursor: pointer; transition: 0.3s;
+            background: #000; border: 1px solid var(--neon); color: var(--neon);
+            padding: 10px; cursor: pointer; font-family: 'Orbitron'; font-size: 10px;
+            transition: 0.2s;
         }
-        button:hover { background: var(--primary); color: black; }
+        button:hover { background: var(--neon); color: white; box-shadow: 0 0 15px var(--neon); }
+        .hint-btn { border-color: #00ffcc; color: #00ffcc; }
+        .hint-btn:hover { background: #00ffcc; color: black; box-shadow: 0 0 15px #00ffcc; }
 
-        #msg-box {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 50px; font-weight: 900; text-shadow: 0 0 30px var(--primary);
-            pointer-events: none; opacity: 0; transition: 0.3s; z-index: 100;
-        }
-
-        /* --- Animations --- */
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            20% { transform: translate(-3px, 0px); }
-            40% { transform: translate(3px, 2px); }
-            60% { transform: translate(-3px, 1px); }
-            80% { transform: translate(1px, -2px); }
-            100% { transform: translate(0, 0); }
-        }
-        .shake { animation: shake 0.2s; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     </style>
 </head>
 <body>
 
-    <div id="msg-box">CHECKMATE</div>
-
-    <div class="level-header">
-        <div style="display:flex; justify-content: space-between;">
-            <span>LEVEL <span id="lvl-num">1</span></span>
-            <span id="bot-rank">BOT: ROOKIE</span>
-        </div>
-        <div class="progress-container"><div id="progress-bar"></div></div>
+    <div class="cyber-header">
+        <div class="lvl-badge">DEITY LEVEL: <span id="lvl">01</span></div>
+        <div class="ai-status" id="status">AI BRAIN: AGGRESSIVE</div>
     </div>
 
-    <div id="board-wrapper">
+    <div id="game-container">
         <div id="board"></div>
     </div>
 
     <div class="controls">
-        <button onclick="resetGame()">RESET</button>
-        <button onclick="undo()">UNDO</button>
-        <button onclick="changeLvl(1)">NEXT LVL (DEBUG)</button>
-        <button onclick="togglePassPlay()" id="mode-btn">VS BOT</button>
+        <button onclick="resetGame()">SYSTEM REBOOT</button>
+        <button onclick="undo()">UNDO TIME</button>
+        <button class="hint-btn" onclick="getHint()">GET AI ADVICE</button>
+        <button id="mode-btn" onclick="toggleMode()">MOD: VS DEITY</button>
     </div>
 
 <script>
@@ -120,21 +102,21 @@
     const boardEl = document.getElementById('board');
     let level = 1;
     let selectedSq = null;
-    let passPlay = false;
+    let vsBot = true;
 
-    const piecesImg = {
-        wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
-        wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-        wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
-        wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-        wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
-        wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
-        bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
-        bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-        bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
-        bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-        bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
-        bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+    // Piece-Square Tables for positional intelligence
+    const pst = {
+        p: [ [0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0] ],
+        n: [ [-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5] ]
+    };
+
+    const assets = {
+        wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+        wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+        wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+        bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+        bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+        bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
     };
 
     function init() {
@@ -143,156 +125,148 @@
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
                 const id = String.fromCharCode(97 + c) + (8 - r);
-                sq.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+                sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
                 sq.dataset.id = id;
-                sq.onclick = () => handleMove(id);
+                sq.onclick = () => onSelect(id);
                 boardEl.appendChild(sq);
             }
         }
-        applyTheme();
-        render();
+        updateBoard();
+        document.getElementById('lvl').innerText = level.toString().padStart(2, '0');
     }
 
-    function render() {
-        const history = game.history({verbose: true});
-        const lastMove = history[history.length - 1];
-
-        document.querySelectorAll('.square').forEach(sq => {
-            sq.innerHTML = '';
-            sq.classList.remove('selected', 'last-move');
-            const p = game.get(sq.dataset.id);
+    function updateBoard() {
+        document.querySelectorAll('.sq').forEach(s => {
+            s.innerHTML = '';
+            s.classList.remove('selected', 'ai-hint-move');
+            const p = game.get(s.dataset.id);
             if (p) {
                 const img = document.createElement('img');
-                img.src = piecesImg[p.color + p.type.toUpperCase()];
+                img.src = assets[p.color + p.type.toUpperCase()];
                 img.className = 'piece';
-                sq.appendChild(img);
-            }
-            if (lastMove && (sq.dataset.id === lastMove.from || sq.dataset.id === lastMove.to)) {
-                sq.classList.add('last-move');
+                s.appendChild(img);
             }
         });
-        checkStatus();
     }
 
-    function handleMove(id) {
-        if (!passPlay && game.turn() === 'b') return;
-
+    function onSelect(id) {
+        if (vsBot && game.turn() === 'b') return;
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
-                if(move.captured) triggerImpact();
                 selectedSq = null;
-                render();
-                if (!passPlay) setTimeout(botMove, 500);
+                updateBoard();
+                if(vsBot) setTimeout(botThink, 250);
                 return;
             }
         }
-
         const p = game.get(id);
         if (p && p.color === game.turn()) {
             selectedSq = id;
-            render();
+            updateBoard();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({square: id, verbose: true}).forEach(m => {
-                const h = document.createElement('div'); h.className = 'hint';
+                const h = document.createElement('div'); h.className = 'hint-sq';
                 document.querySelector(`[data-id="${m.to}"]`).appendChild(h);
             });
         } else {
             selectedSq = null;
-            render();
+            updateBoard();
         }
     }
 
-    // --- AI BOT (Scales with Level) ---
-    function botMove() {
+    // --- DEITY BRAIN (Minimax + Alpha-Beta + PST) ---
+    function botThink() {
         if (game.game_over()) return;
+        document.getElementById('status').innerText = "AI BRAIN: CRUSHING...";
         
+        // Start at Depth 4 (Extreme) immediately
+        const bestMove = getBestMove(game, 4);
+        game.move(bestMove);
+        updateBoard();
+        document.getElementById('status').innerText = "AI BRAIN: READY";
+    }
+
+    function getHint() {
+        if (game.turn() === 'b' && vsBot) return;
+        const hint = getBestMove(game, 3);
+        const fromSq = document.querySelector(`[data-id="${hint.from}"]`);
+        const toSq = document.querySelector(`[data-id="${hint.to}"]`);
+        fromSq.classList.add('ai-hint-move');
+        toSq.classList.add('ai-hint-move');
+        document.getElementById('status').innerText = `ADVICE: ${hint.from} -> ${hint.to}`;
+    }
+
+    function getBestMove(game, depth) {
+        let moves = game.moves({verbose: true});
+        let bestMove = null;
+        let bestValue = -Infinity;
+
+        moves.sort(() => Math.random() - 0.5); // Randomize same-value moves
+
+        for (let move of moves) {
+            game.move(move);
+            let val = -minimax(depth - 1, game, -10000, 10000, true);
+            game.undo();
+            if (val > bestValue) {
+                bestValue = val;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    }
+
+    function minimax(depth, game, alpha, beta, isMax) {
+        if (depth === 0) return evaluate(game.board());
         let moves = game.moves();
-        let chosenMove;
-
-        // Level-based difficulty logic
-        if (level < 20) {
-            chosenMove = moves[Math.floor(Math.random() * moves.length)];
-        } else {
-            // Basic Material Capture AI
-            let bestScore = -9999;
-            moves.forEach(m => {
-                game.move(m);
-                let score = -evaluateBoard(game.board());
+        if (isMax) {
+            let best = -9999;
+            for (let move of moves) {
+                game.move(move);
+                best = Math.max(best, minimax(depth - 1, game, alpha, beta, false));
                 game.undo();
-                if(score > bestScore) { bestScore = score; chosenMove = m; }
-            });
+                alpha = Math.max(alpha, best);
+                if (beta <= alpha) return best;
+            }
+            return best;
+        } else {
+            let best = 9999;
+            for (let move of moves) {
+                game.move(move);
+                best = Math.min(best, minimax(depth - 1, game, alpha, beta, true));
+                game.undo();
+                beta = Math.min(beta, best);
+                if (beta <= alpha) return best;
+            }
+            return best;
         }
-
-        const mObj = game.move(chosenMove);
-        if(mObj.captured) triggerImpact();
-        render();
     }
 
-    function evaluateBoard(board) {
+    function evaluate(board) {
         const vals = {p: 10, n: 30, b: 30, r: 50, q: 90, k: 900};
-        let total = 0;
-        board.forEach(row => row.forEach(p => {
-            if(p) total += vals[p.type] * (p.color === 'w' ? 1 : -1);
-        }));
-        return total;
-    }
-
-    // --- CRAZY EFFECTS ---
-    function applyTheme() {
-        const hue = (level * 137) % 360; // Spread colors evenly
-        const primary = `hsl(${hue}, 100%, 50%)`;
-        document.documentElement.style.setProperty('--primary', primary);
-        document.documentElement.style.setProperty('--glow', `0 0 20px hsl(${hue}, 100%, 50%, 0.5)`);
-        
-        const squares = document.querySelectorAll('.square');
-        squares.forEach(sq => {
-            if(sq.classList.contains('light')) sq.style.backgroundColor = `hsl(${hue}, 20%, 85%)`;
-            else sq.style.backgroundColor = `hsl(${hue}, 40%, 20%)`;
-        });
-
-        document.getElementById('lvl-num').innerText = level;
-        document.getElementById('progress-bar').style.width = level + '%';
-        
-        const ranks = ["ROOKIE", "NOVICE", "WARRIOR", "ELITE", "MASTER", "GRANDMASTER", "DEEP BLUE", "GOD MODE"];
-        document.getElementById('bot-rank').innerText = "BOT: " + ranks[Math.floor(level/13)] || "DEITY";
-    }
-
-    function triggerImpact() {
-        const wrapper = document.getElementById('board-wrapper');
-        wrapper.classList.add('shake');
-        setTimeout(() => wrapper.classList.remove('shake'), 200);
-    }
-
-    function flashMsg(txt) {
-        const b = document.getElementById('msg-box');
-        b.innerText = txt; b.style.opacity = 1;
-        setTimeout(() => b.style.opacity = 0, 2000);
-    }
-
-    function checkStatus() {
-        if (game.in_checkmate()) {
-            flashMsg("LEVEL UP!");
-            if(game.turn() === 'b') changeLvl(1); // Player won
-        } else if (game.in_draw()) {
-            flashMsg("STALEMATE");
+        let score = 0;
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const p = board[r][c];
+                if (p) {
+                    let pScore = vals[p.type];
+                    // Add positional bonus from PST
+                    if(pst[p.type]) pScore += pst[p.type][r][c];
+                    score += pScore * (p.color === 'w' ? -1 : 1);
+                }
+            }
         }
+        return score;
     }
 
-    function changeLvl(n) {
-        level = Math.min(100, level + n);
-        game.reset();
-        init();
-    }
-
-    function togglePassPlay() {
-        passPlay = !passPlay;
-        document.getElementById('mode-btn').innerText = passPlay ? "PASS & PLAY" : "VS BOT";
+    function toggleMode() {
+        vsBot = !vsBot;
+        document.getElementById('mode-btn').innerText = vsBot ? "MOD: VS DEITY" : "MOD: PASS & PLAY";
         resetGame();
     }
 
-    function resetGame() { game.reset(); render(); }
-    function undo() { game.undo(); if(!passPlay) game.undo(); render(); }
+    function resetGame() { game.reset(); init(); }
+    function undo() { game.undo(); if(vsBot) game.undo(); updateBoard(); }
 
     init();
 </script>
