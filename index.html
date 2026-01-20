@@ -8,50 +8,37 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #ced4da; --sd: #495057; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
-        :root { 
-            --primary: #00d4ff; 
-            --bg: #0a0e17; 
-            --card: #141b26; 
-            --sq-l: #ced4da; 
-            --sq-d: #495057; 
-        }
-
-        body { 
-            margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; 
-            display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; 
-        }
-        
-        /* Navigation */
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
-        .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
+        .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
 
-        .architect-tag { font-size: 22px; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary); letter-spacing: 3px; margin: 20px 0; text-transform: uppercase; }
+        .architect-tag { font-size: 22px; font-weight: 900; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 3px; margin: 20px 0; text-transform: uppercase; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .auth-card { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; text-align: center; }
+        .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 1px solid #222; text-align: center; }
         
-        input { background: #050505; border: 1px solid var(--primary); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; outline: none; }
-        .btn-main { width: 100%; padding: 14px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
+        input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; }
-        .xp-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.8s ease-out; box-shadow: 0 0 10px var(--primary); }
+        .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; position: relative; }
+        .xp-fill { height: 100%; background: var(--p); width: 0%; transition: 1s cubic-bezier(0.17, 0.67, 0.83, 0.67); box-shadow: 0 0 15px var(--p); }
 
-        .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; margin-top: 55px; }
-        .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--primary); width: 45%; }
-        .lvl-badge { background: var(--primary); color: black; padding: 1px 4px; border-radius: 3px; font-weight: 900; margin-right: 5px; font-size: 9px; }
+        .hud { width: 100%; background: var(--c); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); box-sizing: border-box; margin-top: 55px; }
+        .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--p); width: 45%; }
+        .lvl-badge { background: var(--p); color: black; padding: 1px 4px; border-radius: 3px; font-weight: 900; margin-right: 5px; font-size: 9px; }
 
-        #board-box { margin: 10px 0; width: 94vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--card); position: relative; border-radius: 8px; }
+        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--c); position: relative; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
-        .sq.l { background: #ced4da; } .sq.d { background: #495057; }
-        
+        .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .piece { width: 90%; z-index: 5; pointer-events: none; }
-        .selected { background: rgba(0, 212, 255, 0.5) !important; }
-        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.6); border-radius: 50%; z-index: 10; pointer-events: none; border: 2px solid #fff; }
+        .selected { background: rgba(0, 212, 255, 0.4) !important; }
+        .move-dot { width: 12px; height: 12px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 1px solid white; box-shadow: 0 0 5px var(--p); }
 
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; }
-        .menu-item { background: var(--card); border: 1px solid #333; padding: 18px 10px; border-radius: 15px; text-align: center; cursor: pointer; }
-        .menu-item span { display: block; font-size: 10px; font-weight: bold; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
+        .menu-item { background: var(--c); border: 1px solid #333; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
+        .menu-item span { display: block; font-size: 9px; font-weight: 900; color: #fff; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -64,82 +51,97 @@
     <div id="auth-screen" class="overlay">
         <div class="architect-tag">ARCHITECT PRO</div>
         <div class="auth-card">
-            <h2 id="auth-title" style="font-size:14px; margin-bottom:15px;">SECURE LOGIN</h2>
+            <h2 id="auth-title">LOGIN</h2>
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 9px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">NEW IDENTITY? SIGN UP</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">MAUTASIM</div>
-        <div id="lvl-status" style="font-size: 11px; color: var(--primary); margin-bottom: 5px;">LEVEL 1 ARCHITECT</div>
+        <div id="lvl-status" style="font-size: 12px; color: var(--p); margin-bottom: 5px; font-weight: bold;">LVL 1</div>
         <div class="xp-bar-container"><div id="xp-visual" class="xp-fill"></div></div>
-        <div id="xp-text" style="font-size: 8px; color: #555; margin-bottom: 20px;">0 / 100 XP</div>
+        <div id="xp-text" style="font-size: 10px; color: #888; margin-bottom: 20px;">0 / 100 XP</div>
         
         <div class="dashboard">
             <div class="menu-item" onclick="startGame('bot')"><span>ULTRA AI</span></div>
             <div class="menu-item" onclick="showOnlineSetup()"><span>ONLINE P2P</span></div>
-            <div class="menu-item" onclick="showLocalSetup()"><span>LOCAL BATTLE</span></div>
+            <div class="menu-item" onclick="showLocalSetup()"><span>LOCAL PASS</span></div>
             <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
+            <div class="menu-item" onclick="forceAddXP()" style="grid-column: span 2; background: rgba(0,212,255,0.1);"><span>TEST: ADD 50 XP</span></div>
         </div>
     </div>
 
     <div id="online-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2>ONLINE LINK</h2>
-            <p style="font-size:10px; color:var(--primary)">YOUR UID: <span id="my-id" style="color:white">...</span></p>
+            <h2>ONLINE</h2>
+            <p style="font-size:10px;">ID: <span id="my-id" style="color:var(--p)">...</span></p>
             <input type="text" id="peer-id-in" placeholder="FRIEND UID">
             <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
             <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
-    <div id="local-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h2>LOCAL SETUP</h2>
-            <input type="text" id="p1-local" placeholder="PLAYER 1">
-            <input type="text" id="p2-local" placeholder="PLAYER 2">
-            <button class="btn-main" onclick="startGame('pass')">START</button>
-        </div>
-    </div>
-
     <div id="win-screen" class="overlay" style="display:none; text-align:center;">
-        <h1 id="winner-text" style="color:var(--primary); font-size:30px;">VICTORY</h1>
-        <p id="lvl-up-alert" style="color:white; font-family:'Roboto Mono'; margin-bottom:20px;"></p>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">CONTINUE</button>
+        <h1 id="winner-text" style="color:var(--p)">VICTORY</h1>
+        <p id="lvl-up-alert" style="color:white;"></p>
+        <button class="btn-main" style="width:180px" onclick="showDashboard()">CONTINUE</button>
     </div>
 
     <div class="hud">
         <div class="player-tag"><span class="lvl-badge" id="p1-lvl-icon">L1</span><span id="p1-label">---</span></div>
         <div class="player-tag" style="text-align:right"><span id="p2-label">---</span><span class="lvl-badge" id="p2-lvl-icon">L1</span></div>
     </div>
-    
     <div id="board-box"><div id="board"></div></div>
 
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null;
-    let audioCtx = null, authMode = 'login', selectedSq = null;
+    let currentUser = null, vsBot = true, isOnline = false, myColor = 'w', peer = null, conn = null, selectedSq = null, audioCtx = null, authMode = 'login';
 
+    // --- UPDATED LEVEL & XP ENGINE ---
     function getStats() {
-        let lvl = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
-        let xp = parseInt(localStorage.getItem(`xp_${currentUser}`)) || 0;
-        return { lvl, xp, next: 100 };
+        let l = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
+        let x = parseInt(localStorage.getItem(`xp_${currentUser}`)) || 0;
+        return { lvl: l, xp: x, next: 100 };
     }
 
+    function saveWinXP() {
+        if(!currentUser) return;
+        let s = getStats();
+        s.xp += 50; // 50 XP per win
+        if (s.xp >= s.next) {
+            s.lvl += 1;
+            s.xp = 0;
+            localStorage.setItem(`lvl_${currentUser}`, s.lvl);
+            localStorage.setItem(`xp_${currentUser}`, s.xp);
+            return "LEVEL UP! REACHED LEVEL " + s.lvl;
+        }
+        localStorage.setItem(`xp_${currentUser}`, s.xp);
+        return "+50 XP GAINED";
+    }
+
+    function forceAddXP() {
+        let s = getStats(); s.xp += 50;
+        if(s.xp >= 100) { s.lvl++; s.xp = 0; }
+        localStorage.setItem(`lvl_${currentUser}`, s.lvl);
+        localStorage.setItem(`xp_${currentUser}`, s.xp);
+        showDashboard();
+    }
+
+    // --- CORE UI ---
     function handleAuth() {
         const u = document.getElementById('user-in').value.trim().toLowerCase();
         const p = document.getElementById('pass-in').value.trim();
         if(!u || !p) return;
         if(authMode === 'signup') {
             localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
-            alert("Identity Registered."); toggleAuth();
+            alert("Registered."); toggleAuth();
         } else {
             if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
-            else alert("Auth Error");
+            else alert("Error");
         }
     }
 
@@ -147,50 +149,24 @@
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('global-nav').style.display = 'none';
-        let stats = getStats();
-        document.getElementById('lvl-status').innerText = `LEVEL ${stats.lvl} ARCHITECT`;
-        document.getElementById('xp-visual').style.width = (stats.xp / stats.next * 100) + "%";
-        document.getElementById('xp-text').innerText = `${stats.xp} / ${stats.next} XP`;
+        let s = getStats();
+        document.getElementById('lvl-status').innerText = `LEVEL ${s.lvl} ARCHITECT`;
+        document.getElementById('xp-visual').style.width = (s.xp / s.next * 100) + "%";
+        document.getElementById('xp-text').innerText = `${s.xp} / ${s.next} XP`;
     }
-
-    function showOnlineSetup() {
-        document.getElementById('home-screen').style.display = 'none';
-        document.getElementById('online-setup').style.display = 'flex';
-        document.getElementById('global-nav').style.display = 'flex';
-        if(!peer) {
-            peer = new Peer('ARCH-' + currentUser + "-" + Math.floor(Math.random()*999));
-            peer.on('open', id => document.getElementById('my-id').innerText = id);
-            peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); });
-        }
-    }
-
-    function connectToPeer() {
-        const id = document.getElementById('peer-id-in').value;
-        if(!id) return; conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online');
-    }
-
-    function setupConn() {
-        conn.on('data', data => { if(data.type === 'move') { game.move(data.move); playSound('move'); render(); } });
-    }
-
-    function goBack() { if(confirm("Quit to Dashboard?")) showDashboard(); }
 
     function startGame(m) {
         vsBot = (m === 'bot'); isOnline = (m === 'online');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        
-        let p1 = currentUser.toUpperCase(), p2 = "ULTRA AI";
-        if(m === 'pass') { p1 = document.getElementById('p1-local').value || "P1"; p2 = document.getElementById('p2-local').value || "P2"; }
-        if(m === 'online') { p1 = myColor === 'w' ? currentUser : "GUEST"; p2 = myColor === 'b' ? currentUser : "GUEST"; }
-
-        document.getElementById('p1-label').innerText = p1;
-        document.getElementById('p2-label').innerText = p2;
+        document.getElementById('p1-label').innerText = currentUser.toUpperCase();
+        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "GUEST");
         document.getElementById('p1-lvl-icon').innerText = "L" + getStats().lvl;
         document.getElementById('p2-lvl-icon').innerText = vsBot ? "L99" : "L1";
         game.reset(); initBoard();
     }
 
+    // --- CHESS ENGINE ---
     function initBoard() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
@@ -208,7 +184,6 @@
     function handleInput(id) {
         if (isOnline && game.turn() !== myColor) return;
         if (vsBot && game.turn() === 'b') return;
-        
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
@@ -218,13 +193,13 @@
                 return;
             }
         }
-        const piece = game.get(id);
-        if (piece && piece.color === game.turn()) {
+        const p = game.get(id);
+        if (p && p.color === game.turn()) {
             selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({ square: id, verbose: true }).forEach(m => {
-                const dot = document.createElement('div'); dot.className = 'move-dot';
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(dot);
+                const d = document.createElement('div'); d.className = 'move-dot';
+                document.querySelector(`[data-id="${m.to}"]`).appendChild(d);
             });
         } else { selectedSq = null; render(); }
     }
@@ -239,27 +214,31 @@
             }
         });
         if (game.game_over()) {
-            let win = game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText;
-            if (win.toLowerCase() === currentUser) {
-                let s = getStats(); s.xp += 100;
-                if(s.xp >= 100) { s.lvl++; s.xp = 0; }
-                localStorage.setItem(`lvl_${currentUser}`, s.lvl); localStorage.setItem(`xp_${currentUser}`, s.xp);
+            let msg = "DRAW";
+            if (game.in_checkmate()) {
+                const winnerColor = game.turn() === 'w' ? 'Black' : 'White';
+                // IF YOU ARE WHITE AND WHITE WINS, OR YOU ARE BLACK AND BLACK WINS
+                if ((myColor === 'w' && winnerColor === 'White') || (myColor === 'b' && winnerColor === 'Black') || vsBot && winnerColor === 'White') {
+                   msg = saveWinXP();
+                } else {
+                   msg = "MISSION FAILED";
+                }
             }
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = win + " VICTORIOUS";
+            document.getElementById('winner-text').innerText = "GAME OVER";
+            document.getElementById('lvl-up-alert').innerText = msg;
         }
     }
 
-    function masterAI() {
-        const m = game.moves(); if(m.length) game.move(m[Math.floor(Math.random()*m.length)]);
-        playSound('move'); render();
-    }
-
+    function masterAI() { const m = game.moves(); if(m.length) game.move(m[Math.floor(Math.random()*m.length)]); playSound('move'); render(); }
     function playSound(t) { if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = t === 'move' ? 200 : 800; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
+    function showOnlineSetup() { document.getElementById('home-screen').style.display='none'; document.getElementById('online-setup').style.display='flex'; if(!peer){ peer = new Peer('ARCH-'+currentUser+'-'+Math.floor(Math.random()*99)); peer.on('open', id => document.getElementById('my-id').innerText = id); peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); }); } }
+    function connectToPeer() { const id = document.getElementById('peer-id-in').value; if(id){ conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online'); } }
+    function setupConn() { conn.on('data', d => { if(d.type==='move'){ game.move(d.move); render(); } }); }
+    function goBack() { showDashboard(); }
     function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
-    function showLocalSetup() { document.getElementById('home-screen').style.display='none'; document.getElementById('local-setup').style.display='flex'; document.getElementById('global-nav').style.display='flex'; }
     window.onload = () => { const s = localStorage.getItem('active_session'); if(s) { currentUser = s; showDashboard(); } };
 </script>
 </body>
