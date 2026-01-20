@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS DEITY | DEV: MAUTASIM</title>
+    <title>CHESS DEITY | ARCHITECT: MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -23,20 +23,38 @@
             display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
         }
 
-        /* GOLD THEME (Triggers at Lvl 10) */
-        body.gold-mode { --primary: var(--gold); --sq-l: #2d2610; --sq-d: #1a1608; }
+        /* MENU & NAME INPUT */
+        .overlay {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
+        .logo { font-family: 'Orbitron'; font-size: 32px; color: var(--primary); text-shadow: 0 0 15px var(--primary); margin-bottom: 5px; }
+        .dev-tag { font-size: 10px; color: #444; letter-spacing: 5px; margin-bottom: 40px; }
+        
+        .btn {
+            width: 250px; padding: 15px; margin: 10px; background: none; 
+            border: 2px solid var(--primary); color: var(--primary);
+            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; border-radius: 5px;
+        }
+        .btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
 
+        input {
+            background: #111; border: 1px solid var(--primary); color: white;
+            padding: 12px; margin: 5px; width: 220px; text-align: center; border-radius: 4px;
+        }
+
+        /* HUD */
         .hud {
             width: 100%; max-width: 400px; padding: 15px;
-            display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary);
-            background: rgba(0,0,0,0.8); z-index: 10;
+            display: flex; justify-content: space-between; border-bottom: 1px solid #222;
         }
-        .stat-val { font-family: 'Orbitron'; font-size: 16px; color: var(--primary); }
+        .stat-val { font-family: 'Orbitron'; font-size: 14px; color: var(--primary); }
 
+        /* BOARD */
         #board-box {
             position: relative; margin: 15px 0;
             width: 92vw; max-width: 380px; aspect-ratio: 1/1;
-            border: 3px solid var(--primary); transition: 0.3s;
+            border: 2px solid var(--primary);
         }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
@@ -46,23 +64,11 @@
         .piece { width: 90%; height: 90%; z-index: 5; filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
         .piece.black { filter: drop-shadow(0 0 6px #7000ff); }
         
-        .move-dot { width: 14px; height: 14px; background: rgba(0, 242, 255, 0.6); border-radius: 50%; z-index: 2; position: absolute; pointer-events: none; }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 242, 255, 0.5); border-radius: 50%; z-index: 2; position: absolute; }
         .threatened { background: radial-gradient(circle, var(--danger) 0%, transparent 80%) !important; animation: pulse 0.6s infinite; }
         .selected { background: rgba(0, 242, 255, 0.3) !important; }
 
         @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-
-        .overlay {
-            position: fixed; inset: 0; background: var(--bg);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
-        }
-        .btn {
-            width: 220px; padding: 15px; margin: 10px; background: none; 
-            border: 2px solid var(--primary); color: var(--primary);
-            font-family: 'Orbitron'; cursor: pointer; transition: 0.3s;
-        }
-        .btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
-        
         .win-shake { animation: shake 0.4s infinite; }
         @keyframes shake { 0% {transform:translate(0,0)} 25% {transform:translate(4px,4px)} 50% {transform:translate(-4px,-4px)} }
     </style>
@@ -70,31 +76,29 @@
 <body>
 
     <div id="start-menu" class="overlay">
-        <h1 style="font-family:Orbitron; color:var(--primary); text-shadow: 0 0 10px var(--primary);">CHESS DEITY</h1>
-        <p style="font-size:10px; color:#555; letter-spacing:4px; margin-bottom:30px;">ARCHITECT: MAUTASIM</p>
-        <button class="btn" onclick="uiClick(); start(true)">SOLO: VS SERIOUS AI</button>
-        <button class="btn" onclick="uiClick(); start(false)">DUO: PASS & PLAY</button>
+        <h1 class="logo">CHESS DEITY</h1>
+        <div class="dev-tag">ENGINE BY MAUTASIM</div>
+        <button class="btn" onclick="initAudio(); startMode('bot')">VS GRANDMASTER AI</button>
+        <button class="btn" onclick="initAudio(); showNameInput()">PASS & PLAY</button>
+    </div>
+
+    <div id="name-menu" class="overlay" style="display:none">
+        <h2 class="logo" style="font-size:20px;">IDENTIFY PLAYERS</h2>
+        <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
+        <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
+        <button class="btn" onclick="startMode('pass')">ENGAGE BATTLE</button>
     </div>
 
     <div id="win-screen" class="overlay" style="display:none">
-        <h1 id="win-text" style="font-family:Orbitron; color:var(--primary);"></h1>
-        <p id="level-msg" style="color:#00ff88;"></p>
-        <button class="btn" onclick="uiClick(); location.reload()">PROCEED</button>
+        <h1 id="win-text" class="logo"></h1>
+        <p id="lvl-msg" style="color:var(--primary); font-family:Orbitron;"></p>
+        <button class="btn" onclick="location.reload()">REBOOT SYSTEM</button>
     </div>
 
     <div class="hud">
-        <div style="text-align:left">
-            <div style="font-size:8px; color:#555">PHASE</div>
-            <div id="lvl-val" class="stat-val">01</div>
-        </div>
-        <div style="text-align:center">
-            <div style="font-size:8px; color:#555">CREATOR</div>
-            <div class="stat-val" style="font-size:12px;">MAUTASIM</div>
-        </div>
-        <div style="text-align:right">
-            <div style="font-size:8px; color:#555">STREAK</div>
-            <div id="streak-val" class="stat-val">0</div>
-        </div>
+        <div>LVL: <span id="lvl-val" class="stat-val">01</span></div>
+        <div id="turn-display" class="stat-val" style="font-size:10px;">MAUTASIM CORE</div>
+        <div>STREAK: <span id="streak-val" class="stat-val">0</span></div>
     </div>
 
     <div id="board-box">
@@ -104,36 +108,61 @@
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let vsBot = true, selectedSq = null, audioCtx = null;
+    let vsBot = true, selectedSq = null, audioCtx = null, musicOsc = null;
+    let p1Name = "White", p2Name = "Deity Bot";
     
     let level = parseInt(localStorage.getItem('m_lvl')) || 1;
     let streak = parseInt(localStorage.getItem('m_streak')) || 0;
 
-    // --- SOUND SYSTEM ---
-    function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function playNote(f, t, d, v) {
-        if(!audioCtx) return;
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-        g.gain.setValueAtTime(v, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + d);
+    // --- AUDIO SYSTEM ---
+    function initAudio() { 
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+        playHomeMusic();
     }
 
-    const sfx = {
-        btn: () => playNote(600, 'sine', 0.1, 0.1),
-        move: () => playNote(400, 'triangle', 0.1, 0.1),
-        capture: () => playNote(120, 'sawtooth', 0.2, 0.15),
-        win: () => { [523, 659, 783].forEach((f, i) => setTimeout(() => playNote(f, 'square', 0.4, 0.1), i*150)); }
-    };
-    function uiClick() { initAudio(); sfx.btn(); }
+    function playHomeMusic() {
+        if(musicOsc) return;
+        musicOsc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        musicOsc.type = 'triangle';
+        musicOsc.frequency.setValueAtTime(110, audioCtx.currentTime); // Low bass hum
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        musicOsc.connect(gain);
+        gain.connect(audioCtx.destination);
+        musicOsc.start();
+    }
 
-    function start(mode) {
-        vsBot = mode;
+    function stopHomeMusic() {
+        if(musicOsc) { musicOsc.stop(); musicOsc = null; }
+    }
+
+    function sfx(freq, type, dur, vol) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        g.gain.setValueAtTime(vol, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + dur);
+    }
+
+    // --- GAME FLOW ---
+    function showNameInput() {
         document.getElementById('start-menu').style.display = 'none';
-        if(level >= 10) document.body.classList.add('gold-mode');
+        document.getElementById('name-menu').style.display = 'flex';
+        sfx(600, 'sine', 0.1, 0.1);
+    }
+
+    function startMode(mode) {
+        stopHomeMusic(); // Music stops during play
+        sfx(800, 'sine', 0.2, 0.1);
+        vsBot = (mode === 'bot');
+        if(!vsBot) {
+            p1Name = document.getElementById('p1-in').value || "P1";
+            p2Name = document.getElementById('p2-in').value || "P2";
+        }
+        document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('name-menu').style.display = 'none';
         document.getElementById('lvl-val').innerText = level.toString().padStart(2, '0');
         document.getElementById('streak-val').innerText = streak;
         initBoard();
@@ -154,7 +183,7 @@
     }
 
     function render() {
-        const queenThreats = getThreats('q');
+        const queenThreats = getQueenThreats();
         document.querySelectorAll('.sq').forEach(s => {
             const id = s.dataset.id;
             const p = game.get(id);
@@ -167,7 +196,8 @@
                 if (p.type === 'q' && queenThreats.includes(id)) s.classList.add('threatened');
             }
         });
-        if (game.game_over()) handleGameOver();
+        document.getElementById('turn-display').innerText = (game.turn() === 'w' ? p1Name : p2Name).toUpperCase();
+        if (game.game_over()) handleEnd();
     }
 
     function onTileClick(id) {
@@ -175,15 +205,16 @@
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
-                move.captured ? sfx.capture() : sfx.move();
+                move.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
                 selectedSq = null; render();
-                if (vsBot) setTimeout(seriousAI, 400);
+                if (vsBot) setTimeout(grandmasterAI, 400);
                 return;
             }
         }
         const p = game.get(id);
         if (p && p.color === game.turn()) {
-            sfx.btn(); selectedSq = id; render();
+            sfx(700, 'sine', 0.05, 0.05); // Button sound on piece tap
+            selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
             game.moves({square: id, verbose: true}).forEach(m => {
                 const d = document.createElement('div'); d.className = 'move-dot';
@@ -192,82 +223,76 @@
         } else { selectedSq = null; render(); }
     }
 
-    // --- DEADLY SERIOUS AI (MINIMAX DEPTH 3) ---
-    function seriousAI() {
+    // --- SUPER-BRAIN AI (Grandmaster Evaluation) ---
+    function grandmasterAI() {
         if (game.game_over()) return;
-        const moves = game.moves({verbose: true});
         let bestMove = null;
-        let bestValue = -9999;
-        
-        // Serious move ordering: Check captures first
-        moves.sort((a,b) => (b.captured?1:0) - (a.captured?1:0));
+        let bestValue = -Infinity;
+        const moves = game.moves();
 
         for (let m of moves) {
             game.move(m);
-            let val = -evaluate(2, -10000, 10000);
+            let val = -minimax(2, -10000, 10000, false);
             game.undo();
             if (val > bestValue) { bestValue = val; bestMove = m; }
         }
-        const final = game.move(bestMove);
-        final.captured ? sfx.capture() : sfx.move();
+        const mObj = game.move(bestMove);
+        mObj.captured ? sfx(150, 'sawtooth', 0.3, 0.15) : sfx(400, 'triangle', 0.1, 0.1);
         render();
     }
 
-    function evaluate(depth, alpha, beta) {
-        if (depth === 0) {
-            let total = 0;
-            const weights = {p:10, n:30, b:30, r:50, q:90, k:900};
-            game.board().forEach(r => r.forEach(p => { if(p) total += weights[p.type] * (p.color==='b'?1:-1); }));
-            return total;
-        }
-        let moves = game.moves();
-        let best = -9999;
+    function minimax(depth, alpha, beta, isMax) {
+        if (depth === 0) return evaluateBoard();
+        const moves = game.moves();
+        let best = isMax ? -10000 : 10000;
         for (let m of moves) {
             game.move(m);
-            best = Math.max(best, -evaluate(depth-1, -beta, -alpha));
+            const score = minimax(depth - 1, alpha, beta, !isMax);
             game.undo();
-            alpha = Math.max(alpha, best);
+            if (isMax) { best = Math.max(best, score); alpha = Math.max(alpha, best); }
+            else { best = Math.min(best, score); beta = Math.min(beta, best); }
             if (beta <= alpha) break;
         }
         return best;
     }
 
-    function handleGameOver() {
-        const winScreen = document.getElementById('win-screen');
-        const winText = document.getElementById('win-text');
-        const lvlMsg = document.getElementById('level-msg');
-        winScreen.style.display = 'flex';
-
-        if (game.in_checkmate()) {
-            const winner = game.turn() === 'w' ? 'BLACK' : 'WHITE';
-            if (winner === 'WHITE') {
-                level++; streak++;
-                localStorage.setItem('m_lvl', level);
-                localStorage.setItem('m_streak', streak);
-                winText.innerText = "MAUTASIM VICTORIOUS";
-                lvlMsg.innerText = "LEVEL " + level + " UNLOCKED";
-                sfx.win(); document.getElementById('board-box').classList.add('win-shake');
-            } else {
-                streak = 0; localStorage.setItem('m_streak', 0);
-                winText.innerText = "DEITY BOT WINS";
-                lvlMsg.innerText = "RETRY PHASE " + level;
-            }
-        } else { winText.innerText = "STALEMATE / DRAW"; }
+    function evaluateBoard() {
+        let score = 0;
+        const weights = {p: 10, n: 32, b: 33, r: 50, q: 90, k: 900};
+        game.board().forEach(r => r.forEach(p => { if(p) score += weights[p.type] * (p.color === 'b' ? 1 : -1); }));
+        return score;
     }
 
-    function getThreats(type) {
+    function handleEnd() {
+        const overlay = document.getElementById('win-screen');
+        overlay.style.display = 'flex';
+        const isWin = game.in_checkmate() && game.turn() === 'b';
+        if(isWin && vsBot) {
+            level++; streak++;
+            localStorage.setItem('m_lvl', level);
+            localStorage.setItem('m_streak', streak);
+            document.getElementById('board-box').classList.add('win-shake');
+            sfx(523, 'square', 0.5, 0.1); // Victory Sound
+        }
+        document.getElementById('win-text').innerText = isWin ? "MAUTASIM WINS" : "DEFEAT / DRAW";
+        document.getElementById('lvl-msg').innerText = "PHASE: " + level;
+    }
+
+    function getQueenThreats() {
         const threats = [];
-        const fen = game.fen();
-        game.board().forEach((row, r) => row.forEach((p, c) => {
-            if (p && p.type === type) {
-                const pos = String.fromCharCode(97+c) + (8-r);
-                const temp = new Chess(fen);
+        ['w', 'b'].forEach(c => {
+            let qPos = null;
+            game.board().forEach((row, r) => row.forEach((p, col) => {
+                if(p && p.type === 'q' && p.color === c) qPos = String.fromCharCode(97+col) + (8-r);
+            }));
+            if (qPos) {
+                const temp = new Chess(game.fen());
                 const tokens = temp.fen().split(' ');
-                tokens[1] = p.color === 'w' ? 'b' : 'w';
+                tokens[1] = c === 'w' ? 'b' : 'w';
                 temp.load(tokens.join(' '));
-                if (temp.moves({verbose:true}).some(m => m.to === pos)) threats.push(pos);
+                if (temp.moves({verbose:true}).some(m => m.to === qPos)) threats.push(qPos);
             }
-        }));
+        });
         return threats;
     }
 </script>
