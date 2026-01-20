@@ -6,136 +6,154 @@
     <title>CHESS DEITY | DEV: MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Quicksand:wght@300;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono&display=swap');
 
         :root {
-            --accent: #00d4ff;
-            --gold: #ffcc00;
-            --bg: #0d1117;
-            --sq-l: #21262d;
-            --sq-d: #161b22;
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #050505;
+            --sq-l: #1a1a1a;
+            --sq-d: #0a0a0a;
         }
 
         body {
             margin: 0; background: var(--bg); color: white;
-            font-family: 'Quicksand', sans-serif;
+            font-family: 'JetBrains Mono', monospace;
             display: flex; flex-direction: column; align-items: center;
             height: 100vh; overflow: hidden;
         }
 
-        /* --- START PAGE --- */
-        #start-page {
+        /* --- START & NAME PAGE --- */
+        #start-page, #name-page {
             position: fixed; inset: 0; background: var(--bg);
             z-index: 1000; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
         }
-        .logo-area { margin-bottom: 50px; }
-        .logo-area h1 { font-family: 'Orbitron'; font-size: 28px; letter-spacing: 5px; color: var(--accent); margin: 0; }
-        .logo-area p { font-size: 10px; color: #555; letter-spacing: 3px; }
+        .logo { font-family: 'Orbitron'; font-size: 32px; color: var(--primary); text-shadow: 0 0 20px var(--primary); margin: 0; }
+        .dev { font-size: 10px; color: #444; letter-spacing: 5px; margin-bottom: 40px; }
 
-        .menu-btn {
-            width: 250px; padding: 15px; margin: 10px;
-            background: transparent; border: 1px solid var(--accent);
-            color: var(--accent); font-family: 'Orbitron'; cursor: pointer;
-            transition: 0.3s; border-radius: 4px;
+        .btn {
+            width: 260px; padding: 15px; margin: 10px;
+            background: transparent; border: 2px solid var(--primary);
+            color: var(--primary); font-family: 'Orbitron'; cursor: pointer;
+            border-radius: 8px; font-weight: bold; transition: 0.3s;
         }
-        .menu-btn:hover { background: var(--accent); color: black; box-shadow: 0 0 20px var(--accent); }
+        .btn:hover { background: var(--primary); color: black; box-shadow: 0 0 30px var(--primary); }
 
-        /* --- GAME UI --- */
+        input {
+            background: #111; border: 1px solid var(--primary); color: white;
+            padding: 12px; margin: 10px; width: 240px; text-align: center;
+            font-family: 'JetBrains Mono'; border-radius: 4px;
+        }
+
+        /* --- HUD --- */
         .hud {
-            width: 100%; max-width: 400px; padding: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #30363d;
+            width: 100%; max-width: 400px; padding: 20px;
+            display: flex; justify-content: space-between; border-bottom: 1px solid #222;
         }
-        .stat-box { text-align: center; }
-        .stat-label { font-size: 9px; color: #8b949e; text-transform: uppercase; }
-        .stat-val { font-family: 'Orbitron'; font-size: 16px; color: var(--accent); }
+        .hud-val { font-family: 'Orbitron'; color: var(--primary); font-size: 14px; }
 
+        /* --- THE BOARD --- */
         #board-container {
             position: relative; margin: 20px 0;
-            width: 90vw; max-width: 380px; aspect-ratio: 1/1;
-            border: 1px solid #30363d; border-radius: 8px; overflow: hidden;
+            width: 90vw; max-width: 400px; aspect-ratio: 1/1;
+            border: 3px solid #222; border-radius: 10px;
         }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sq-l); }
         .sq.d { background: var(--sq-d); }
-        .piece { width: 85%; height: 85%; transition: transform 0.2s; }
-
-        /* --- OVERLAYS --- */
-        #game-overlay {
-            position: absolute; inset: 0; background: rgba(13, 17, 23, 0.95);
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 500; text-align: center;
-        }
-        .win-msg { font-family: 'Orbitron'; font-size: 24px; color: var(--gold); text-shadow: 0 0 20px var(--gold); }
-
-        /* --- SHAKE --- */
-        .shake-effect { animation: victoryShake 0.5s ease-in-out infinite; }
-        @keyframes victoryShake {
-            0%, 100% { transform: translate(0,0); }
-            25% { transform: translate(-5px, 5px); }
-            50% { transform: translate(5px, -5px); }
-            75% { transform: translate(-5px, -5px); }
+        
+        /* High-Contrast Glow Pieces */
+        .piece { 
+            width: 85%; height: 85%; 
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); /* Makes black pieces visible */
         }
 
-        .dev-tag { font-size: 10px; color: #444; margin-top: 20px; }
-        .selected { background: rgba(0, 212, 255, 0.2) !important; box-shadow: inset 0 0 15px var(--accent); }
+        /* OVERLAY */
+        #victory-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 500;
+        }
+        .victory-title { font-family: 'Orbitron'; font-size: 28px; color: #ffcc00; }
+
+        /* WINNER SHAKE */
+        .winner-shake { animation: v-shake 0.4s infinite; }
+        @keyframes v-shake {
+            0% { transform: rotate(0deg); } 25% { transform: rotate(1deg); }
+            50% { transform: rotate(0deg); } 75% { transform: rotate(-1deg); }
+        }
+
+        .selected { background: rgba(0, 242, 255, 0.3) !important; box-shadow: inset 0 0 15px var(--primary); }
     </style>
 </head>
 <body>
 
     <div id="start-page">
-        <div class="logo-area">
-            <h1>CHESS DEITY</h1>
-            <p>DESIGNED BY MAUTASIM</p>
-        </div>
-        <button class="menu-btn" onclick="startMode('bot')">PLAY WITH DEITY</button>
-        <button class="menu-btn" onclick="startMode('pass')">PASS & PLAY</button>
+        <h1 class="logo">CHESS DEITY</h1>
+        <div class="dev">MAUTASIM CORE</div>
+        <button class="btn" onclick="startAI()">VS DEITY BOT</button>
+        <button class="btn" onclick="showNameEntry()">PASS & PLAY</button>
     </div>
 
-    <div id="game-overlay">
-        <div class="win-msg" id="winner-text">MAUTASIM WINS</div>
-        <p style="font-size: 12px; color: #8b949e; margin: 15px 0;">SYSTEM OVERWRITTEN BY MAUTASIM</p>
-        <button class="menu-btn" onclick="location.reload()">CONTINUE MISSION</button>
+    <div id="name-page" style="display:none;">
+        <h2 class="logo" style="font-size:20px;">IDENTIFY PLAYERS</h2>
+        <input type="text" id="p1" placeholder="PLAYER 1 (WHITE)">
+        <input type="text" id="p2" placeholder="PLAYER 2 (BLACK)">
+        <button class="btn" onclick="startPassPlay()">ENGAGE BATTLE</button>
+    </div>
+
+    <div id="victory-overlay">
+        <div class="victory-title" id="win-msg"></div>
+        <p style="color: #666; font-size: 10px; margin-top: 15px;">SYSTEM OVERWRITTEN BY MAUTASIM</p>
+        <button class="btn" style="margin-top:30px;" onclick="location.reload()">REBOOT</button>
     </div>
 
     <div class="hud">
-        <div class="stat-box">
-            <div class="stat-label">Level</div>
-            <div class="stat-val" id="lvl-display">01</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Current Move</div>
-            <div class="stat-val" id="turn-display" style="font-size: 12px;">WHITE</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Streak</div>
-            <div class="stat-val" id="streak-display" style="color:var(--gold)">0</div>
-        </div>
+        <div>LVL: <span id="lvl-num" class="hud-val">01</span></div>
+        <div>STREAK: <span id="streak-num" class="hud-val">0</span></div>
+        <div id="turn-name" class="hud-val">WHITE</div>
     </div>
 
     <div id="board-container">
         <div id="board"></div>
     </div>
 
-    <div style="font-size: 9px; color: #30363d; letter-spacing: 2px;">MAUTASIM DEITY CORE V2.0</div>
+    <div style="font-size: 10px; color: #333;">ENCRYPTED BY MAUTASIM ENGINE</div>
 
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
     let vsBot = true;
     let selectedSq = null;
-    
-    // Persistent Stats
+    let player1 = "White";
+    let player2 = "Black";
     let level = parseInt(localStorage.getItem('m_lvl')) || 1;
     let streak = parseInt(localStorage.getItem('m_streak')) || 0;
 
-    function startMode(mode) {
-        vsBot = (mode === 'bot');
+    function startAI() {
+        vsBot = true;
+        player2 = "Deity Bot";
         document.getElementById('start-page').style.display = 'none';
-        document.getElementById('lvl-display').innerText = level.toString().padStart(2, '0');
-        document.getElementById('streak-display').innerText = streak;
+        setup();
+    }
+
+    function showNameEntry() {
+        document.getElementById('start-page').style.display = 'none';
+        document.getElementById('name-page').style.display = 'flex';
+    }
+
+    function startPassPlay() {
+        vsBot = false;
+        player1 = document.getElementById('p1').value || "P1";
+        player2 = document.getElementById('p2').value || "P2";
+        document.getElementById('name-page').style.display = 'none';
+        setup();
+    }
+
+    function setup() {
+        document.getElementById('lvl-num').innerText = level.toString().padStart(2, '0');
+        document.getElementById('streak-num').innerText = streak;
         initBoard();
     }
 
@@ -151,84 +169,77 @@
                 boardEl.appendChild(sq);
             }
         }
-        updateUI();
+        render();
     }
 
-    function updateUI() {
+    function render() {
         document.querySelectorAll('.sq').forEach(s => {
             s.innerHTML = ''; s.classList.remove('selected');
             const p = game.get(s.dataset.id);
             if (p) {
                 const img = document.createElement('img');
+                // High contrast pieces
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece';
                 s.appendChild(img);
             }
         });
-        document.getElementById('turn-display').innerText = game.turn() === 'w' ? 'WHITE' : 'BLACK';
-        checkGame();
+        document.getElementById('turn-name').innerText = game.turn() === 'w' ? player1.toUpperCase() : player2.toUpperCase();
+        checkStatus();
     }
 
     function onSelect(id) {
         if (vsBot && game.turn() === 'b') return;
-
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
                 selectedSq = null;
-                updateUI();
-                if (vsBot) setTimeout(makeBotMove, 400);
+                render();
+                if (vsBot) setTimeout(botMove, 400);
                 return;
             }
         }
-
         const p = game.get(id);
         if (p && p.color === game.turn()) {
             selectedSq = id;
-            updateUI();
+            render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
         } else {
             selectedSq = null;
-            updateUI();
+            render();
         }
     }
 
-    function makeBotMove() {
+    function botMove() {
         if (game.game_over()) return;
         const moves = game.moves();
-        // Deity Logic: Prioritize captures to be aggressive
-        const captures = moves.filter(m => m.includes('x'));
-        const move = captures.length > 0 ? captures[0] : moves[Math.floor(Math.random() * moves.length)];
+        const move = moves[Math.floor(Math.random() * moves.length)];
         game.move(move);
-        updateUI();
+        render();
     }
 
-    function checkGame() {
+    function checkStatus() {
         if (game.game_over()) {
-            const overlay = document.getElementById('game-overlay');
-            const winText = document.getElementById('winner-text');
+            const overlay = document.getElementById('victory-overlay');
+            const msg = document.getElementById('win-msg');
             overlay.style.display = 'flex';
 
             if (game.in_checkmate()) {
-                const winner = game.turn() === 'w' ? 'BLACK' : 'WHITE';
-                winText.innerText = winner + " WINS";
+                const winner = game.turn() === 'w' ? player2 : player1;
+                msg.innerText = winner.toUpperCase() + " WINS";
                 
-                // Logic for Leveling & Streak
-                if (vsBot) {
-                    if (winner === 'WHITE') {
-                        level++;
-                        streak++;
-                        localStorage.setItem('m_lvl', level);
-                        localStorage.setItem('m_streak', streak);
-                        // Trigger Victory Shake
-                        document.getElementById('board-container').classList.add('shake-effect');
-                    } else {
-                        streak = 0;
-                        localStorage.setItem('m_streak', streak);
-                    }
+                if (vsBot && winner === player1) {
+                    level++;
+                    streak++;
+                    localStorage.setItem('m_lvl', level);
+                    localStorage.setItem('m_streak', streak);
+                    document.getElementById('board-container').classList.add('winner-shake');
+                } else if (vsBot) {
+                    streak = 0;
+                    localStorage.setItem('m_streak', streak);
                 }
             } else {
-                winText.innerText = "STALEMATE";
+                msg.innerText = "DRAW / STALEMATE";
             }
         }
     }
