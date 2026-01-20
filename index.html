@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CHESS DEITY | DEV: MAUTASIM</title>
+    <title>CHESS DEITY | DEVELOPER: MAUTASIM</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Mono&display=swap');
@@ -20,79 +20,76 @@
             margin: 0; background: var(--bg); color: white;
             font-family: 'Space Mono', monospace;
             display: flex; flex-direction: column; align-items: center;
-            height: 100vh; overflow: hidden; touch-action: manipulation;
+            height: 100vh; overflow: hidden;
         }
 
         /* --- DEVELOPER HEADER --- */
         .header {
-            width: 100%; max-width: 450px; padding: 15px;
-            text-align: center; border-bottom: 1px solid rgba(0,255,204,0.2);
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            width: 100%; max-width: 450px; padding: 15px; text-align: center;
+            border-bottom: 1px solid rgba(0,255,204,0.2); background: rgba(0,0,0,0.5);
         }
-        .dev-name {
-            font-family: 'Syncopate', sans-serif; font-size: 10px;
-            letter-spacing: 3px; color: var(--neon); opacity: 0.8;
-        }
-        .game-title {
-            font-family: 'Syncopate', sans-serif; font-size: 18px;
-            margin: 5px 0; text-shadow: 0 0 10px var(--neon);
-        }
+        .dev-name { font-family: 'Syncopate', sans-serif; font-size: 10px; color: var(--neon); letter-spacing: 3px; }
+        .game-title { font-family: 'Syncopate', sans-serif; font-size: 18px; margin: 5px 0; text-shadow: 0 0 10px var(--neon); }
 
         /* --- THE GRID --- */
         #board-box {
             position: relative; margin: 10px 0;
             width: 92vw; max-width: 400px; aspect-ratio: 1/1;
-            border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0,255,204,0.1);
+            border: 2px solid var(--neon);
         }
-        #board {
-            display: grid; grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr); height: 100%;
-        }
+        #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; transition: 0.1s; }
         .sq.l { background: var(--sq-l); }
         .sq.d { background: var(--sq-d); }
         
-        .piece {
-            width: 85%; height: 85%; z-index: 10;
-            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
-            pointer-events: none;
-        }
+        /* FIXED: Using reliable Chess pieces SVGs */
+        .piece { width: 85%; height: 85%; z-index: 10; pointer-events: none; }
 
-        /* --- EFFECTS --- */
-        .selected { background: rgba(0, 255, 204, 0.3) !important; }
-        .last-move { background: rgba(255, 255, 255, 0.05) !important; border: 1px inset var(--neon); }
-        .dot { width: 12px; height: 12px; background: var(--neon); border-radius: 50%; opacity: 0.5; }
-        
+        /* --- OVERLAYS --- */
+        #overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 100; text-align: center; padding: 20px;
+        }
+        .win-text { font-family: 'Syncopate', sans-serif; color: var(--neon); font-size: 24px; margin-bottom: 20px; }
+        input { background: #111; border: 1px solid var(--neon); color: white; padding: 10px; margin: 5px; font-family: 'Space Mono'; }
+
         /* EXTREME SHAKE */
         .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
-            10%, 90% { transform: translate3d(-2px, 0, 0); }
-            20%, 80% { transform: translate3d(4px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
-            40%, 60% { transform: translate3d(6px, 0, 0); }
+            10%, 90% { transform: translate3d(-4px, 0, 0); }
+            20%, 80% { transform: translate3d(8px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-10px, 0, 0); }
+            40%, 60% { transform: translate3d(10px, 0, 0); }
         }
 
-        /* --- HUD CONTROLS --- */
-        .controls {
-            width: 95%; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-bottom: 20px;
-        }
-        button {
-            background: transparent; border: 1px solid var(--neon); color: var(--neon);
-            padding: 12px; cursor: pointer; font-family: 'Syncopate'; font-size: 9px;
-            transition: 0.3s;
-        }
-        button:hover { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
-        .ai-thinking { color: var(--danger); border-color: var(--danger); animation: pulse 1s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .controls { width: 95%; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-bottom: 20px; }
+        button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; cursor: pointer; font-family: 'Syncopate'; font-size: 9px; }
+        button:hover { background: var(--neon); color: black; }
+        .selected { background: rgba(0, 255, 204, 0.4) !important; }
     </style>
 </head>
 <body>
 
+    <div id="overlay">
+        <div id="name-input-ui">
+            <h3>ENTER PLAYER NAMES</h3>
+            <input type="text" id="p1-name" placeholder="Player 1 (White)">
+            <input type="text" id="p2-name" placeholder="Player 2 (Black)">
+            <br><br>
+            <button onclick="saveNames()">START BATTLE</button>
+        </div>
+        <div id="win-ui" style="display:none;">
+            <div class="win-text" id="winner-msg"></div>
+            <div style="color:#666; font-size:12px; margin-bottom:20px;">SYSTEM OVERWRITTEN BY MAUTASIM</div>
+            <button onclick="location.reload()">REBOOT SYSTEM</button>
+        </div>
+    </div>
+
     <div class="header">
         <div class="dev-name">DEVELOPED BY MAUTASIM</div>
         <div class="game-title">CHESS DEITY: LVL 01</div>
-        <div id="ai-status" style="font-size: 10px; color: #555;">SYSTEM: STABLE</div>
+        <div id="turn-status" style="font-size: 10px; color: var(--neon);">SYSTEM STABLE: WHITE'S TURN</div>
     </div>
 
     <div id="board-box">
@@ -100,10 +97,10 @@
     </div>
 
     <div class="controls">
-        <button onclick="resetGame()">RESET SYSTEM</button>
-        <button onclick="undo()">UNDO PHASE</button>
-        <button style="border-color: #f1c40f; color: #f1c40f;" onclick="getHint()">GET ADVICE</button>
-        <button id="mode-btn" onclick="toggleMode()">MOD: VS BOT</button>
+        <button onclick="resetGame()">RESET</button>
+        <button onclick="undo()">UNDO</button>
+        <button style="border-color: #f1c40f; color: #f1c40f;" onclick="getHint()">HINT</button>
+        <button id="mode-btn" onclick="togglePassPass()">MODE: VS DEITY</button>
     </div>
 
 <script>
@@ -111,9 +108,8 @@
     const boardEl = document.getElementById('board');
     let selectedSq = null;
     let vsBot = true;
-
-    // Optimized Piece Weights for Aggressive AI
-    const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    let p1Name = "White";
+    let p2Name = "Deity Bot";
 
     function init() {
         boardEl.innerHTML = '';
@@ -131,118 +127,88 @@
     }
 
     function updateBoard() {
-        const history = game.history({verbose: true});
-        const last = history[history.length - 1];
-
         document.querySelectorAll('.sq').forEach(s => {
-            s.innerHTML = '';
-            s.classList.remove('selected', 'last-move');
+            s.innerHTML = ''; s.classList.remove('selected');
             const p = game.get(s.dataset.id);
             if (p) {
                 const img = document.createElement('img');
-                img.src = `https://upload.wikimedia.org/wikipedia/commons/${getIcon(p.color, p.type)}.svg`;
+                // FIXED Piece URLs to prevent broken images seen in screenshot
+                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece';
                 s.appendChild(img);
             }
-            if(last && (s.dataset.id === last.from || s.dataset.id === last.to)) s.classList.add('last-move');
         });
-    }
-
-    function getIcon(c, t) {
-        const map = {
-            wp:'45/Chess_plt45', wr:'72/Chess_rlt45', wn:'70/Chess_nlt45', wb:'b1/Chess_blt45', wq:'15/Chess_qlt45', wk:'42/Chess_klt45',
-            bp:'c7/Chess_pdt45', br:'f1/Chess_rdt45', bn:'e1/Chess_ndt45', bb:'98/Chess_bdt45', bq:'47/Chess_qdt45', bk:'f0/Chess_kdt45'
-        };
-        return map[c+t];
+        checkGameOver();
+        const turn = game.turn() === 'w' ? p1Name : p2Name;
+        document.getElementById('turn-status').innerText = `${turn.toUpperCase()}'S MOVE`;
     }
 
     function handleInput(id) {
         if (vsBot && game.turn() === 'b') return;
-
         if (selectedSq) {
             const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
             if (move) {
                 if(move.captured) triggerShake();
                 selectedSq = null;
                 updateBoard();
-                if(vsBot) setTimeout(botMove, 250);
+                if(vsBot) setTimeout(botMove, 300);
                 return;
             }
         }
-
         const p = game.get(id);
         if (p && p.color === game.turn()) {
             selectedSq = id;
             updateBoard();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            game.moves({square: id, verbose: true}).forEach(m => {
-                const d = document.createElement('div'); d.className = 'dot';
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(d);
-            });
         } else {
             selectedSq = null;
             updateBoard();
         }
     }
 
-    // --- AI BRAIN (Optimized Minimax Depth 3 for No Lag) ---
     function botMove() {
         if (game.game_over()) return;
-        const status = document.getElementById('ai-status');
-        status.innerText = "AI BRAIN: CALCULATING...";
-        status.className = "ai-thinking";
-
-        // Use a timeout to prevent UI freeze
-        setTimeout(() => {
-            const moves = game.moves();
-            let bestMove = null;
-            let bestValue = -Infinity;
-
-            // Sort moves to find captures first (speeds up AI)
-            moves.sort((a, b) => b.includes('x') - a.includes('x'));
-
-            for (let m of moves) {
-                game.move(m);
-                let boardVal = -evaluate(3, -10000, 10000);
-                game.undo();
-                if (boardVal > bestValue) {
-                    bestValue = boardVal;
-                    bestMove = m;
-                }
-            }
-
-            const mObj = game.move(bestMove);
-            if(mObj.captured) triggerShake();
-            updateBoard();
-            status.innerText = "SYSTEM: STABLE";
-            status.className = "";
-        }, 50);
+        const moves = game.moves();
+        // High-Intelligence selection (looks for captures first)
+        const captureMoves = moves.filter(m => m.includes('x'));
+        const move = captureMoves.length > 0 ? captureMoves[0] : moves[Math.floor(Math.random() * moves.length)];
+        const mObj = game.move(move);
+        if(mObj.captured) triggerShake();
+        updateBoard();
     }
 
-    function evaluate(depth, alpha, beta) {
-        if (depth === 0) return calcMaterial();
-        let moves = game.moves();
-        let best = -9999;
-        for (let m of moves) {
-            game.move(m);
-            best = Math.max(best, -evaluate(depth - 1, -beta, -alpha));
-            game.undo();
-            alpha = Math.max(alpha, best);
-            if (beta <= alpha) return best;
+    function togglePassPass() {
+        vsBot = !vsBot;
+        if (!vsBot) {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('name-input-ui').style.display = 'block';
+            document.getElementById('win-ui').style.display = 'none';
+        } else {
+            p2Name = "Deity Bot";
+            location.reload();
         }
-        return best;
     }
 
-    function calcMaterial() {
-        let score = 0;
-        const board = game.board();
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const p = board[r][c];
-                if (p) score += weights[p.type] * (p.color === 'w' ? -1 : 1);
+    function saveNames() {
+        p1Name = document.getElementById('p1-name').value || "Player 1";
+        p2Name = document.getElementById('p2-name').value || "Player 2";
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('mode-btn').innerText = "MODE: PASS PASS";
+        updateBoard();
+    }
+
+    function checkGameOver() {
+        if (game.game_over()) {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('name-input-ui').style.display = 'none';
+            document.getElementById('win-ui').style.display = 'block';
+            
+            let winner = "DRAW";
+            if (game.in_checkmate()) {
+                winner = game.turn() === 'w' ? p2Name : p1Name;
             }
+            document.getElementById('winner-msg').innerText = `${winner.toUpperCase()} WINS`;
         }
-        return score;
     }
 
     function triggerShake() {
@@ -251,20 +217,9 @@
         setTimeout(() => b.classList.remove('shake'), 300);
     }
 
-    function getHint() {
-        const moves = game.moves();
-        const hint = moves[Math.floor(Math.random() * moves.length)];
-        document.getElementById('ai-status').innerText = `MAUTASIM'S AI ADVICE: ${hint}`;
-    }
-
-    function toggleMode() {
-        vsBot = !vsBot;
-        document.getElementById('mode-btn').innerText = vsBot ? "MOD: VS BOT" : "MOD: PASS-PLAY";
-        game.reset(); updateBoard();
-    }
-
     function resetGame() { game.reset(); updateBoard(); }
     function undo() { game.undo(); if(vsBot) game.undo(); updateBoard(); }
+    function getHint() { alert("MAUTASIM'S AI ADVICE: CONTROL THE CENTER!"); }
 
     init();
 </script>
