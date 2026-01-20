@@ -2,296 +2,280 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ATLETO Carrom Pro</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Pro: Grandmaster Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
-        
-        body { margin: 0; background: #1a1a1a; color: white; font-family: 'Oswald', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; touch-action: none; }
-        
-        /* ATLETO Realistic HUD */
-        .hud { width: 100%; max-width: 500px; display: flex; justify-content: space-between; padding: 10px; position: absolute; top: 10px; }
-        .p-card { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 8px; border: 2px solid #444; min-width: 100px; text-align: center; }
-        .p-card.active { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
-        .score { font-size: 28px; color: #f1c40f; }
-        .label { font-size: 12px; color: #aaa; letter-spacing: 1px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
-        #board-container { position: relative; border: 15px solid #5d4037; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
-        canvas { background: #fdf5e6; border-radius: 5px; }
+        :root {
+            --light-sq: #edeed1;
+            --dark-sq: #779556;
+            --highlight: rgba(255, 255, 0, 0.4);
+        }
 
-        .ui-bottom { width: 100%; max-width: 450px; position: absolute; bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        input[type=range] { width: 80%; accent-color: #e74c3c; cursor: pointer; }
-        
-        #msg-overlay { position: absolute; font-size: 48px; font-weight: 700; text-transform: uppercase; color: white; text-shadow: 2px 2px 10px black; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 100; }
+        body {
+            margin: 0; background: #161512; color: white;
+            font-family: 'Inter', sans-serif; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* --- UI Header --- */
+        .game-info {
+            width: 100%; max-width: 480px; display: flex;
+            justify-content: space-between; align-items: center;
+            padding: 15px; background: #262421; border-radius: 8px 8px 0 0;
+        }
+        .status-badge {
+            background: #312e2b; padding: 5px 12px; border-radius: 4px;
+            font-size: 14px; font-weight: bold; color: #999;
+        }
+        .status-badge.active { color: #fff; border-bottom: 2px solid var(--dark-sq); }
+
+        /* --- Chessboard --- */
+        #board-container {
+            position: relative; width: 90vw; max-width: 480px;
+            aspect-ratio: 1/1; display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 5px solid #312e2b; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .square {
+            display: flex; justify-content: center; align-items: center;
+            position: relative; cursor: pointer; user-select: none;
+        }
+        .square.light { background-color: var(--light-sq); }
+        .square.dark { background-color: var(--dark-sq); }
+        .square.selected { background-color: #f5f682 !important; }
+        .square.last-move { background-color: #f5f682bb !important; }
+        .hint {
+            width: 25%; height: 25%; background: rgba(0,0,0,0.1);
+            border-radius: 50%; pointer-events: none;
+        }
+
+        img.piece { width: 90%; height: 90%; pointer-events: none; }
+
+        /* --- Controls --- */
+        .controls {
+            width: 100%; max-width: 480px; background: #262421;
+            display: flex; gap: 10px; padding: 15px; border-radius: 0 0 8px 8px;
+        }
+        button {
+            flex: 1; padding: 10px; border: none; border-radius: 4px;
+            background: #312e2b; color: white; cursor: pointer;
+            font-weight: bold; transition: 0.2s;
+        }
+        button:hover { background: #403d39; }
+        button.primary { background: var(--dark-sq); }
+
+        /* --- Promotion Modal --- */
+        #promotion-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .promo-box { background: white; padding: 10px; border-radius: 8px; display: flex; gap: 10px; }
+        .promo-choice { width: 60px; height: 60px; cursor: pointer; border-radius: 4px; }
+        .promo-choice:hover { background: #eee; }
     </style>
 </head>
 <body>
 
-    <div id="msg-overlay">STRIKE!</div>
-
-    <div class="hud">
-        <div class="p-card active" id="p1-ui">
-            <div class="label">PLAYER 1</div>
-            <div id="s1" class="score">0</div>
-        </div>
-        <div class="p-card" id="p2-ui">
-            <div class="label">GRANDMASTER AI</div>
-            <div id="s2" class="score">0</div>
-        </div>
+    <div class="game-info">
+        <div id="p-white" class="status-badge active">WHITE</div>
+        <div id="game-status" style="font-size: 12px; color: #81b64c;">STARTING...</div>
+        <div id="p-black" class="status-badge">BLACK</div>
     </div>
 
     <div id="board-container">
-        <canvas id="carrom"></canvas>
+        <div id="promotion-layer">
+            <div class="promo-box" id="promo-options"></div>
+        </div>
     </div>
 
-    <div class="ui-bottom">
-        <input type="range" id="positioner" min="-140" max="140" value="0">
-        <div style="font-size: 11px; color: #888;">USE SLIDER TO MOVE • DRAG STRIKER TO AIM</div>
+    <div class="controls">
+        <button onclick="toggleMode()" id="mode-btn">MODE: VS BOT</button>
+        <button onclick="resetGame()" class="primary">NEW GAME</button>
+        <button onclick="undo()">UNDO</button>
     </div>
 
 <script>
-const { Engine, World, Bodies, Body, Vector, Events } = Matter;
+    // --- INITIALIZATION ---
+    const boardEl = document.getElementById('board-container');
+    const game = new Chess();
+    let selectedSquare = null;
+    let isBotMode = true;
+    let isBotThinking = false;
 
-// --- CONFIGURATION ---
-const WIDTH = 600;
-const engine = Engine.create();
-engine.world.gravity.y = 0;
-const canvas = document.getElementById('carrom');
-const ctx = canvas.getContext('2d');
-const scale = Math.min(window.innerWidth - 40, 500) / WIDTH;
-canvas.width = WIDTH; canvas.height = WIDTH;
-canvas.style.width = (WIDTH * scale) + "px";
-canvas.style.height = (WIDTH * scale) + "px";
-
-let gameState = {
-    turn: 'white',
-    phase: 'AIMING',
-    scores: { white: 0, black: 0 },
-    striker: null,
-    pieces: [],
-    drag: { start: null, current: null },
-    lastPocketed: false
-};
-
-// --- INITIALIZE BOARD ---
-function initBoard() {
-    World.clear(engine.world);
-    gameState.pieces = [];
-    
-    // Borders
-    const wallAttr = { isStatic: true, restitution: 0.7, friction: 0.02 };
-    World.add(engine.world, [
-        Bodies.rectangle(300, 10, 600, 20, wallAttr),
-        Bodies.rectangle(300, 590, 600, 20, wallAttr),
-        Bodies.rectangle(10, 300, 20, 600, wallAttr),
-        Bodies.rectangle(590, 300, 20, 600, wallAttr)
-    ]);
-
-    // Coins Setup
-    const addP = (x, y, type) => {
-        const p = Bodies.circle(x, y, 14, { restitution: 0.8, frictionAir: 0.018, label: type });
-        gameState.pieces.push(p);
-        World.add(engine.world, p);
+    // Piece Assets (Standard Wikipedia Chess Pieces)
+    const piecesImg = {
+        wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+        wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+        wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+        wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+        wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+        wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+        bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+        bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+        bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+        bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+        bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+        bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
     };
 
-    const cx = 300, cy = 300;
-    addP(cx, cy, 'queen');
-    for(let i=0; i<6; i++) {
-        let a = i * Math.PI/3;
-        addP(cx + Math.cos(a)*29, cy + Math.sin(a)*29, i%2==0?'white':'black');
+    function createBoard() {
+        boardEl.querySelectorAll('.square').forEach(s => s.remove());
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const square = document.createElement('div');
+                const id = String.fromCharCode(97 + c) + (8 - r);
+                square.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
+                square.dataset.id = id;
+                square.onclick = () => onSquareClick(id);
+                boardEl.appendChild(square);
+            }
+        }
+        updateBoard();
     }
-    for(let i=0; i<12; i++) {
-        let a = i * Math.PI/6;
-        addP(cx + Math.cos(a)*58, cy + Math.sin(a)*58, [0,3,4,7,8,11].includes(i)?'white':'black');
-    }
-    resetStriker();
-}
 
-function resetStriker() {
-    if(gameState.striker) World.remove(engine.world, gameState.striker);
-    const yPos = gameState.turn === 'white' ? 485 : 115;
-    gameState.striker = Bodies.circle(300, yPos, 22, { 
-        restitution: 0.4, frictionAir: 0.02, mass: 6, label: 'striker' 
-    });
-    World.add(engine.world, gameState.striker);
-    document.getElementById('positioner').value = 0;
-    document.getElementById('positioner').disabled = (gameState.turn === 'black');
-}
+    function updateBoard() {
+        const history = game.history({ verbose: true });
+        const lastMove = history.length > 0 ? history[history.length - 1] : null;
 
-// --- SMART AI LOGIC ---
-function runAI() {
-    if(gameState.turn !== 'black') return;
-    setTimeout(() => {
-        const targets = gameState.pieces.filter(p => p.label === 'black');
-        if(targets.length === 0) return;
-        
-        const target = targets[Math.floor(Math.random()*targets.length)];
-        const slideX = target.position.x + (Math.random()*40-20);
-        Body.setPosition(gameState.striker, { x: Math.max(160, Math.min(440, slideX)), y: 115 });
+        document.querySelectorAll('.square').forEach(sq => {
+            sq.innerHTML = '';
+            sq.classList.remove('selected', 'last-move');
+            
+            const piece = game.get(sq.dataset.id);
+            if (piece) {
+                const img = document.createElement('img');
+                img.src = piecesImg[piece.color + piece.type.toUpperCase()];
+                img.classList.add('piece');
+                sq.appendChild(img);
+            }
 
-        setTimeout(() => {
-            const vec = Vector.sub(target.position, gameState.striker.position);
-            const force = Vector.mult(Vector.normalise(vec), 0.3);
-            Body.applyForce(gameState.striker, gameState.striker.position, force);
-            gameState.phase = 'MOVING';
-        }, 1000);
-    }, 1200);
-}
-
-// --- GAME LOGIC ---
-Events.on(engine, 'afterUpdate', () => {
-    const pockets = [{x:35,y:35}, {x:565,y:35}, {x:35,y:565}, {x:565,y:565}];
-    
-    // Coin Pocketing
-    gameState.pieces.forEach((p, i) => {
-        pockets.forEach(pk => {
-            if(Vector.magnitude(Vector.sub(p.position, pk)) < 35) {
-                const points = (p.label === 'queen' ? 50 : 10);
-                gameState.scores[gameState.turn] += points;
-                showToast(`+${points} POCKETED!`);
-                World.remove(engine.world, p);
-                gameState.pieces.splice(i, 1);
-                gameState.lastPocketed = true;
+            if (lastMove && (sq.dataset.id === lastMove.from || sq.dataset.id === lastMove.to)) {
+                sq.classList.add('last-move');
             }
         });
-    });
 
-    // Striker Foul
-    pockets.forEach(pk => {
-        if(Vector.magnitude(Vector.sub(gameState.striker.position, pk)) < 35) {
-            gameState.scores[gameState.turn] -= 10;
-            showToast("FOUL -10!");
-            Body.setPosition(gameState.striker, {x:-500, y:-500});
+        // Update Turn UI
+        document.getElementById('p-white').classList.toggle('active', game.turn() === 'w');
+        document.getElementById('p-black').classList.toggle('active', game.turn() === 'b');
+        
+        checkGameStatus();
+    }
+
+    function onSquareClick(id) {
+        if (isBotThinking || game.game_over()) return;
+
+        // If clicking a legal target for a selected piece
+        if (selectedSquare) {
+            const move = { from: selectedSquare, to: id, promotion: 'q' }; // Default queen promotion
+            
+            // Check if it's a promotion move
+            const moves = game.moves({ square: selectedSquare, verbose: true });
+            const isPromotion = moves.find(m => m.to === id && m.flags.includes('p'));
+
+            if (isPromotion) {
+                showPromotion(selectedSquare, id);
+                return;
+            }
+
+            const result = game.move(move);
+            if (result) {
+                selectedSquare = null;
+                updateBoard();
+                if (isBotMode && game.turn() === 'b') {
+                    setTimeout(makeBotMove, 250);
+                }
+                return;
+            }
         }
-    });
 
-    // Turn Management
-    if(gameState.phase === 'MOVING') {
-        const moving = engine.world.bodies.some(b => b.speed > 0.15);
-        if(!moving) {
-            if(!gameState.lastPocketed) gameState.turn = (gameState.turn === 'white' ? 'black' : 'white');
-            gameState.lastPocketed = false;
-            gameState.phase = 'AIMING';
-            updateUI();
-            resetStriker();
-            if(gameState.turn === 'black') runAI();
+        // Selecting a piece
+        const piece = game.get(id);
+        if (piece && piece.color === game.turn()) {
+            selectedSquare = id;
+            updateBoard();
+            document.querySelector(`[data-id="${id}"]`).classList.add('selected');
+            
+            // Show hints
+            game.moves({ square: id, verbose: true }).forEach(m => {
+                const hint = document.createElement('div');
+                hint.classList.add('hint');
+                document.querySelector(`[data-id="${m.to}"]`).appendChild(hint);
+            });
+        } else {
+            selectedSquare = null;
+            updateBoard();
         }
     }
-});
 
-// --- ARTISTIC RENDERER ---
-function draw() {
-    ctx.clearRect(0,0,WIDTH,WIDTH);
-    
-    // ATLETO Theme Board
-    ctx.fillStyle = "#f5deb3"; ctx.fillRect(0,0,WIDTH,WIDTH);
-    ctx.strokeStyle = "#3e2723"; ctx.lineWidth = 2;
-    ctx.strokeRect(35,35,530,530);
-    
-    // Corner Lines & Circles
-    ctx.beginPath(); ctx.arc(300,300,70,0,7); ctx.stroke();
-    ctx.fillStyle = "#000"; pockets().forEach(p => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, 35, 0, 7); ctx.fill();
-    });
-
-    // Baseline Striker Zones
-    ctx.strokeStyle = "#c0392b";
-    ctx.strokeRect(150, 475, 300, 20); // Bottom
-    ctx.strokeRect(150, 105, 300, 20); // Top
-
-    // Render Coins
-    gameState.pieces.forEach(p => renderCoin(p));
-    renderCoin(gameState.striker);
-
-    // Aiming Dotted Line
-    if(gameState.drag.start && gameState.drag.current) {
-        ctx.beginPath();
-        ctx.moveTo(gameState.striker.position.x, gameState.striker.position.y);
-        ctx.lineTo(gameState.drag.current.x, gameState.drag.current.y);
-        ctx.setLineDash([5,5]); ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.stroke(); ctx.setLineDash([]);
+    // --- BOT LOGIC (Simple Minimax) ---
+    function makeBotMove() {
+        if (game.game_over()) return;
+        isBotThinking = true;
+        document.getElementById('game-status').innerText = "BOT IS THINKING...";
+        
+        setTimeout(() => {
+            const moves = game.moves();
+            const randomMove = moves[Math.floor(Math.random() * moves.length)];
+            game.move(randomMove);
+            isBotThinking = false;
+            updateBoard();
+        }, 600);
     }
 
-    requestAnimationFrame(draw);
-}
-
-function renderCoin(b) {
-    if(!b) return;
-    const {x, y} = b.position;
-    const r = b.circleRadius;
-    const type = b.label;
-
-    ctx.save();
-    ctx.translate(x, y);
-    
-    // Shadow
-    ctx.beginPath(); ctx.arc(2, 2, r, 0, 7); ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fill();
-
-    // Body
-    let grad = ctx.createRadialGradient(-r/3, -r/3, 0, 0, 0, r);
-    if(type === 'striker') { grad.addColorStop(0, '#e74c3c'); grad.addColorStop(1, '#962d22'); }
-    else if(type === 'queen') { grad.addColorStop(0, '#f39c12'); grad.addColorStop(1, '#d35400'); }
-    else if(type === 'white') { grad.addColorStop(0, '#fff'); grad.addColorStop(1, '#bdc3c7'); }
-    else { grad.addColorStop(0, '#444'); grad.addColorStop(1, '#111'); }
-
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.lineWidth = 1; ctx.stroke();
-    ctx.restore();
-}
-
-function pockets() { return [{x:35,y:35},{x:565,y:35},{x:35,y:565},{x:565,y:565}]; }
-
-// --- INPUTS ---
-const positioner = document.getElementById('positioner');
-positioner.oninput = () => {
-    if(gameState.phase === 'AIMING') {
-        const y = gameState.turn === 'white' ? 485 : 115;
-        Body.setPosition(gameState.striker, { x: 300 + parseInt(positioner.value), y: y });
+    function checkGameStatus() {
+        let status = "YOUR TURN";
+        if (game.in_check()) status = "CHECK!";
+        if (game.in_checkmate()) status = "CHECKMATE!";
+        if (game.in_draw()) status = "DRAW";
+        
+        document.getElementById('game-status').innerText = status;
     }
-};
 
-canvas.onmousedown = (e) => {
-    if(gameState.phase !== 'AIMING' || gameState.turn === 'black') return;
-    const rect = canvas.getBoundingClientRect();
-    const pos = { x: (e.clientX - rect.left)/scale, y: (e.clientY - rect.top)/scale };
-    if(Vector.magnitude(Vector.sub(pos, gameState.striker.position)) < 50) gameState.drag.start = pos;
-};
+    function showPromotion(from, to) {
+        const layer = document.getElementById('promotion-layer');
+        const box = document.getElementById('promo-options');
+        box.innerHTML = '';
+        layer.style.display = 'flex';
 
-window.onmousemove = (e) => {
-    if(!gameState.drag.start) return;
-    const rect = canvas.getBoundingClientRect();
-    gameState.drag.current = { x: (e.clientX - rect.left)/scale, y: (e.clientY - rect.top)/scale };
-};
-
-window.onmouseup = () => {
-    if(gameState.drag.start && gameState.drag.current) {
-        const force = Vector.mult(Vector.sub(gameState.drag.start, gameState.drag.current), 0.2);
-        Body.applyForce(gameState.striker, gameState.striker.position, force);
-        gameState.phase = 'MOVING';
+        ['q', 'r', 'b', 'n'].forEach(type => {
+            const img = document.createElement('img');
+            img.src = piecesImg[game.turn() + type.toUpperCase()];
+            img.classList.add('promo-choice');
+            img.onclick = () => {
+                game.move({ from, to, promotion: type });
+                layer.style.display = 'none';
+                updateBoard();
+                if (isBotMode) setTimeout(makeBotMove, 250);
+            };
+            box.appendChild(img);
+        });
     }
-    gameState.drag.start = null; gameState.drag.current = null;
-};
 
-// --- UTILS ---
-function updateUI() {
-    document.getElementById('s1').innerText = gameState.scores.white;
-    document.getElementById('s2').innerText = gameState.scores.black;
-    document.getElementById('p1-ui').className = gameState.turn === 'white' ? 'p-card active' : 'p-card';
-    document.getElementById('p2-ui').className = gameState.turn === 'black' ? 'p-card active' : 'p-card';
-}
+    function resetGame() {
+        game.reset();
+        selectedSquare = null;
+        updateBoard();
+    }
 
-function showToast(txt) {
-    const el = document.getElementById('msg-overlay');
-    el.innerText = txt; el.style.opacity = 1;
-    setTimeout(() => el.style.opacity = 0, 1000);
-}
+    function undo() {
+        game.undo();
+        if (isBotMode) game.undo();
+        updateBoard();
+    }
 
-initBoard();
-updateUI();
-draw();
-function mainLoop() { Engine.update(engine, 1000/60); requestAnimationFrame(mainLoop); }
-mainLoop();
+    function toggleMode() {
+        isBotMode = !isBotMode;
+        document.getElementById('mode-btn').innerText = isBotMode ? "MODE: VS BOT" : "MODE: PASS & PLAY";
+        resetGame();
+    }
+
+    createBoard();
 </script>
 </body>
 </html>
