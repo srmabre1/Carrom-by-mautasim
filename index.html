@@ -9,102 +9,90 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        
-        :root { 
-            --p: #00d4ff; --bg: #0a0e17; --c: #141b26; 
-            /* High-contrast board colors that resist dark-mode inversion */
-            --sl: #dee3e6; --sd: #769656; 
-        }
-
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
-
-        /* --- THE ANTI-DARK MODE FIX --- */
-        img.piece { 
-            width: 90%; z-index: 5; pointer-events: none; 
-            /* This 're-inverts' the piece if the browser forced dark mode on it */
-            filter: invert(0) !important;
-        }
-
-        /* If your browser forces an inversion, this media query tries to flip it back */
-        @media (prefers-color-scheme: dark) {
-            img.piece { filter: brightness(1.2) contrast(1.1); }
-        }
-
+        img.piece { width: 90%; z-index: 5; pointer-events: none; filter: invert(0) !important; }
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
-
         .architect-tag { font-size: 22px; font-weight: 900; color: var(--p); text-shadow: 0 0 15px var(--p); letter-spacing: 3px; margin: 15px 0; text-transform: uppercase; }
-        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        
-        .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 1px solid #222; text-align: center; }
+        .dev-credit { font-size: 8px; color: #555; letter-spacing: 2px; margin-top: -10px; margin-bottom: 10px; }
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
+        .auth-card { background: var(--c); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; text-align: center; }
         input { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
-        
-        .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 10px 0; border: 1px solid #333; position: relative; }
-        .xp-fill { height: 100%; background: var(--p); width: 0%; transition: 1s ease; box-shadow: 0 0 15px var(--p); }
-
+        .theme-grid { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+        .theme-opt { width: 50px; height: 50px; border: 2px solid #444; border-radius: 8px; cursor: pointer; display: flex; flex-wrap: wrap; overflow: hidden; }
+        .theme-opt div { width: 50%; height: 50%; }
+        .theme-opt.active { border-color: var(--p); box-shadow: 0 0 10px var(--p); }
+        .xp-bar-container { width: 80%; height: 8px; background: #111; border-radius: 10px; margin: 5px 0; border: 1px solid #333; }
+        .xp-fill { height: 100%; background: var(--p); width: 0%; transition: 1s ease; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; margin-top: 10px;}
+        .menu-item { background: var(--c); border: 1px solid #333; padding: 12px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
+        .menu-item span { display: block; font-size: 9px; font-weight: 900; color: #fff; }
+        #history-list { width: 90%; max-height: 250px; overflow-y: auto; margin-top: 10px; border-top: 1px solid #222; }
+        .history-item { font-size: 10px; padding: 8px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; font-family: 'Roboto Mono'; }
+        .win { color: #4caf50; } .loss { color: #f44336; } .draw { color: #888; }
         .hud { width: 100%; background: var(--c); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); box-sizing: border-box; margin-top: 55px; }
-        .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--p); width: 45%; }
-
         #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--c); position: relative; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .selected { background: rgba(255, 255, 0, 0.5) !important; }
-        .move-dot { width: 16px; height: 16px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 2px solid white; pointer-events: none; }
-
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
-        .menu-item { background: var(--c); border: 1px solid #333; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
-        .menu-item span { display: block; font-size: 9px; font-weight: 900; color: #fff; }
     </style>
 </head>
 <body onclick="initAudio()">
 
     <div id="global-nav" class="nav-ui" style="display:none">
         <div class="btn-ui" onclick="showDashboard()">🏠 HOME</div>
-        <div class="btn-ui" onclick="goBack()">← BACK</div>
     </div>
 
     <div id="auth-screen" class="overlay">
         <div class="architect-tag">ARCHITECT PRO</div>
+        <div class="dev-credit">DEVELOPED BY MAUTASIM</div>
         <div class="auth-card">
-            <h2 id="auth-title">LOGIN</h2>
+            <h2 id="auth-title" style="font-size:14px">INITIALIZE SYSTEM</h2>
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSWORD">
-            <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">SIGN UP</p>
+            <button class="btn-main" onclick="handleAuth()">ENTER</button>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="toggleAuth()">CREATE ACCOUNT</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
-        <div class="architect-tag">MAUTASIM</div>
+        <div class="architect-tag">ARCHITECT</div>
+        <div class="dev-credit">BY MAUTASIM</div>
         <div id="lvl-status" style="font-size: 12px; color: var(--p);">LVL 1</div>
         <div class="xp-bar-container"><div id="xp-visual" class="xp-fill"></div></div>
-        <div id="xp-text" style="font-size: 10px; color: #888; margin-bottom: 20px;">0 / 100 XP</div>
+        
         <div class="dashboard">
-            <div class="menu-item" onclick="startGame('bot')"><span>ULTRA AI</span></div>
-            <div class="menu-item" onclick="showOnlineSetup()"><span>ONLINE</span></div>
-            <div class="menu-item" onclick="showLocalSetup()"><span>LOCAL PASS</span></div>
+            <div class="menu-item" onclick="prepareGame('bot')"><span>ULTRA AI</span></div>
+            <div class="menu-item" onclick="prepareGame('online')"><span>ONLINE</span></div>
+            <div class="menu-item" onclick="prepareGame('pass')"><span>LOCAL PASS</span></div>
             <div class="menu-item" onclick="doLogout()"><span>LOGOUT</span></div>
         </div>
+
+        <p style="font-size: 10px; color: #555; margin-top: 20px;">RECENT MATCHES (20)</p>
+        <div id="history-list"></div>
     </div>
 
-    <div id="local-setup" class="overlay" style="display:none">
+    <div id="game-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h2>LOCAL PASS</h2>
-            <input type="text" id="p1-local" placeholder="PLAYER 1 (White)">
-            <input type="text" id="p2-local" placeholder="PLAYER 2 (Black)">
-            <button class="btn-main" onclick="startGame('pass')">START BATTLE</button>
-            <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
-        </div>
-    </div>
-
-    <div id="online-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h2>ONLINE LINK</h2>
-            <p style="font-size:10px;">YOUR ID: <span id="my-id" style="color:var(--p)">...</span></p>
-            <input type="text" id="peer-id-in" placeholder="FRIEND UID">
-            <button class="btn-main" onclick="connectToPeer()">CONNECT</button>
+            <h2 id="setup-title" style="font-size:14px">PREPARE BATTLE</h2>
+            <div id="local-inputs" style="display:none">
+                <input type="text" id="p1-local" placeholder="PLAYER 1 (White)">
+                <input type="text" id="p2-local" placeholder="PLAYER 2 (Black)">
+            </div>
+            <div id="online-inputs" style="display:none">
+                <p style="font-size:9px;">UID: <span id="my-id" style="color:var(--p)">...</span></p>
+                <input type="text" id="peer-id-in" placeholder="OPPONENT UID">
+            </div>
+            <p style="font-size: 9px; color: var(--p); margin-top:10px">BOARD THEME</p>
+            <div class="theme-grid">
+                <div class="theme-opt active" id="t-classic" onclick="setTheme('classic')"><div style="background:#dee3e6"></div><div style="background:#769656"></div><div style="background:#769656"></div><div style="background:#dee3e6"></div></div>
+                <div class="theme-opt" id="t-neon" onclick="setTheme('neon')"><div style="background:#1a1a1a"></div><div style="background:#00d4ff"></div><div style="background:#00d4ff"></div><div style="background:#1a1a1a"></div></div>
+                <div class="theme-opt" id="t-wood" onclick="setTheme('wood')"><div style="background:#ebecd0"></div><div style="background:#779556"></div><div style="background:#779556"></div><div style="background:#ebecd0"></div></div>
+            </div>
+            <button class="btn-main" onclick="confirmStart()">START</button>
             <button class="btn-main" style="background:none; border:1px solid #333; color:#555" onclick="showDashboard()">BACK</button>
         </div>
     </div>
@@ -124,7 +112,42 @@
 <script>
     const game = new Chess();
     const boardEl = document.getElementById('board');
-    let currentUser = null, vsBot = true, isOnline = false, isPass = false, myColor = 'w', peer = null, conn = null, selectedSq = null, audioCtx = null, authMode = 'login';
+    let currentUser = null, vsBot = true, isOnline = false, isPass = false, myColor = 'w', peer = null, conn = null, selectedSq = null, audioCtx = null, authMode = 'login', currentMode = 'bot';
+
+    const themes = { classic: { sl: '#dee3e6', sd: '#769656' }, neon: { sl: '#1a1a1a', sd: '#00d4ff' }, wood: { sl: '#ebecd0', sd: '#779556' } };
+
+    function setTheme(t) {
+        document.querySelectorAll('.theme-opt').forEach(el => el.classList.remove('active'));
+        document.getElementById('t-' + t).classList.add('active');
+        document.documentElement.style.setProperty('--sl', themes[t].sl);
+        document.documentElement.style.setProperty('--sd', themes[t].sd);
+    }
+
+    function saveMatch(opponent, result) {
+        let history = JSON.parse(localStorage.getItem(`history_${currentUser}`)) || [];
+        const match = { 
+            opp: opponent, 
+            res: result, 
+            date: new Date().toLocaleDateString([], {month:'short', day:'numeric'}),
+            mode: isOnline ? 'Online' : (vsBot ? 'AI' : 'Local')
+        };
+        history.unshift(match);
+        if(history.length > 20) history.pop();
+        localStorage.setItem(`history_${currentUser}`, JSON.stringify(history));
+    }
+
+    function loadHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        let history = JSON.parse(localStorage.getItem(`history_${currentUser}`)) || [];
+        history.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            const resClass = m.res === 'WIN' ? 'win' : (m.res === 'LOSS' ? 'loss' : 'draw');
+            div.innerHTML = `<span>${m.date} vs ${m.opp}</span> <span class="${resClass}">${m.res}</span>`;
+            list.appendChild(div);
+        });
+    }
 
     function getStats() {
         let l = parseInt(localStorage.getItem(`lvl_${currentUser}`)) || 1;
@@ -132,56 +155,55 @@
         return { lvl: l, xp: x, next: 100 };
     }
 
-    function addXP() {
-        let s = getStats(); s.xp += 50;
+    function addXP(isWin) {
+        let s = getStats(); 
+        if(isWin) s.xp += 50; else s.xp += 10;
         if(s.xp >= 100) { s.lvl++; s.xp = 0; }
         localStorage.setItem(`lvl_${currentUser}`, s.lvl);
         localStorage.setItem(`xp_${currentUser}`, s.xp);
-        return s.xp === 0 ? "LEVEL UP!" : "+50 XP SECURED";
+        return s.xp === 0 ? "LEVEL UP!" : (isWin ? "+50 XP" : "+10 XP");
     }
 
-    function handleAuth() {
-        const u = document.getElementById('user-in').value.trim().toLowerCase();
-        const p = document.getElementById('pass-in').value.trim();
-        if(!u || !p) return;
-        if(authMode === 'signup') {
-            localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
-            toggleAuth();
-        } else {
-            if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
-            else alert("Error");
+    function prepareGame(mode) {
+        currentMode = mode;
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('game-setup').style.display = 'flex';
+        document.getElementById('local-inputs').style.display = (mode === 'pass') ? 'block' : 'none';
+        document.getElementById('online-inputs').style.display = (mode === 'online') ? 'block' : 'none';
+        if(mode === 'online' && !peer) {
+            peer = new Peer('ARCH-'+currentUser+'-'+Math.floor(Math.random()*99));
+            peer.on('open', id => document.getElementById('my-id').innerText = id);
+            peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); });
         }
     }
 
-    function showDashboard() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('global-nav').style.display = 'none';
-        let s = getStats();
-        document.getElementById('lvl-status').innerText = `LEVEL ${s.lvl}`;
-        document.getElementById('xp-visual').style.width = (s.xp / s.next * 100) + "%";
-        document.getElementById('xp-text').innerText = `${s.xp} / ${s.next} XP`;
+    function confirmStart() {
+        if(currentMode === 'online') {
+            const id = document.getElementById('peer-id-in').value;
+            if(id) { conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online'); }
+            else { alert("ID Required"); }
+        } else startGame(currentMode);
     }
 
     function startGame(m) {
         vsBot = (m === 'bot'); isOnline = (m === 'online'); isPass = (m === 'pass');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('p1-label').innerText = isPass ? (document.getElementById('p1-local').value || "P1") : currentUser.toUpperCase();
-        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "P2");
+        let n1 = isPass ? (document.getElementById('p1-local').value || "PLAYER 1") : currentUser.toUpperCase();
+        let n2 = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : (document.getElementById('p2-local').value || "PLAYER 2"));
+        document.getElementById('p1-label').innerText = n1; document.getElementById('p2-label').innerText = n2;
         game.reset(); initBoard();
     }
 
     function initBoard() {
         boardEl.innerHTML = '';
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const sq = document.createElement('div');
-                sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
-                sq.dataset.id = String.fromCharCode(97 + c) + (8 - r);
-                sq.onclick = () => handleInput(sq.dataset.id);
-                boardEl.appendChild(sq);
-            }
+        for (let i = 0; i < 64; i++) {
+            const r = Math.floor(i/8), c = i%8;
+            const sq = document.createElement('div');
+            sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
+            sq.dataset.id = String.fromCharCode(97 + c) + (8 - r);
+            sq.onclick = () => handleInput(sq.dataset.id);
+            boardEl.appendChild(sq);
         }
         render();
     }
@@ -206,10 +228,6 @@
         if (p && p.color === game.turn()) {
             selectedSq = id; render();
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
-            game.moves({ square: id, verbose: true }).forEach(m => {
-                const d = document.createElement('div'); d.className = 'move-dot';
-                document.querySelector(`[data-id="${m.to}"]`).appendChild(d);
-            });
         } else { selectedSq = null; render(); }
     }
 
@@ -218,27 +236,62 @@
             const p = game.get(s.dataset.id); s.innerHTML = ''; s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
-                // Standard pieces that are bright (White) and dark (Black)
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece'; s.appendChild(img);
             }
         });
+
         if (game.game_over()) {
-            let msg = "DRAW";
-            if (game.in_checkmate()) msg = addXP();
+            let winText = "DRAW";
+            let res = "DRAW";
+            let opponent = document.getElementById('p2-label').innerText;
+
+            if (game.in_checkmate()) {
+                const winnerIsWhite = (game.turn() === 'b');
+                const winnerName = winnerIsWhite ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText;
+                winText = winnerName + " WINS!";
+                
+                // Logic for History Result
+                if (isPass) res = "WIN"; // In local, someone always wins
+                else if (isOnline) res = ( (winnerIsWhite && myColor==='w') || (!winnerIsWhite && myColor==='b') ) ? "WIN" : "LOSS";
+                else res = winnerIsWhite ? "WIN" : "LOSS";
+            }
+            
+            saveMatch(opponent, res);
+            let xpMsg = addXP(res === 'WIN');
+            document.getElementById('winner-text').innerText = winText;
+            document.getElementById('lvl-up-alert').innerText = xpMsg;
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('lvl-up-alert').innerText = msg;
         }
+    }
+
+    function handleAuth() {
+        const u = document.getElementById('user-in').value.trim().toLowerCase();
+        const p = document.getElementById('pass-in').value.trim();
+        if(!u || !p) return;
+        if(authMode === 'signup') {
+            localStorage.setItem(`pw_${u}`, p); localStorage.setItem(`lvl_${u}`, 1); localStorage.setItem(`xp_${u}`, 0);
+            toggleAuth();
+        } else {
+            if(localStorage.getItem(`pw_${u}`) === p) { currentUser = u; localStorage.setItem('active_session', u); showDashboard(); }
+            else alert("System Rejected: Invalid Credentials");
+        }
+    }
+
+    function showDashboard() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        document.getElementById('home-screen').style.display = 'flex';
+        document.getElementById('global-nav').style.display = 'none';
+        let s = getStats();
+        document.getElementById('lvl-status').innerText = `ARCHITECT LVL ${s.lvl}`;
+        document.getElementById('xp-visual').style.width = (s.xp / s.next * 100) + "%";
+        loadHistory();
     }
 
     function playSound(t) { if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = t === 'move' ? 200 : 800; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
-    function showLocalSetup() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); document.getElementById('local-setup').style.display = 'flex'; }
-    function showOnlineSetup() { document.getElementById('home-screen').style.display='none'; document.getElementById('online-setup').style.display='flex'; if(!peer){ peer = new Peer('ARCH-'+currentUser+'-'+Math.floor(Math.random()*99)); peer.on('open', id => document.getElementById('my-id').innerText = id); peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); }); } }
-    function connectToPeer() { const id = document.getElementById('peer-id-in').value; if(id){ conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online'); } }
+    function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode === 'login' ? "INITIALIZE SYSTEM" : "CREATE NEW ID"; }
     function setupConn() { conn.on('data', d => { if(d.type==='move'){ game.move(d.move); render(); } }); }
-    function goBack() { showDashboard(); }
     function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
     window.onload = () => { const s = localStorage.getItem('active_session'); if(s) { currentUser = s; showDashboard(); } };
 </script>
