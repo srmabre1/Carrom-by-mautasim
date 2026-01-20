@@ -3,200 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Architect Chess Pro</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <title>ARCHITECT CHESS PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --bg: #f0f2f5; --card: #ffffff; --text: #1c1e21; --accent: #1877f2; --success: #42b72a; }
-        body.dark-mode { --bg: #18191a; --card: #242526; --text: #e4e6eb; --accent: #2d88ff; --success: #45bd62; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
+        :root { --primary: #00d4ff; --bg: #05070a; --card: #111621; --sq-l: #ced4da; --sq-d: #495057; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
+        
+        .architect-tag { font-size: 20px; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary); letter-spacing: 2px; margin: 20px 0; text-transform: uppercase; }
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 20px 0; }
+        .auth-card { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; text-align: center; }
+        
+        input { background: #000; border: 1px solid #333; color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 14px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
+        
+        .level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; max-width: 400px; padding: 20px; }
+        .level-box { background: #1a1a1a; border: 1px solid #333; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; cursor: pointer; position: relative;}
+        .level-box.unlocked { border-color: var(--primary); color: var(--primary); }
+        .level-box.locked { opacity: 0.3; cursor: not-allowed; }
+        .level-box.locked::after { content: 'LOCKED'; position: absolute; font-size: 6px; bottom: 5px; }
 
-        body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; height: 100vh; }
-        
-        /* Improved Login System */
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-card { background: var(--card); padding: 40px 30px; border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.1); width: 85%; max-width: 360px; text-align: center; }
-        .login-card h1 { color: var(--accent); margin-bottom: 10px; font-size: 1.8rem; letter-spacing: -1px; }
-        .input-group { margin-bottom: 15px; }
-        input { width: 100%; padding: 14px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 1rem; box-sizing: border-box; background: var(--bg); color: var(--text); }
-        
-        /* Header & Nav */
-        .navbar { width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .brand { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
-        
-        /* Stats & Board */
-        .stats-container { display: flex; gap: 20px; margin: 15px 0; background: var(--card); padding: 10px 30px; border-radius: 50px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #board { width: 92vw; max-width: 380px; border-radius: 8px; border: 4px solid var(--card); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        
-        /* Action Buttons */
-        .panel { margin: 15px; padding: 15px; background: var(--card); width: 85vw; max-width: 380px; border-radius: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-        .btn-primary { background: var(--accent); color: white; grid-column: span 2; }
-        .btn-sec { background: var(--success); color: white; }
-        .btn-theme { background: #606770; color: white; }
-        
-        #status-msg { grid-column: span 2; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; color: var(--accent); }
-        .dev-footer { position: fixed; bottom: 10px; font-size: 0.7rem; opacity: 0.6; }
-        .hidden { display: none !important; }
+        .hud { width: 100%; background: var(--card); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); box-sizing: border-box; }
+        .player-tag { font-family: 'Roboto Mono'; font-size: 12px; color: var(--primary); width: 40%; }
+        #board-box { margin: 15px 0; width: 94vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--card); }
+        #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
+        .sq { display: flex; justify-content: center; align-items: center; }
+        .sq.l { background: var(--sq-l); } .sq.d { background: var(--sq-d); }
+        .piece { width: 90%; z-index: 5; }
+        .move-intel { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.4); border-radius: 50%; border: 1px solid var(--primary); }
+        .selected { background: rgba(0, 212, 255, 0.4) !important; }
+        .back-btn { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 5px; font-size: 10px; z-index: 110; cursor: pointer; }
     </style>
 </head>
-<body class="light-mode">
+<body onclick="initAudio()">
 
-    <div id="login-overlay">
-        <div class="login-card">
-            <h1>M-ARCHITECT</h1>
-            <p style="margin-bottom: 25px; opacity: 0.7;">Developer Pro Edition</p>
-            <div class="input-group">
-                <input type="text" id="reg-name" placeholder="Full Name">
-            </div>
-            <div class="input-group">
-                <input type="password" id="reg-pass" placeholder="Secure Passcode">
-            </div>
-            <button class="btn btn-primary" style="margin-top: 10px;" onclick="handleAuth()">INITIALIZE SYSTEM</button>
-            <p id="auth-hint" style="font-size: 0.75rem; margin-top: 15px; color: #666;">Account will be encrypted locally</p>
+    <div id="btn-back-ui" class="back-btn" style="display:none" onclick="location.reload()">← MENU</div>
+
+    <div id="level-screen" class="overlay" style="display:none">
+        <h2 style="color:var(--primary)">SELECT LEVEL</h2>
+        <div class="level-grid" id="level-grid"></div>
+        <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
+    </div>
+
+    <div class="hud">
+        <div class="player-tag" id="p1-label">---</div>
+        <div id="current-lvl-tag" style="font-size: 10px; color: #666;">LVL 1</div>
+        <div class="player-tag" id="p2-label" style="text-align:right">---</div>
+    </div>
+    <div id="board-box"><div id="board"></div></div>
+
+    <div id="auth-screen" class="overlay">
+        <div class="architect-tag">ARCHITECT CHESS PRO</div>
+        <div class="auth-card">
+            <h2 id="auth-title">LOGIN</h2>
+            <input type="text" id="user-in" placeholder="USERNAME">
+            <input type="password" id="pass-in" placeholder="PASSWORD">
+            <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
+            <p style="font-size: 10px; color: #666; margin-top: 15px; cursor: pointer;" onclick="toggleAuth()">SIGN UP</p>
         </div>
-        <div class="dev-footer">Engineered by Mautasim</div>
     </div>
 
-    <div class="navbar">
-        <span class="brand">ARCHITECT CHESS</span>
-        <button class="btn btn-theme" style="padding: 5px 12px;" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+    <div id="home-screen" class="overlay" style="display:none">
+        <div class="architect-tag">ARCHITECT CHESS PRO</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; width:90%;">
+            <div class="btn-main" onclick="showLevels()" style="text-align:center; padding: 40px 0;">CAMPAIGN</div>
+            <div class="btn-main" onclick="startLocal()" style="text-align:center; padding: 40px 0;">LOCAL</div>
+        </div>
+        <button class="btn-main" onclick="doLogout()" style="width:80%; margin-top:20px; background:none; border:1px solid red; color:red;">LOGOUT</button>
     </div>
 
-    <div class="stats-container">
-        <div>👤 <span id="p-label">Player</span>: <span id="p-score">0</span></div>
-        <div style="color: #ccc;">|</div>
-        <div>🤖 AI: <span id="ai-score">0</span></div>
-    </div>
+<script>
+    const game = new Chess();
+    const boardEl = document.getElementById('board');
+    let currentUser = null, vsBot = false, selectedSq = null, audioCtx = null;
+    let currentLevel = 1, p1Name = "Player", p2Name = "AI";
 
-    <div id="board"></div>
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    
+    function playSound(type) {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(type === 'move' ? 200 : 800, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        o.start(); o.stop(audioCtx.currentTime + 0.1);
+    }
 
-    <div class="panel">
-        <div id="status-msg">System Active</div>
-        <button class="btn btn-primary" onclick="newGame()">Start New Match</button>
-        <button class="btn btn-sec" onclick="startOnline()">Online P2P</button>
-        <button class="btn" style="background: #f02849; color: white;" onclick="undoMove()">Undo Move</button>
-        <button class="btn" style="background: #e4e6eb; color: #1c1e21;" onclick="logout()">Log Out</button>
-    </div>
+    // --- PROGRESS SYSTEM ---
+    function getUnlockedLevel() {
+        return parseInt(localStorage.getItem(`lvl_progress_${currentUser}`)) || 1;
+    }
 
-    <div class="dev-footer">© 2026 Architect Mautasim | Version 1.0.5</div>
+    function unlockNextLevel() {
+        let reached = getUnlockedLevel();
+        if (currentLevel === reached && reached < 100) {
+            localStorage.setItem(`lvl_progress_${currentUser}`, reached + 1);
+        }
+    }
 
-    <script>
-        let board = null, game = new Chess(), peer = null, conn = null;
-        let pWins = parseInt(localStorage.getItem('pWins')) || 0;
-        let aiWins = parseInt(localStorage.getItem('aiWins')) || 0;
-        let activeUser = localStorage.getItem('activeUser') || "";
+    function showLevels() {
+        const grid = document.getElementById('level-grid');
+        grid.innerHTML = '';
+        const unlocked = getUnlockedLevel();
+        for (let i = 1; i <= 100; i++) {
+            const div = document.createElement('div');
+            div.className = `level-box ${i <= unlocked ? 'unlocked' : 'locked'}`;
+            div.innerText = i;
+            if (i <= unlocked) div.onclick = () => { currentLevel = i; startGame('bot'); };
+            grid.appendChild(div);
+        }
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('level-screen').style.display = 'flex';
+    }
 
-        // AUTH SYSTEM
-        function handleAuth() {
-            const name = $('#reg-name').val();
-            const pass = $('#reg-pass').val();
-            if(name.length < 2 || pass.length < 4) {
-                alert("Error: Name (2+ chars) and Passcode (4+ chars) required.");
+    // --- GAME LOGIC ---
+    function handleAuth() {
+        const u = document.getElementById('user-in').value.trim();
+        const p = document.getElementById('pass-in').value.trim();
+        if(!u) return;
+        currentUser = u;
+        localStorage.setItem('active_session', u);
+        showDashboard();
+    }
+
+    function showDashboard() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        document.getElementById('home-screen').style.display = 'flex';
+    }
+
+    function startLocal() {
+        p1Name = prompt("Enter Player 1 Name", "White") || "P1";
+        p2Name = prompt("Enter Player 2 Name", "Black") || "P2";
+        startGame('pass');
+    }
+
+    function startGame(m) {
+        vsBot = (m === 'bot');
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        document.getElementById('btn-back-ui').style.display = 'block';
+        document.getElementById('p1-label').innerText = p1Name;
+        document.getElementById('p2-label').innerText = p2Name;
+        document.getElementById('current-lvl-tag').innerText = vsBot ? `LEVEL ${currentLevel}` : "LOCAL";
+        initBoard();
+    }
+
+    function initBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const sq = document.createElement('div');
+                sq.className = `sq ${(r + c) % 2 === 0 ? 'l' : 'd'}`;
+                sq.dataset.id = String.fromCharCode(97 + c) + (8 - r);
+                sq.onclick = () => handleInput(sq.dataset.id);
+                boardEl.appendChild(sq);
+            }
+        }
+        renderPieces();
+    }
+
+    function handleInput(id) {
+        if (vsBot && game.turn() === 'b') return;
+        if (selectedSq) {
+            const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
+            if (move) {
+                playSound('move'); selectedSq = null; renderPieces();
+                if (vsBot && !game.game_over()) setTimeout(masterAI, 600);
                 return;
             }
-            localStorage.setItem('activeUser', name);
-            localStorage.setItem('localKey', btoa(pass)); // Basic encryption
-            location.reload();
         }
+        const p = game.get(id);
+        if (p && p.color === game.turn()) {
+            playSound('select'); selectedSq = id; renderPieces();
+            document.querySelector(`[data-id="${id}"]`).classList.add('selected');
+        } else { selectedSq = null; renderPieces(); }
+    }
 
-        if(activeUser) {
-            $('#login-overlay').addClass('hidden');
-            $('#p-label').text(activeUser.split(' ')[0].toUpperCase());
-            updateScores();
-        }
-
-        function logout() {
-            if(confirm("Log out of Architect System?")) {
-                localStorage.removeItem('activeUser');
-                location.reload();
+    function renderPieces() {
+        document.querySelectorAll('.sq').forEach(s => {
+            const p = game.get(s.dataset.id);
+            s.innerHTML = '';
+            if (p) {
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
+                img.className = 'piece'; s.appendChild(img);
             }
-        }
-
-        // GAME LOGIC
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            $('#theme-btn').text(document.body.classList.contains('dark-mode') ? "☀️ Light" : "🌙 Dark");
-        }
-
-        function onDragStart(s, p) {
-            if (game.game_over() || p.search(/^b/) !== -1) return false;
-        }
-
-        function onDrop(source, target) {
-            let move = game.move({ from: source, to: target, promotion: 'q' });
-            if (move === null) return 'snapback';
-            
-            if (conn) {
-                conn.send(game.fen());
-            } else {
-                $('#status-msg').text("AI is analyzing...");
-                window.setTimeout(makeAiMove, 600);
-            }
-            updateStatus();
-        }
-
-        function makeAiMove() {
-            let moves = game.moves();
-            if (moves.length > 0) {
-                game.move(moves[Math.floor(Math.random() * moves.length)]);
-                board.position(game.fen());
-                updateStatus();
-            }
-        }
-
-        function updateStatus() {
+        });
+        
+        if (game.game_over()) {
+            let winMsg = "DRAW!";
             if (game.in_checkmate()) {
-                if (game.turn() === 'b') {
-                    pWins++; localStorage.setItem('pWins', pWins);
-                    alert("🏆 CONGRATULATIONS " + activeUser.toUpperCase() + "! CHECKMATE.");
-                } else {
-                    aiWins++; localStorage.setItem('aiWins', aiWins);
-                    alert("🤖 AI DEFEATED THE ARCHITECT.");
+                const winner = game.turn() === 'w' ? p2Name : p1Name;
+                winMsg = `${winner} WINS!`;
+                if (vsBot && game.turn() === 'b') { // White (User) won
+                    unlockNextLevel();
+                    winMsg += " LEVEL UNLOCKED!";
                 }
             }
-            updateScores();
-            let turnTxt = game.turn() === 'w' ? activeUser + "'s Turn" : "Opponent's Turn";
-            if(game.in_check()) turnTxt += " (CHECK!)";
-            $('#status-msg').text(turnTxt);
+            setTimeout(() => { alert(winMsg); location.reload(); }, 300);
         }
+    }
 
-        function updateScores() {
-            $('#p-score').text(pWins);
-            $('#ai-score').text(aiWins);
+    // AI gets smarter based on level
+    function masterAI() {
+        const moves = game.moves();
+        if (moves.length === 0) return;
+        
+        // At Level 1, AI is 100% random. 
+        // At Level 100, AI looks for simple captures or checks more often.
+        const difficulty = currentLevel / 100; 
+        let move;
+        
+        if (Math.random() < difficulty) {
+            // "Smart" move: Try to find a capture or check
+            move = moves.find(m => m.includes('x') || m.includes('+')) || moves[0];
+        } else {
+            move = moves[Math.floor(Math.random() * moves.length)];
         }
+        
+        game.move(move);
+        playSound('move');
+        renderPieces();
+    }
 
-        function newGame() { game.reset(); board.start(); updateStatus(); }
-        function undoMove() { game.undo(); game.undo(); board.position(game.fen()); updateStatus(); }
-
-        // MULTIPLAYER
-        function startOnline() {
-            let targetId = prompt("JOIN: Enter Friend's ID\nHOST: Leave blank");
-            peer = new Peer();
-            peer.on('open', id => {
-                if (!targetId) alert("HOSTING ACTIVE\nYour ID: " + id);
-                else { conn = peer.connect(targetId); setupConn(); }
-            });
-            peer.on('connection', c => { conn = c; setupConn(); });
-        }
-
-        function setupConn() {
-            conn.on('data', d => { game.load(d); board.position(game.fen()); updateStatus(); });
-            alert("SYSTEMS LINKED: Multiplayer Ready.");
-        }
-
-        board = Chessboard('board', {
-            draggable: true,
-            position: 'start',
-            onDragStart: onDragStart,
-            onDrop: onDrop,
-            onSnapEnd: () => board.position(game.fen())
-        });
-        updateStatus();
-    </script>
+    function doLogout() { localStorage.removeItem('active_session'); location.reload(); }
+</script>
 </body>
 </html>
