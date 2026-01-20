@@ -8,9 +8,20 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #ced4da; --sd: #495057; }
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #b5c3ce; --sd: #4b7399; }
+        
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
+        /* FIX FOR DARK MODE INVERSION */
+        img.piece { 
+            width: 90%; 
+            z-index: 5; 
+            pointer-events: none; 
+            /* This ensures pieces don't invert even if "Force Dark Mode" is on */
+            filter: brightness(1) !important; 
+            mix-blend-mode: normal !important;
+        }
+
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 6px 10px; border-radius: 5px; font-size: 9px; cursor: pointer; font-weight: bold; }
 
@@ -26,15 +37,13 @@
 
         .hud { width: 100%; background: var(--c); padding: 12px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); box-sizing: border-box; margin-top: 55px; }
         .player-tag { font-family: 'Roboto Mono'; font-size: 11px; color: var(--p); width: 45%; }
-        .lvl-badge { background: var(--p); color: black; padding: 1px 4px; border-radius: 3px; font-weight: 900; margin-right: 5px; font-size: 9px; }
 
         #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 4px solid var(--c); position: relative; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
-        .piece { width: 90%; z-index: 5; pointer-events: none; }
-        .selected { background: rgba(0, 212, 255, 0.4) !important; }
-        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.7); border-radius: 50%; z-index: 10; border: 2px solid white; }
+        .selected { background: rgba(0, 212, 255, 0.6) !important; }
+        .move-dot { width: 14px; height: 14px; background: rgba(0, 212, 255, 0.8); border-radius: 50%; z-index: 10; border: 2px solid white; pointer-events: none; }
 
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; }
         .menu-item { background: var(--c); border: 1px solid #333; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; }
@@ -99,8 +108,8 @@
     </div>
 
     <div class="hud">
-        <div class="player-tag"><span class="lvl-badge" id="p1-lvl-icon">L1</span><span id="p1-label">---</span></div>
-        <div class="player-tag" style="text-align:right"><span id="p2-label">---</span><span class="lvl-badge" id="p2-lvl-icon">L1</span></div>
+        <div class="player-tag"><span id="p1-label">---</span></div>
+        <div class="player-tag" style="text-align:right"><span id="p2-label">---</span></div>
     </div>
     <div id="board-box"><div id="board"></div></div>
 
@@ -116,8 +125,7 @@
     }
 
     function addXP() {
-        let s = getStats();
-        s.xp += 50;
+        let s = getStats(); s.xp += 50;
         if(s.xp >= 100) { s.lvl++; s.xp = 0; }
         localStorage.setItem(`lvl_${currentUser}`, s.lvl);
         localStorage.setItem(`xp_${currentUser}`, s.xp);
@@ -147,25 +155,12 @@
         document.getElementById('xp-text').innerText = `${s.xp} / ${s.next} XP`;
     }
 
-    function showLocalSetup() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        document.getElementById('local-setup').style.display = 'flex';
-    }
-
     function startGame(m) {
         vsBot = (m === 'bot'); isOnline = (m === 'online'); isPass = (m === 'pass');
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        
-        let p1 = currentUser.toUpperCase(), p2 = "ULTRA AI";
-        if(isPass) {
-            p1 = document.getElementById('p1-local').value || "PLAYER 1";
-            p2 = document.getElementById('p2-local').value || "PLAYER 2";
-        }
-        document.getElementById('p1-label').innerText = p1;
-        document.getElementById('p2-label').innerText = p2;
-        document.getElementById('p1-lvl-icon').innerText = "L" + getStats().lvl;
-        document.getElementById('p2-lvl-icon').innerText = vsBot ? "L99" : "L1";
+        document.getElementById('p1-label').innerText = isPass ? (document.getElementById('p1-local').value || "PLAYER 1") : currentUser.toUpperCase();
+        document.getElementById('p2-label').innerText = vsBot ? "ULTRA AI" : (isOnline ? "REMOTE" : "PLAYER 2");
         game.reset(); initBoard();
     }
 
@@ -195,7 +190,7 @@
                     const m = game.moves();
                     game.move(m[Math.floor(Math.random()*m.length)]);
                     playSound('move'); render();
-                }, 500);
+                }, 400);
                 return;
             }
         }
@@ -223,7 +218,6 @@
             let msg = "DRAW";
             if (game.in_checkmate()) msg = addXP();
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = "CHECKMATE";
             document.getElementById('lvl-up-alert').innerText = msg;
         }
     }
@@ -231,6 +225,7 @@
     function playSound(t) { if(!audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = t === 'move' ? 200 : 800; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleAuth() { authMode = authMode === 'login' ? 'signup' : 'login'; document.getElementById('auth-title').innerText = authMode.toUpperCase(); }
+    function showLocalSetup() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); document.getElementById('local-setup').style.display = 'flex'; }
     function showOnlineSetup() { document.getElementById('home-screen').style.display='none'; document.getElementById('online-setup').style.display='flex'; if(!peer){ peer = new Peer('ARCH-'+currentUser+'-'+Math.floor(Math.random()*99)); peer.on('open', id => document.getElementById('my-id').innerText = id); peer.on('connection', c => { conn = c; setupConn(); myColor = 'w'; startGame('online'); }); } }
     function connectToPeer() { const id = document.getElementById('peer-id-in').value; if(id){ conn = peer.connect(id); myColor = 'b'; setupConn(); startGame('online'); } }
     function setupConn() { conn.on('data', d => { if(d.type==='move'){ game.move(d.move); render(); } }); }
