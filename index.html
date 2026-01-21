@@ -55,12 +55,11 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p id="my-peer-id" style="font-size: 10px; color: var(--p); margin-top: 15px;"></p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
-        <div class="architect-tag" id="user-display">MAUTASIM</div>
+        <div class="architect-tag" id="user-display">---</div>
         <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
@@ -68,10 +67,9 @@
             <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
             <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
-        
         <div id="social-panel">
-            <input type="text" id="friend-id" placeholder="ENTER FRIEND ID (ARCH-...)">
-            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">CONNECT & PLAY</button>
+            <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
+            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
             <div id="friends-list"></div>
         </div>
     </div>
@@ -102,7 +100,6 @@
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
-        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
     </div>
 
@@ -134,19 +131,13 @@
         if(!u) return;
         currentUser = u;
         localStorage.setItem('arch_user', u);
-        const peerId = 'ARCH-' + currentUser;
-        peer = new Peer(peerId);
+        peer = new Peer('ARCH-' + currentUser);
         
-        peer.on('open', (id) => {
-            document.getElementById('my-peer-id').innerText = "YOUR ID: " + id;
-        });
-
         peer.on('connection', c => {
             conn = c;
             currentMode = 'online';
-            playerColor = 'b'; // Receiver is Black
-            setupOnlineBridge();
-            alert("INCOMING CHALLENGE FROM " + conn.peer);
+            playerColor = 'b'; 
+            setupP2P();
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-', '');
             document.getElementById('p2-label').innerText = currentUser;
             startGame();
@@ -159,15 +150,13 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
         document.getElementById('global-nav').style.display = 'none';
+        renderFriends();
     }
 
     function prepareGame(mode) {
         currentMode = mode;
         if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else {
-            document.getElementById('pass-setup').style.display = 'flex';
-            document.getElementById('p1-in').value = currentUser;
-        }
+        else document.getElementById('pass-setup').style.display = 'flex';
     }
 
     function startAI() {
@@ -204,21 +193,13 @@
     }
 
     function handleInput(id) {
-        // Prevent moving if not your turn in Online mode
         if (currentMode === 'online' && game.turn() !== playerColor) return;
-
         if (selectedSq) {
             const moveData = { from: selectedSq, to: id, promotion: 'q' };
             const move = game.move(moveData);
             if (move) {
-                playSound(400); 
-                selectedSq = null; 
-                render();
-                
-                if (currentMode === 'online' && conn) {
-                    conn.send({ type: 'MOVE', data: moveData });
-                }
-                
+                playSound(400); selectedSq = null; render();
+                if (currentMode === 'online' && conn) conn.send({type: 'MOVE', move: moveData});
                 if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
                 return;
             }
@@ -229,13 +210,8 @@
 
     function aiMove() {
         const moves = game.moves();
-        let move;
-        if (aiDifficulty === 'architect') {
-            move = moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)];
-        } else {
-            move = moves[Math.floor(Math.random() * moves.length)];
-        }
-        game.move(move); playSound(300); render();
+        let move = (aiDifficulty === 'architect') ? (moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)]) : moves[Math.floor(Math.random() * moves.length)];
+        game.move(move); render();
     }
 
     function render() {
@@ -253,9 +229,7 @@
         });
         if(game.game_over()) { 
             document.getElementById('win-screen').style.display = 'flex'; 
-            let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
-            document.getElementById('winner-text').innerText = winnerStr; 
-            playSound(600); 
+            document.getElementById('winner-text').innerText = "CHECKMATE"; 
         }
     }
 
@@ -264,53 +238,43 @@
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
         if(!id) return;
-        conn = peer.connect(id);
+        conn = peer.connect('ARCH-' + id);
         currentMode = 'online';
-        playerColor = 'w'; // Initiator is White
-        setupOnlineBridge();
+        playerColor = 'w';
+        setupP2P();
         conn.on('open', () => {
             document.getElementById('p1-label').innerText = currentUser;
-            document.getElementById('p2-label').innerText = id.replace('ARCH-', '');
+            document.getElementById('p2-label').innerText = id;
             startGame();
-            document.getElementById('chat-window').style.display = 'flex';
         });
     }
 
-    function setupOnlineBridge() {
+    function setupP2P() {
         conn.on('data', data => {
-            if (data.type === 'MOVE') {
-                game.move(data.data);
-                playSound(300);
-                render();
-            } else if (data.type === 'CHAT') {
-                displayChatMessage("Friend", data.msg);
+            if(data.type === 'MOVE') { game.move(data.move); render(); }
+            if(data.type === 'CHAT') {
+                const m = document.createElement('div'); m.style.color="var(--p)"; m.innerText = "Friend: " + data.msg;
+                document.getElementById('chat-msgs').appendChild(m);
             }
         });
-        document.getElementById('chatting-with').innerText = conn.peer;
         document.getElementById('chat-window').style.display = 'flex';
+        document.getElementById('chatting-with').innerText = conn.peer;
     }
 
     function sendChat() {
         const inp = document.getElementById('chat-input');
         if(!conn || !inp.value) return;
-        conn.send({ type: 'CHAT', msg: inp.value });
-        displayChatMessage("Me", inp.value);
+        conn.send({type: 'CHAT', msg: inp.value});
+        const m = document.createElement('div'); m.innerText = "Me: " + inp.value;
+        document.getElementById('chat-msgs').appendChild(m);
         inp.value = '';
     }
 
-    function displayChatMessage(sender, text) {
-        const msg = document.createElement('div');
-        msg.style.color = sender === "Me" ? "white" : "var(--p)";
-        msg.innerText = sender + ": " + text;
-        const box = document.getElementById('chat-msgs');
-        box.appendChild(msg);
-        box.scrollTop = box.scrollHeight;
-    }
-
+    function renderFriends() { /* Purely visual for this version */ }
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
+    function confirmExit() { if(confirm("Exit?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; handleAuth(); } };
+    window.onload = () => { if(localStorage.getItem('arch_user')) { document.getElementById('user-in').value = localStorage.getItem('arch_user'); } };
 </script>
 </body>
 </html>
