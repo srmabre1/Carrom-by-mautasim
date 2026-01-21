@@ -55,11 +55,12 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="alert('Account feature active. Enter details to login/sync.')">CREATE ACCOUNT</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
-        <div class="architect-tag" id="user-display">---</div>
+        <div class="architect-tag" id="user-display">MAUTASIM</div>
         <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
@@ -67,6 +68,7 @@
             <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
             <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
+        
         <div id="social-panel">
             <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
@@ -100,6 +102,7 @@
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
+        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
     </div>
 
@@ -126,29 +129,26 @@
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
-    // ORIGINAL AUTH LOGIC
     function handleAuth() {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         if(!u) return;
         currentUser = u;
         localStorage.setItem('arch_user', u);
         
-        // PeerJS Initialization using ID
+        // Initialize PeerJS with the username
         peer = new Peer('ARCH-' + currentUser);
         
-        peer.on('open', (id) => {
-            console.log('My peer ID is: ' + id);
-        });
-
         peer.on('connection', c => {
             conn = c;
             currentMode = 'online';
-            playerColor = 'b'; // Receiver is always Black
-            setupP2PListeners();
-            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-', '');
+            playerColor = 'b'; // Receiving player is Black
+            setupOnlineHandlers();
+            alert('CONNECTED TO ' + conn.peer);
+            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
             document.getElementById('p2-label').innerText = currentUser;
             startGame();
         });
+
         showDashboard();
     }
 
@@ -157,13 +157,16 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
         document.getElementById('global-nav').style.display = 'none';
-        document.getElementById('board-box').style.display = 'none';
+        renderFriends();
     }
 
     function prepareGame(mode) {
         currentMode = mode;
         if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else document.getElementById('pass-setup').style.display = 'flex';
+        else {
+            document.getElementById('pass-setup').style.display = 'flex';
+            document.getElementById('p1-in').value = currentUser;
+        }
     }
 
     function startAI() {
@@ -184,9 +187,7 @@
     function startGame() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('board-box').style.display = 'block';
-        game.reset(); 
-        initBoard();
+        game.reset(); initBoard();
     }
 
     function initBoard() {
@@ -202,7 +203,7 @@
     }
 
     function handleInput(id) {
-        // Turn control for online mode
+        // Enforce turns in Online Mode
         if (currentMode === 'online' && game.turn() !== playerColor) return;
 
         if (selectedSq) {
@@ -212,12 +213,12 @@
                 playSound(400); 
                 selectedSq = null; 
                 render();
-                
-                // Sync Online Move
+
+                // Send Move Online
                 if (currentMode === 'online' && conn) {
-                    conn.send({ type: 'MOVE', data: moveData });
+                    conn.send({ type: 'MOVE', move: moveData });
                 }
-                
+
                 if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
                 return;
             }
@@ -228,7 +229,12 @@
 
     function aiMove() {
         const moves = game.moves();
-        let move = (aiDifficulty === 'architect') ? (moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)]) : moves[Math.floor(Math.random() * moves.length)];
+        let move;
+        if (aiDifficulty === 'architect') {
+            move = moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)];
+        } else {
+            move = moves[Math.floor(Math.random() * moves.length)];
+        }
         game.move(move); playSound(300); render();
     }
 
@@ -247,72 +253,81 @@
         });
         if(game.game_over()) { 
             document.getElementById('win-screen').style.display = 'flex'; 
-            document.getElementById('winner-text').innerText = "CHECKMATE"; 
+            let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
+            document.getElementById('winner-text').innerText = winnerStr; 
+            playSound(600); 
         }
     }
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
     
-    // ONLINE PLAY FUNCTIONALITY
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
         if(!id) return;
         
+        // This initiates the connection
         conn = peer.connect('ARCH-' + id);
         currentMode = 'online';
-        playerColor = 'w'; // Sender is always White
+        playerColor = 'w'; // Initiator is White
         
         conn.on('open', () => {
-            setupP2PListeners();
+            setupOnlineHandlers();
+            alert("CONNECTED! STARTING GAME.");
             document.getElementById('p1-label').innerText = currentUser;
             document.getElementById('p2-label').innerText = id;
             startGame();
+            
+            // Save to friends list visually
+            let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+            if(!friends.includes(id)) friends.push(id);
+            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
+            renderFriends();
         });
     }
-
-    function setupP2PListeners() {
+    
+    function setupOnlineHandlers() {
         conn.on('data', data => {
             if (data.type === 'MOVE') {
-                game.move(data.data);
+                game.move(data.move);
                 playSound(300);
                 render();
-            } else if (data.type === 'CHAT') {
-                receiveChat(data.msg);
+            }
+            if (data.type === 'CHAT') {
+                const msg = document.createElement('div');
+                msg.style.color = "var(--p)";
+                msg.innerText = "Friend: " + data.msg;
+                document.getElementById('chat-msgs').appendChild(msg);
+                document.getElementById('chat-window').style.display = 'flex';
             }
         });
         document.getElementById('chat-window').style.display = 'flex';
-        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-', '');
+        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
+    }
+
+    function renderFriends() {
+        const list = document.getElementById('friends-list'); list.innerHTML = '';
+        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+        friends.forEach(f => {
+            const div = document.createElement('div'); div.className = 'friend-item';
+            div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">PLAY</span>`;
+            div.onclick = () => { document.getElementById('friend-id').value = f; addFriend(); };
+            list.appendChild(div);
+        });
     }
 
     function sendChat() {
         const inp = document.getElementById('chat-input');
         if(!conn || !inp.value) return;
         conn.send({ type: 'CHAT', msg: inp.value });
-        const m = document.createElement('div'); m.innerText = "Me: " + inp.value;
-        document.getElementById('chat-msgs').appendChild(m);
+        const msg = document.createElement('div'); msg.innerText = "Me: " + inp.value;
+        document.getElementById('chat-msgs').appendChild(msg);
         inp.value = '';
-        const box = document.getElementById('chat-msgs');
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function receiveChat(msg) {
-        const m = document.createElement('div'); 
-        m.style.color="var(--p)"; 
-        m.innerText = "Friend: " + msg;
-        document.getElementById('chat-msgs').appendChild(m);
-        const box = document.getElementById('chat-msgs');
-        box.scrollTop = box.scrollHeight;
     }
 
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit Match?")) showDashboard(); }
+    function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    
-    window.onload = () => { 
-        if(localStorage.getItem('arch_user')) { 
-            document.getElementById('user-in').value = localStorage.getItem('arch_user'); 
-        } 
-    };
+    window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; handleAuth(); } };
 </script>
 </body>
 </html>
