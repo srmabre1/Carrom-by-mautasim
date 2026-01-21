@@ -126,18 +126,25 @@
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
+    // ORIGINAL AUTH LOGIC
     function handleAuth() {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         if(!u) return;
         currentUser = u;
         localStorage.setItem('arch_user', u);
+        
+        // PeerJS Initialization using ID
         peer = new Peer('ARCH-' + currentUser);
         
+        peer.on('open', (id) => {
+            console.log('My peer ID is: ' + id);
+        });
+
         peer.on('connection', c => {
             conn = c;
             currentMode = 'online';
-            playerColor = 'b'; 
-            setupP2P();
+            playerColor = 'b'; // Receiver is always Black
+            setupP2PListeners();
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-', '');
             document.getElementById('p2-label').innerText = currentUser;
             startGame();
@@ -150,7 +157,7 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
         document.getElementById('global-nav').style.display = 'none';
-        renderFriends();
+        document.getElementById('board-box').style.display = 'none';
     }
 
     function prepareGame(mode) {
@@ -177,7 +184,9 @@
     function startGame() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        game.reset(); initBoard();
+        document.getElementById('board-box').style.display = 'block';
+        game.reset(); 
+        initBoard();
     }
 
     function initBoard() {
@@ -193,13 +202,22 @@
     }
 
     function handleInput(id) {
+        // Turn control for online mode
         if (currentMode === 'online' && game.turn() !== playerColor) return;
+
         if (selectedSq) {
             const moveData = { from: selectedSq, to: id, promotion: 'q' };
             const move = game.move(moveData);
             if (move) {
-                playSound(400); selectedSq = null; render();
-                if (currentMode === 'online' && conn) conn.send({type: 'MOVE', move: moveData});
+                playSound(400); 
+                selectedSq = null; 
+                render();
+                
+                // Sync Online Move
+                if (currentMode === 'online' && conn) {
+                    conn.send({ type: 'MOVE', data: moveData });
+                }
+                
                 if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
                 return;
             }
@@ -211,7 +229,7 @@
     function aiMove() {
         const moves = game.moves();
         let move = (aiDifficulty === 'architect') ? (moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)]) : moves[Math.floor(Math.random() * moves.length)];
-        game.move(move); render();
+        game.move(move); playSound(300); render();
     }
 
     function render() {
@@ -235,46 +253,66 @@
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
     
+    // ONLINE PLAY FUNCTIONALITY
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
         if(!id) return;
+        
         conn = peer.connect('ARCH-' + id);
         currentMode = 'online';
-        playerColor = 'w';
-        setupP2P();
+        playerColor = 'w'; // Sender is always White
+        
         conn.on('open', () => {
+            setupP2PListeners();
             document.getElementById('p1-label').innerText = currentUser;
             document.getElementById('p2-label').innerText = id;
             startGame();
         });
     }
 
-    function setupP2P() {
+    function setupP2PListeners() {
         conn.on('data', data => {
-            if(data.type === 'MOVE') { game.move(data.move); render(); }
-            if(data.type === 'CHAT') {
-                const m = document.createElement('div'); m.style.color="var(--p)"; m.innerText = "Friend: " + data.msg;
-                document.getElementById('chat-msgs').appendChild(m);
+            if (data.type === 'MOVE') {
+                game.move(data.data);
+                playSound(300);
+                render();
+            } else if (data.type === 'CHAT') {
+                receiveChat(data.msg);
             }
         });
         document.getElementById('chat-window').style.display = 'flex';
-        document.getElementById('chatting-with').innerText = conn.peer;
+        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-', '');
     }
 
     function sendChat() {
         const inp = document.getElementById('chat-input');
         if(!conn || !inp.value) return;
-        conn.send({type: 'CHAT', msg: inp.value});
+        conn.send({ type: 'CHAT', msg: inp.value });
         const m = document.createElement('div'); m.innerText = "Me: " + inp.value;
         document.getElementById('chat-msgs').appendChild(m);
         inp.value = '';
+        const box = document.getElementById('chat-msgs');
+        box.scrollTop = box.scrollHeight;
     }
 
-    function renderFriends() { /* Purely visual for this version */ }
+    function receiveChat(msg) {
+        const m = document.createElement('div'); 
+        m.style.color="var(--p)"; 
+        m.innerText = "Friend: " + msg;
+        document.getElementById('chat-msgs').appendChild(m);
+        const box = document.getElementById('chat-msgs');
+        box.scrollTop = box.scrollHeight;
+    }
+
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit?")) showDashboard(); }
+    function confirmExit() { if(confirm("Exit Match?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    window.onload = () => { if(localStorage.getItem('arch_user')) { document.getElementById('user-in').value = localStorage.getItem('arch_user'); } };
+    
+    window.onload = () => { 
+        if(localStorage.getItem('arch_user')) { 
+            document.getElementById('user-in').value = localStorage.getItem('arch_user'); 
+        } 
+    };
 </script>
 </body>
 </html>
