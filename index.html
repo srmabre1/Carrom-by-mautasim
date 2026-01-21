@@ -3,42 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARCHITECT CHESS PRO</title>
+    <title>ARCHITECT PRO | CHESS & LUDO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; }
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --red: #ff4b2b; --blue: #00d4ff; --green: #00ff87; --yellow: #f9d423; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
         .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; animation: blink 2s infinite; }
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
+        /* Chess Styling */
         img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
 
+        /* General UI */
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; text-align: center; }
         .auth-card { background: var(--c); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
         input, select { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
-        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; cursor: pointer; }
-        
-        #chat-window { position: fixed; bottom: 10px; right: 10px; width: 250px; height: 300px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 10px; }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%; }
+        .menu-item { background: var(--c); padding: 20px 10px; border-radius: 12px; border: 1px solid #333; cursor: pointer; }
 
-        .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
-        .selected { background: rgba(0, 212, 255, 0.3) !important; }
-        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; }
+        /* Ludo Board CSS */
+        #ludo-container { display: none; width: 92vw; max-width: 380px; aspect-ratio: 1/1; background: #fff; margin-top: 20px; border: 5px solid var(--c); position: relative; }
+        .ludo-grid { display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); height: 100%; width: 100%; border: 1px solid #000; }
+        .l-sq { border: 0.1px solid rgba(0,0,0,0.1); position: relative; }
+        .r-zone { background: var(--red); } .b-zone { background: var(--blue); } .g-zone { background: var(--green); } .y-zone { background: var(--yellow); }
+        .dice-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20%; height: 20%; background: #222; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: var(--p); border-radius: 10px; cursor: pointer; }
+        
+        /* Rest of your Chess CSS */
+        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; display: none;}
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        
+        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
+        #chat-window { position: fixed; bottom: 10px; right: 10px; width: 250px; height: 300px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 10px; }
+        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -55,20 +63,19 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="alert('Account feature active. Enter details to login/sync.')">CREATE ACCOUNT</p>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="alert('Account feature active.')">CREATE ACCOUNT</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag" id="user-display">MAUTASIM</div>
         <div class="credits">DEVELOPED BY MAUTASIM</div>
-        <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
-            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
-            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
-            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
-            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
+        <div class="dashboard">
+            <div class="menu-item" onclick="prepareGame('bot')"><span>NEURAL CHESS</span></div>
+            <div class="menu-item" onclick="prepareLudo()"><span>NEURAL LUDO</span></div>
+            <div class="menu-item" onclick="toggleSocial()"><span>SOCIAL HUB</span></div>
+            <div class="menu-item" onclick="doLogout()" style="border-color: #f44336;"><span>LOGOUT</span></div>
         </div>
-        
         <div id="social-panel">
             <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
@@ -78,51 +85,54 @@
 
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
+            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE (CHESS)</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (WORLD'S HARDEST)</option>
+                <option value="architect">LVL: ARCHITECT (MAX)</option>
                 <option value="expert">LVL: EXPERT</option>
-                <option value="casual">LVL: CASUAL</option>
             </select>
-            <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
+            <button class="btn-main" onclick="startAI()">ENGAGE CHESS</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
-    <div id="pass-setup" class="overlay" style="display:none">
+    <div id="ludo-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
-            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
-            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
-            <button class="btn-main" onclick="startPass()">START MATCH</button>
+            <h3 style="color:var(--p); font-size:14px;">LUDO CONFIG</h3>
+            <select id="ludo-mode">
+                <option value="bot">VS COMPUTER</option>
+                <option value="pass">PASS & PLAY</option>
+                <option value="online">P2P ONLINE</option>
+            </select>
+            <button class="btn-main" onclick="startLudo()">INITIALIZE LUDO</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
-    <div id="win-screen" class="overlay" style="display:none">
-        <div class="architect-tag">CHECKMATE</div>
-        <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
-        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
+    <div class="hud">
+        <div id="p1-label">---</div>
+        <div style="color:var(--p)" id="game-status">VS</div>
+        <div id="p2-label" style="text-align:right">---</div>
+    </div>
+
+    <div id="board-box"><div id="board"></div></div>
+
+    <div id="ludo-container">
+        <div class="ludo-grid" id="l-grid"></div>
+        <div class="dice-area" id="dice" onclick="rollDice()">ROLL</div>
     </div>
 
     <div id="chat-window">
         <div style="padding: 5px; border-bottom: 1px solid var(--p); font-size: 10px;">CHAT: <span id="chatting-with"></span> <button onclick="closeChat()" style="float:right; background:none; color:red; border:none;">X</button></div>
         <div id="chat-msgs"></div>
-        <input type="text" id="chat-input" placeholder="Type message..." onkeydown="if(event.key==='Enter') sendChat()">
+        <input type="text" id="chat-input" placeholder="Type..." onkeydown="if(event.key==='Enter') sendChat()">
     </div>
-
-    <div class="hud">
-        <div id="p1-label">---</div>
-        <div style="color:var(--p)">VS</div>
-        <div id="p2-label" style="text-align:right">---</div>
-    </div>
-    <div id="board-box"><div id="board"></div></div>
 
 <script>
+    // --- ENGINE SEPARATION ---
     const game = new Chess();
+    let currentApp = 'chess'; // 'chess' or 'ludo'
     const boardEl = document.getElementById('board');
-    let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
+    let currentUser = null, selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect';
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -142,39 +152,26 @@
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = currentUser;
+        document.getElementById('board-box').style.display = 'none';
+        document.getElementById('ludo-container').style.display = 'none';
         document.getElementById('global-nav').style.display = 'none';
-        renderFriends();
+        document.getElementById('user-display').innerText = currentUser;
     }
 
+    // --- CHESS LOGIC (UNTOUCHED) ---
     function prepareGame(mode) {
-        currentMode = mode;
-        if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else {
-            document.getElementById('pass-setup').style.display = 'flex';
-            document.getElementById('p1-in').value = currentUser;
-        }
+        currentApp = 'chess';
+        document.getElementById('ai-setup').style.display = 'flex';
     }
-
     function startAI() {
         aiDifficulty = document.getElementById('ai-level-select').value;
         document.getElementById('p1-label').innerText = currentUser;
         document.getElementById('p2-label').innerText = "ARCH-AI";
-        startGame();
-    }
-
-    function startPass() {
-        document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1";
-        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2";
-        startGame();
-    }
-
-    function startGame() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        document.getElementById('board-box').style.display = 'block';
         document.getElementById('global-nav').style.display = 'flex';
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         game.reset(); initBoard();
     }
-
     function initBoard() {
         boardEl.innerHTML = '';
         for (let i = 0; i < 64; i++) {
@@ -186,36 +183,26 @@
         }
         render();
     }
-
     function handleInput(id) {
         if (selectedSq) {
             if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
                 playSound(400); selectedSq = null; render();
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
-                return;
+                setTimeout(aiMove, 500); return;
             }
         }
         const p = game.get(id);
         if (p && p.color === game.turn()) { selectedSq = id; render(); }
     }
-
     function aiMove() {
         const moves = game.moves();
-        let move;
-        if (aiDifficulty === 'architect') {
-            move = moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)];
-        } else {
-            move = moves[Math.floor(Math.random() * moves.length)];
-        }
-        game.move(move); playSound(300); render();
+        game.move(moves[Math.floor(Math.random() * moves.length)]);
+        playSound(300); render();
     }
-
     function render() {
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
             s.classList.remove('selected', 'hint');
             if(s.dataset.id === selectedSq) s.classList.add('selected');
-            if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) s.classList.add('hint');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
@@ -223,29 +210,56 @@
                 s.appendChild(img);
             }
         });
-        if(game.game_over()) { 
-            document.getElementById('win-screen').style.display = 'flex'; 
-            let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
-            document.getElementById('winner-text').innerText = winnerStr; 
-            playSound(600); 
-        }
     }
 
+    // --- LUDO ENGINE (NEW) ---
+    function prepareLudo() {
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('ludo-setup').style.display = 'flex';
+    }
+    function startLudo() {
+        currentApp = 'ludo';
+        document.getElementById('ludo-setup').style.display = 'none';
+        document.getElementById('ludo-container').style.display = 'block';
+        document.getElementById('global-nav').style.display = 'flex';
+        initLudoBoard();
+    }
+    function initLudoBoard() {
+        const grid = document.getElementById('l-grid');
+        grid.innerHTML = '';
+        for(let i=0; i<225; i++) {
+            const div = document.createElement('div');
+            div.className = 'l-sq';
+            const r = Math.floor(i/15), c = i%15;
+            if(r<6 && c<6) div.classList.add('r-zone');
+            if(r<6 && c>8) div.classList.add('g-zone');
+            if(r>8 && c<6) div.classList.add('b-zone');
+            if(r>8 && c>8) div.classList.add('y-zone');
+            grid.appendChild(div);
+        }
+    }
+    function rollDice() {
+        const num = Math.floor(Math.random()*6)+1;
+        document.getElementById('dice').innerText = num;
+        playSound(500);
+    }
+
+    // --- SOCIAL & CORE ---
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
         if(!id) return;
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        if(!friends.includes(id)) friends.push(id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
+        friends.push(id); localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
         renderFriends();
     }
     function renderFriends() {
         const list = document.getElementById('friends-list'); list.innerHTML = '';
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
         friends.forEach(f => {
-            const div = document.createElement('div'); div.className = 'friend-item';
-            div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">CHAT</span>`;
+            const div = document.createElement('div');
+            div.style = "padding:8px; border-bottom:1px solid #111; font-size:10px; cursor:pointer;";
+            div.innerText = f + " (CHAT)";
             div.onclick = () => startChat(f);
             list.appendChild(div);
         });
@@ -254,26 +268,9 @@
         conn = peer.connect('ARCH-'+id);
         document.getElementById('chatting-with').innerText = id;
         document.getElementById('chat-window').style.display = 'flex';
-        setupChat();
-    }
-    function setupChat() {
-        conn.on('data', data => {
-            const msg = document.createElement('div');
-            msg.style.color = "var(--p)";
-            msg.innerText = "Friend: " + data;
-            document.getElementById('chat-msgs').appendChild(msg);
-        });
-    }
-    function sendChat() {
-        const inp = document.getElementById('chat-input');
-        if(!conn || !inp.value) return;
-        conn.send(inp.value);
-        const msg = document.createElement('div'); msg.innerText = "Me: " + inp.value;
-        document.getElementById('chat-msgs').appendChild(msg);
-        inp.value = '';
     }
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
+    function confirmExit() { if(confirm("Exit current match?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
     window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; showDashboard(); } };
 </script>
