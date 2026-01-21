@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --red: #ff4b2b; --blue: #00d4ff; --green: #00ff87; --yellow: #f9d423; }
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --r: #ff4b2b; --g: #00ff87; --b: #00d4ff; --y: #f9d423; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
@@ -28,22 +28,27 @@
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%; }
-        .menu-item { background: var(--c); padding: 20px 10px; border-radius: 12px; border: 1px solid #333; cursor: pointer; }
+        .menu-item { background: var(--c); padding: 20px 10px; border-radius: 12px; border: 1px solid #333; cursor: pointer; text-align: center; font-size: 11px; }
 
-        /* Ludo Board CSS */
-        #ludo-container { display: none; width: 92vw; max-width: 380px; aspect-ratio: 1/1; background: #fff; margin-top: 20px; border: 5px solid var(--c); position: relative; }
-        .ludo-grid { display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); height: 100%; width: 100%; border: 1px solid #000; }
-        .l-sq { border: 0.1px solid rgba(0,0,0,0.1); position: relative; }
-        .r-zone { background: var(--red); } .b-zone { background: var(--blue); } .g-zone { background: var(--green); } .y-zone { background: var(--yellow); }
-        .dice-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20%; height: 20%; background: #222; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: var(--p); border-radius: 10px; cursor: pointer; }
+        /* Ludo Layout */
+        #ludo-board { display: none; width: 92vw; max-width: 400px; aspect-ratio: 1/1; background: #fff; position: relative; border: 4px solid #333; }
+        .ludo-grid { display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); height: 100%; width: 100%; }
+        .cell { border: 0.1px solid rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center; }
+        .home { width: 100%; height: 100%; }
+        .red { background: var(--r); } .green { background: var(--g); } .blue { background: var(--b); } .yellow { background: var(--y); }
+        .star::after { content: '★'; color: rgba(0,0,0,0.3); font-size: 12px; }
+        .token { width: 80%; height: 80%; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 10; position: absolute; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .dice-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: #222; border: 2px solid var(--p); border-radius: 10px; color: var(--p); font-size: 24px; display: flex; align-items: center; justify-content: center; z-index: 20; cursor: pointer; }
         
-        /* Rest of your Chess CSS */
-        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; display: none;}
+        /* Chess Board */
+        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; display: none; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
+        .sq.hint::after { content: ''; width: 12px; height: 12px; background: var(--p); border-radius: 50%; opacity: 0.5; }
+        .selected { background: rgba(0, 212, 255, 0.4) !important; }
+
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
-        
         #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
         #chat-window { position: fixed; bottom: 10px; right: 10px; width: 250px; height: 300px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 10px; }
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; }
@@ -63,7 +68,7 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="alert('Account feature active.')">CREATE ACCOUNT</p>
+            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer">CREATE ACCOUNT</p>
         </div>
     </div>
 
@@ -77,7 +82,7 @@
             <div class="menu-item" onclick="doLogout()" style="border-color: #f44336;"><span>LOGOUT</span></div>
         </div>
         <div id="social-panel">
-            <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
+            <input type="text" id="friend-id" placeholder="FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
             <div id="friends-list"></div>
         </div>
@@ -85,40 +90,44 @@
 
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE (CHESS)</h3>
+            <h3 style="color:var(--p); font-size:14px;">CHESS NEURAL OVERRIDE</h3>
             <select id="ai-level-select">
                 <option value="architect">LVL: ARCHITECT (MAX)</option>
                 <option value="expert">LVL: EXPERT</option>
             </select>
-            <button class="btn-main" onclick="startAI()">ENGAGE CHESS</button>
+            <button class="btn-main" onclick="startAI()">ENGAGE</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
-    <div id="ludo-setup" class="overlay" style="display:none">
+    <div id="ludo-config" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">LUDO CONFIG</h3>
-            <select id="ludo-mode">
-                <option value="bot">VS COMPUTER</option>
-                <option value="pass">PASS & PLAY</option>
-                <option value="online">P2P ONLINE</option>
+            <h3 style="color:var(--p); font-size:14px;">LUDO CONFIGURATION</h3>
+            <select id="ludo-count" onchange="updateLudoNames()">
+                <option value="2">2 PLAYERS</option>
+                <option value="3">3 PLAYERS</option>
+                <option value="4">4 PLAYERS</option>
             </select>
-            <button class="btn-main" onclick="startLudo()">INITIALIZE LUDO</button>
+            <div id="ludo-names-inputs">
+                <input type="text" id="ln1" placeholder="PLAYER 1 (RED)">
+                <input type="text" id="ln2" placeholder="PLAYER 2 (GREEN)">
+            </div>
+            <button class="btn-main" onclick="startLudo()">START LUDO</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
     <div class="hud">
         <div id="p1-label">---</div>
-        <div style="color:var(--p)" id="game-status">VS</div>
+        <div style="color:var(--p)" id="turn-status">VS</div>
         <div id="p2-label" style="text-align:right">---</div>
     </div>
 
     <div id="board-box"><div id="board"></div></div>
 
-    <div id="ludo-container">
+    <div id="ludo-board">
         <div class="ludo-grid" id="l-grid"></div>
-        <div class="dice-area" id="dice" onclick="rollDice()">ROLL</div>
+        <div class="dice-btn" id="l-dice" onclick="rollLudoDice()">?</div>
     </div>
 
     <div id="chat-window">
@@ -128,11 +137,8 @@
     </div>
 
 <script>
-    // --- ENGINE SEPARATION ---
     const game = new Chess();
-    let currentApp = 'chess'; // 'chess' or 'ludo'
-    const boardEl = document.getElementById('board');
-    let currentUser = null, selectedSq = null, audioCtx = null, muted = false;
+    let currentApp = 'chess', currentUser = null, selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect';
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -145,7 +151,7 @@
         currentUser = u;
         localStorage.setItem('arch_user', u);
         peer = new Peer('ARCH-' + currentUser);
-        peer.on('connection', c => { conn = c; setupChat(); document.getElementById('chat-window').style.display = 'flex'; });
+        peer.on('connection', c => { conn = c; document.getElementById('chat-window').style.display = 'flex'; });
         showDashboard();
     }
 
@@ -153,12 +159,12 @@
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('board-box').style.display = 'none';
-        document.getElementById('ludo-container').style.display = 'none';
+        document.getElementById('ludo-board').style.display = 'none';
         document.getElementById('global-nav').style.display = 'none';
         document.getElementById('user-display').innerText = currentUser;
     }
 
-    // --- CHESS LOGIC (UNTOUCHED) ---
+    // --- CHESS ENGINE (RESTORED) ---
     function prepareGame(mode) {
         currentApp = 'chess';
         document.getElementById('ai-setup').style.display = 'flex';
@@ -173,36 +179,40 @@
         game.reset(); initBoard();
     }
     function initBoard() {
+        const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
         for (let i = 0; i < 64; i++) {
             const sq = document.createElement('div');
             sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`;
             sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8));
-            sq.onclick = () => handleInput(sq.dataset.id);
+            sq.onclick = () => handleChessInput(sq.dataset.id);
             boardEl.appendChild(sq);
         }
-        render();
+        renderChess();
     }
-    function handleInput(id) {
+    function handleChessInput(id) {
         if (selectedSq) {
-            if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
-                playSound(400); selectedSq = null; render();
-                setTimeout(aiMove, 500); return;
+            const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
+            if (move) {
+                playSound(400); selectedSq = null; renderChess();
+                if(!game.game_over()) setTimeout(chessAIMove, 500);
+                return;
             }
         }
         const p = game.get(id);
-        if (p && p.color === game.turn()) { selectedSq = id; render(); }
+        if (p && p.color === game.turn()) { selectedSq = id; renderChess(); }
     }
-    function aiMove() {
+    function chessAIMove() {
         const moves = game.moves();
-        game.move(moves[Math.floor(Math.random() * moves.length)]);
-        playSound(300); render();
+        const bestMove = moves.find(m => m.includes('#')) || moves.find(m => m.includes('x')) || moves[Math.floor(Math.random() * moves.length)];
+        game.move(bestMove); playSound(300); renderChess();
     }
-    function render() {
+    function renderChess() {
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
             s.classList.remove('selected', 'hint');
             if(s.dataset.id === selectedSq) s.classList.add('selected');
+            if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) s.classList.add('hint');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
@@ -212,39 +222,55 @@
         });
     }
 
-    // --- LUDO ENGINE (NEW) ---
+    // --- LUDO ENGINE (REAL DESIGN) ---
     function prepareLudo() {
         document.getElementById('home-screen').style.display = 'none';
-        document.getElementById('ludo-setup').style.display = 'flex';
+        document.getElementById('ludo-config').style.display = 'flex';
+        updateLudoNames();
+    }
+    function updateLudoNames() {
+        const count = document.getElementById('ludo-count').value;
+        const container = document.getElementById('ludo-names-inputs');
+        container.innerHTML = '';
+        const colors = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
+        for(let i=0; i<count; i++) {
+            container.innerHTML += `<input type="text" id="ln${i+1}" placeholder="PLAYER ${i+1} (${colors[i]})">`;
+        }
     }
     function startLudo() {
         currentApp = 'ludo';
-        document.getElementById('ludo-setup').style.display = 'none';
-        document.getElementById('ludo-container').style.display = 'block';
+        document.getElementById('ludo-config').style.display = 'none';
+        document.getElementById('ludo-board').style.display = 'block';
         document.getElementById('global-nav').style.display = 'flex';
-        initLudoBoard();
+        document.getElementById('p1-label').innerText = document.getElementById('ln1').value || "RED";
+        document.getElementById('p2-label').innerText = document.getElementById('ln2').value || "GREEN";
+        initLudoGrid();
     }
-    function initLudoBoard() {
+    function initLudoGrid() {
         const grid = document.getElementById('l-grid');
         grid.innerHTML = '';
         for(let i=0; i<225; i++) {
-            const div = document.createElement('div');
-            div.className = 'l-sq';
             const r = Math.floor(i/15), c = i%15;
-            if(r<6 && c<6) div.classList.add('r-zone');
-            if(r<6 && c>8) div.classList.add('g-zone');
-            if(r>8 && c<6) div.classList.add('b-zone');
-            if(r>8 && c>8) div.classList.add('y-zone');
-            grid.appendChild(div);
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if(r<6 && c<6) cell.classList.add('red');
+            if(r<6 && c>8) cell.classList.add('green');
+            if(r>8 && c<6) cell.classList.add('blue');
+            if(r>8 && c>8) cell.classList.add('yellow');
+            if((r==7 && c>0 && c<7)) cell.classList.add('red');
+            if((c==7 && r>0 && r<7)) cell.classList.add('green');
+            if((r==7 && c>8 && c<14)) cell.classList.add('yellow');
+            if((c==7 && r>8 && r<14)) cell.classList.add('blue');
+            grid.appendChild(cell);
         }
     }
-    function rollDice() {
-        const num = Math.floor(Math.random()*6)+1;
-        document.getElementById('dice').innerText = num;
+    function rollLudoDice() {
+        const val = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('l-dice').innerText = val;
         playSound(500);
     }
 
-    // --- SOCIAL & CORE ---
+    // --- CORE ---
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
@@ -260,17 +286,11 @@
             const div = document.createElement('div');
             div.style = "padding:8px; border-bottom:1px solid #111; font-size:10px; cursor:pointer;";
             div.innerText = f + " (CHAT)";
-            div.onclick = () => startChat(f);
+            div.onclick = () => { conn = peer.connect('ARCH-'+f); document.getElementById('chat-window').style.display = 'flex'; };
             list.appendChild(div);
         });
     }
-    function startChat(id) {
-        conn = peer.connect('ARCH-'+id);
-        document.getElementById('chatting-with').innerText = id;
-        document.getElementById('chat-window').style.display = 'flex';
-    }
-    function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit current match?")) showDashboard(); }
+    function confirmExit() { if(confirm("Exit game to Hub?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
     window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; showDashboard(); } };
 </script>
