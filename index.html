@@ -1,5 +1,4 @@
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -56,7 +55,7 @@
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p style="font-size: 10px; color: #555; margin-top: 15px; cursor:pointer" onclick="alert('Account feature active. Enter details to login/sync.')">CREATE ACCOUNT</p>
+            <p id="my-peer-id" style="font-size: 10px; color: var(--p); margin-top: 15px;"></p>
         </div>
     </div>
 
@@ -71,8 +70,8 @@
         </div>
         
         <div id="social-panel">
-            <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
-            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
+            <input type="text" id="friend-id" placeholder="ENTER FRIEND ID (ARCH-...)">
+            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">CONNECT & PLAY</button>
             <div id="friends-list"></div>
         </div>
     </div>
@@ -124,7 +123,7 @@
     const game = new Chess();
     const boardEl = document.getElementById('board');
     let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
-    let peer = null, conn = null, aiDifficulty = 'architect';
+    let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
@@ -135,8 +134,23 @@
         if(!u) return;
         currentUser = u;
         localStorage.setItem('arch_user', u);
-        peer = new Peer('ARCH-' + currentUser);
-        peer.on('connection', c => { conn = c; setupChat(); document.getElementById('chat-window').style.display = 'flex'; });
+        const peerId = 'ARCH-' + currentUser;
+        peer = new Peer(peerId);
+        
+        peer.on('open', (id) => {
+            document.getElementById('my-peer-id').innerText = "YOUR ID: " + id;
+        });
+
+        peer.on('connection', c => {
+            conn = c;
+            currentMode = 'online';
+            playerColor = 'b'; // Receiver is Black
+            setupOnlineBridge();
+            alert("INCOMING CHALLENGE FROM " + conn.peer);
+            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-', '');
+            document.getElementById('p2-label').innerText = currentUser;
+            startGame();
+        });
         showDashboard();
     }
 
@@ -145,7 +159,6 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
         document.getElementById('global-nav').style.display = 'none';
-        renderFriends();
     }
 
     function prepareGame(mode) {
@@ -159,12 +172,14 @@
 
     function startAI() {
         aiDifficulty = document.getElementById('ai-level-select').value;
+        playerColor = 'w';
         document.getElementById('p1-label').innerText = currentUser;
         document.getElementById('p2-label').innerText = "ARCH-AI";
         startGame();
     }
 
     function startPass() {
+        playerColor = 'w';
         document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1";
         document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2";
         startGame();
@@ -189,9 +204,21 @@
     }
 
     function handleInput(id) {
+        // Prevent moving if not your turn in Online mode
+        if (currentMode === 'online' && game.turn() !== playerColor) return;
+
         if (selectedSq) {
-            if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
-                playSound(400); selectedSq = null; render();
+            const moveData = { from: selectedSq, to: id, promotion: 'q' };
+            const move = game.move(moveData);
+            if (move) {
+                playSound(400); 
+                selectedSq = null; 
+                render();
+                
+                if (currentMode === 'online' && conn) {
+                    conn.send({ type: 'MOVE', data: moveData });
+                }
+                
                 if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
                 return;
             }
@@ -233,56 +260,57 @@
     }
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+    
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim();
         if(!id) return;
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        if(!friends.includes(id)) friends.push(id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
-        renderFriends();
-    }
-    function renderFriends() {
-        const list = document.getElementById('friends-list'); list.innerHTML = '';
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        friends.forEach(f => {
-            const div = document.createElement('div'); div.className = 'friend-item';
-            div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">CHAT</span>`;
-            div.onclick = () => startChat(f);
-            list.appendChild(div);
+        conn = peer.connect(id);
+        currentMode = 'online';
+        playerColor = 'w'; // Initiator is White
+        setupOnlineBridge();
+        conn.on('open', () => {
+            document.getElementById('p1-label').innerText = currentUser;
+            document.getElementById('p2-label').innerText = id.replace('ARCH-', '');
+            startGame();
+            document.getElementById('chat-window').style.display = 'flex';
         });
     }
-    function startChat(id) {
-        conn = peer.connect('ARCH-'+id);
-        document.getElementById('chatting-with').innerText = id;
-        document.getElementById('chat-window').style.display = 'flex';
-        setupChat();
-    }
-    function setupChat() {
+
+    function setupOnlineBridge() {
         conn.on('data', data => {
-            const msg = document.createElement('div');
-            msg.style.color = "var(--p)";
-            msg.innerText = "Friend: " + data;
-            document.getElementById('chat-msgs').appendChild(msg);
+            if (data.type === 'MOVE') {
+                game.move(data.data);
+                playSound(300);
+                render();
+            } else if (data.type === 'CHAT') {
+                displayChatMessage("Friend", data.msg);
+            }
         });
+        document.getElementById('chatting-with').innerText = conn.peer;
+        document.getElementById('chat-window').style.display = 'flex';
     }
+
     function sendChat() {
         const inp = document.getElementById('chat-input');
         if(!conn || !inp.value) return;
-        conn.send(inp.value);
-        const msg = document.createElement('div'); msg.innerText = "Me: " + inp.value;
-        document.getElementById('chat-msgs').appendChild(msg);
+        conn.send({ type: 'CHAT', msg: inp.value });
+        displayChatMessage("Me", inp.value);
         inp.value = '';
     }
+
+    function displayChatMessage(sender, text) {
+        const msg = document.createElement('div');
+        msg.style.color = sender === "Me" ? "white" : "var(--p)";
+        msg.innerText = sender + ": " + text;
+        const box = document.getElementById('chat-msgs');
+        box.appendChild(msg);
+        box.scrollTop = box.scrollHeight;
+    }
+
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
     function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; showDashboard(); } };
+    window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; handleAuth(); } };
 </script>
 </body>
 </html>
-
-
-
-
-
-
