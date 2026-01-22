@@ -29,8 +29,10 @@
         #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
         .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; cursor: pointer; }
         
-        #chat-window { position: fixed; bottom: 10px; right: 10px; width: 250px; height: 300px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 10px; }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; }
+        /* CHAT UI IMPROVEMENTS */
+        #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
+        .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -80,7 +82,7 @@
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (WORLD'S HARDEST)</option>
+                <option value="architect">LVL: ARCHITECT (INSTANT/EXTREME)</option>
                 <option value="casual">LVL: CASUAL</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
@@ -105,10 +107,15 @@
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
     </div>
 
+    <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    </div>
     <div id="chat-window">
-        <div style="padding: 5px; border-bottom: 1px solid var(--p); font-size: 10px;">CHAT: <span id="chatting-with"></span> <button onclick="closeChat()" style="float:right; background:none; color:red; border:none;">X</button></div>
+        <div style="padding: 12px; border-bottom: 1px solid var(--p); font-size: 10px; font-weight: 900; background:rgba(0,212,255,0.1)">
+            COMM-LINK: <span id="chatting-with" style="color:var(--p)"></span>
+        </div>
         <div id="chat-msgs"></div>
-        <input type="text" id="chat-input" placeholder="Type message..." onkeydown="if(event.key==='Enter') sendChat()">
+        <input type="text" id="chat-input" placeholder="SEND DATA..." onkeydown="if(event.key==='Enter') sendChat()">
     </div>
 
     <div class="hud">
@@ -131,18 +138,15 @@
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
-        if(!u || !p) { alert("ENTER ALL FIELDS"); return; }
-
+        if(!u || !p) { alert("DATA MISSING"); return; }
         const storedPass = localStorage.getItem('pwd_' + u);
-        
         if(type === 'signup') {
-            if(storedPass) { alert("USERNAME TAKEN"); return; }
+            if(storedPass) { alert("ID TAKEN"); return; }
             localStorage.setItem('pwd_' + u, p);
-            alert("ACCOUNT CREATED! LOGGING IN...");
+            alert("ACCOUNT SECURED");
         } else {
-            if(!storedPass || storedPass !== p) { alert("INVALID CREDENTIALS"); return; }
+            if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
         }
-
         currentUser = u;
         localStorage.setItem('arch_user', u);
         initPeer();
@@ -153,9 +157,7 @@
         if(peer) return;
         peer = new Peer('ARCH-' + currentUser);
         peer.on('connection', c => { 
-            conn = c; 
-            currentMode = 'online';
-            playerColor = 'b';
+            conn = c; currentMode = 'online'; playerColor = 'b';
             setupConnection(); 
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
             document.getElementById('p2-label').innerText = currentUser;
@@ -163,32 +165,36 @@
         });
     }
 
-    // --- PRO LEVEL AI ENGINE ---
-    const pst = {
-        p: [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10,-20,-20, 10, 10, 5, 5, -5,-10, 0, 0,-10, -5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, 5, 10, 25, 25, 10, 5, 5, 10, 10, 20, 30, 30, 20, 10, 10, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 0, 0, 0],
-        n: [-50,-40,-30,-30,-30,-30,-40,-50,-40,-20, 0, 5, 5, 0,-20,-40,-30, 5, 10, 15, 15, 10, 5,-30,-30, 0, 15, 20, 20, 15, 0,-30,-30, 5, 15, 20, 20, 15, 5,-30,-30, 0, 10, 15, 15, 10, 0,-30,-40,-20, 0, 0, 0, 0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50]
-    };
+    // --- INSTANT ARCHITECT AI ENGINE ---
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-
+    
     function evaluateBoard(g) {
-        let total = 0;
-        const b = g.board();
+        let total = 0; const b = g.board();
         for(let i=0; i<8; i++) {
             for(let j=0; j<8; j++) {
                 if(b[i][j]) {
-                    let v = pieceValues[b[i][j].type];
-                    // Add positional bonus for center control (pawn/knight)
-                    if(pst[b[i][j].type]) v += pst[b[i][j].type][i*8+j];
-                    total += (b[i][j].color === 'w' ? v : -v);
+                    const val = pieceValues[b[i][j].type];
+                    total += (b[i][j].color === 'w' ? val : -val);
                 }
             }
         }
         return total;
     }
 
+    // Move Ordering for Speed
+    function getMoveScore(g, m) {
+        let score = 0;
+        const target = g.get(m.to);
+        if (target) score += 10 * pieceValues[target.type]; // Prioritize captures
+        if (m.flags.includes('c')) score += 50; // Prioritize checks
+        return score;
+    }
+
     function minimax(g, depth, alpha, beta, isMax) {
         if(depth === 0) return -evaluateBoard(g);
-        const moves = g.moves();
+        let moves = g.moves({verbose: true});
+        moves.sort((a, b) => getMoveScore(g, b) - getMoveScore(g, a)); // Speed optimization
+
         if(isMax) {
             let best = -Infinity;
             for(let m of moves) {
@@ -214,7 +220,7 @@
         if(game.game_over()) return;
         const moves = game.moves();
         let bestMove = null, bestVal = -Infinity;
-        // Depth 3 for speed + extreme difficulty
+        // Optimized depth for instant response
         for(let m of moves) {
             game.move(m);
             let v = minimax(game, 2, -Infinity, Infinity, false);
@@ -232,7 +238,7 @@
             if (move) {
                 playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 100);
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 10); // Reduced delay
                 return;
             }
         }
@@ -241,13 +247,15 @@
     }
 
     function setupConnection() {
-        document.getElementById('chat-window').style.display = 'flex';
+        document.getElementById('chat-btn').style.display = 'flex';
         document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
         conn.on('data', data => {
             if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
             else if (data.type === 'chat') {
-                const msg = document.createElement('div'); msg.style.color = "var(--p)";
-                msg.innerText = "Friend: " + data.data; document.getElementById('chat-msgs').appendChild(msg);
+                const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+                msg.innerHTML = `<span style="color:var(--p)">STRANGER:</span> ${data.data}`;
+                document.getElementById('chat-msgs').appendChild(msg);
+                document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
             }
         });
     }
@@ -268,6 +276,8 @@
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
         document.getElementById('global-nav').style.display = 'none';
+        document.getElementById('chat-btn').style.display = 'none';
+        document.getElementById('chat-window').style.display = 'none';
         renderFriends();
     }
 
@@ -348,25 +358,33 @@
             div.onclick = () => startOnlineGame(f); list.appendChild(div);
         });
     }
+
+    function toggleChatWindow() {
+        const win = document.getElementById('chat-window');
+        win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    }
+
     function sendChat() {
         const inp = document.getElementById('chat-input');
         if(!conn || !inp.value) return;
         conn.send({type: 'chat', data: inp.value});
-        const msg = document.createElement('div'); msg.innerText = "Me: " + inp.value;
+        const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+        msg.innerHTML = `<span style="color:#777">YOU:</span> ${inp.value}`;
         document.getElementById('chat-msgs').appendChild(msg);
+        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
         inp.value = '';
     }
-    function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
-    function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
+
+    function confirmExit() { if(confirm("ABORT MATCH?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
+    
     window.onload = () => { 
         const s = localStorage.getItem('arch_user'); 
         if(s) { 
             currentUser = s; 
             document.getElementById('user-in').value = s;
             document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
-            initPeer();
-            showDashboard();
+            initPeer(); showDashboard();
         } 
     };
 </script>
