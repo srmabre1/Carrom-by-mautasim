@@ -54,8 +54,9 @@
         <div class="auth-card">
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
-            <button class="btn-main" onclick="handleAuth()">INITIALIZE</button>
-            <p id="auth-status" style="font-size: 10px; color: var(--p); margin-top: 15px;">LOGIN OR AUTO-SIGNUP</p>
+            <button class="btn-main" onclick="handleAuth('login')">LOGIN</button>
+            <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP</button>
+            <p id="auth-status" style="font-size: 10px; color: var(--p); margin-top: 15px;">SECURE ACCESS PROTOCOL</p>
         </div>
     </div>
 
@@ -68,7 +69,6 @@
             <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
             <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
-        
         <div id="social-panel">
             <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
@@ -80,7 +80,7 @@
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (HARDEST)</option>
+                <option value="architect">LVL: ARCHITECT (WORLD'S HARDEST)</option>
                 <option value="casual">LVL: CASUAL</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
@@ -128,18 +128,20 @@
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
-    // --- PERSISTENT AUTH SYSTEM ---
-    function handleAuth() {
+    function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
-        if(!u || !p) return;
+        if(!u || !p) { alert("ENTER ALL FIELDS"); return; }
 
         const storedPass = localStorage.getItem('pwd_' + u);
-        if(storedPass && storedPass !== p) {
-            document.getElementById('auth-status').innerText = "INVALID PASSKEY";
-            return;
+        
+        if(type === 'signup') {
+            if(storedPass) { alert("USERNAME TAKEN"); return; }
+            localStorage.setItem('pwd_' + u, p);
+            alert("ACCOUNT CREATED! LOGGING IN...");
+        } else {
+            if(!storedPass || storedPass !== p) { alert("INVALID CREDENTIALS"); return; }
         }
-        if(!storedPass) localStorage.setItem('pwd_' + u, p);
 
         currentUser = u;
         localStorage.setItem('arch_user', u);
@@ -161,82 +163,76 @@
         });
     }
 
-    // --- ADVANCED AI ENGINE (MINIMAX) ---
-    const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+    // --- PRO LEVEL AI ENGINE ---
+    const pst = {
+        p: [0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10,-20,-20, 10, 10, 5, 5, -5,-10, 0, 0,-10, -5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, 5, 10, 25, 25, 10, 5, 5, 10, 10, 20, 30, 30, 20, 10, 10, 50, 50, 50, 50, 50, 50, 50, 50, 0, 0, 0, 0, 0, 0, 0, 0],
+        n: [-50,-40,-30,-30,-30,-30,-40,-50,-40,-20, 0, 5, 5, 0,-20,-40,-30, 5, 10, 15, 15, 10, 5,-30,-30, 0, 15, 20, 20, 15, 0,-30,-30, 5, 15, 20, 20, 15, 5,-30,-30, 0, 10, 15, 15, 10, 0,-30,-40,-20, 0, 0, 0, 0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50]
+    };
+    const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
     function evaluateBoard(g) {
         let total = 0;
-        const board = g.board();
+        const b = g.board();
         for(let i=0; i<8; i++) {
             for(let j=0; j<8; j++) {
-                if(board[i][j]) {
-                    const val = pieceValues[board[i][j].type];
-                    total += (board[i][j].color === 'w' ? val : -val);
+                if(b[i][j]) {
+                    let v = pieceValues[b[i][j].type];
+                    // Add positional bonus for center control (pawn/knight)
+                    if(pst[b[i][j].type]) v += pst[b[i][j].type][i*8+j];
+                    total += (b[i][j].color === 'w' ? v : -v);
                 }
             }
         }
         return total;
     }
 
-    function minimax(g, depth, alpha, beta, isMaximizing) {
+    function minimax(g, depth, alpha, beta, isMax) {
         if(depth === 0) return -evaluateBoard(g);
         const moves = g.moves();
-        if(isMaximizing) {
-            let bestScore = -9999;
+        if(isMax) {
+            let best = -Infinity;
             for(let m of moves) {
                 g.move(m);
-                bestScore = Math.max(bestScore, minimax(g, depth - 1, alpha, beta, !isMaximizing));
-                g.undo();
-                alpha = Math.max(alpha, bestScore);
+                best = Math.max(best, minimax(g, depth-1, alpha, beta, false));
+                g.undo(); alpha = Math.max(alpha, best);
                 if(beta <= alpha) break;
             }
-            return bestScore;
+            return best;
         } else {
-            let bestScore = 9999;
+            let best = Infinity;
             for(let m of moves) {
                 g.move(m);
-                bestScore = Math.min(bestScore, minimax(g, depth - 1, alpha, beta, !isMaximizing));
-                g.undo();
-                beta = Math.min(beta, bestScore);
+                best = Math.min(best, minimax(g, depth-1, alpha, beta, true));
+                g.undo(); beta = Math.min(beta, best);
                 if(beta <= alpha) break;
             }
-            return bestScore;
+            return best;
         }
     }
 
     function aiMove() {
-        const moves = game.moves();
         if(game.game_over()) return;
-
-        let bestMove = null;
-        if(aiDifficulty === 'architect') {
-            let bestValue = -9999;
-            for(let m of moves) {
-                game.move(m);
-                let boardValue = minimax(game, 2, -10000, 10000, false);
-                game.undo();
-                if(boardValue > bestValue) { bestValue = boardValue; bestMove = m; }
-            }
-        } else {
-            bestMove = moves[Math.floor(Math.random() * moves.length)];
+        const moves = game.moves();
+        let bestMove = null, bestVal = -Infinity;
+        // Depth 3 for speed + extreme difficulty
+        for(let m of moves) {
+            game.move(m);
+            let v = minimax(game, 2, -Infinity, Infinity, false);
+            game.undo();
+            if(v > bestVal) { bestVal = v; bestMove = m; }
         }
-        game.move(bestMove || moves[0]); 
-        playSound(300); 
-        render();
+        game.move(bestMove || moves[0]); playSound(300); render();
     }
 
-    // --- GAME LOGIC ---
     function handleInput(id) {
         if (currentMode === 'online' && game.turn() !== playerColor) return;
-
         if (selectedSq) {
             const moveData = { from: selectedSq, to: id, promotion: 'q' };
             const move = game.move(moveData);
             if (move) {
-                playSound(400); 
-                selectedSq = null; 
-                render();
+                playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 500);
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 100);
                 return;
             }
         }
@@ -250,10 +246,8 @@
         conn.on('data', data => {
             if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
             else if (data.type === 'chat') {
-                const msg = document.createElement('div');
-                msg.style.color = "var(--p)";
-                msg.innerText = "Friend: " + data.data;
-                document.getElementById('chat-msgs').appendChild(msg);
+                const msg = document.createElement('div'); msg.style.color = "var(--p)";
+                msg.innerText = "Friend: " + data.data; document.getElementById('chat-msgs').appendChild(msg);
             }
         });
     }
@@ -269,7 +263,6 @@
         });
     }
 
-    // --- UI HELPERS ---
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
@@ -333,8 +326,7 @@
         if(game.game_over()) { 
             document.getElementById('win-screen').style.display = 'flex'; 
             let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
-            document.getElementById('winner-text').innerText = winnerStr; 
-            playSound(600); 
+            document.getElementById('winner-text').innerText = winnerStr; playSound(600); 
         }
     }
 
@@ -353,8 +345,7 @@
         friends.forEach(f => {
             const div = document.createElement('div'); div.className = 'friend-item';
             div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">PLAY</span>`;
-            div.onclick = () => startOnlineGame(f);
-            list.appendChild(div);
+            div.onclick = () => startOnlineGame(f); list.appendChild(div);
         });
     }
     function sendChat() {
@@ -374,7 +365,8 @@
             currentUser = s; 
             document.getElementById('user-in').value = s;
             document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
-            handleAuth(); 
+            initPeer();
+            showDashboard();
         } 
     };
 </script>
