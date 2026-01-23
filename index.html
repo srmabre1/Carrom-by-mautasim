@@ -6,9 +6,10 @@
     <title>ARCHITECT CHESS PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&display=swap');
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
@@ -33,10 +34,15 @@
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
-        /* CERTIFICATE & GALLERY */
-        #cert-overlay { display:none; background: #000; color: var(--p); border: 4px double var(--p); padding: 30px; text-align: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; width: 85%; max-width: 400px; box-shadow: 0 0 50px var(--p); }
-        .gallery-list { width: 90%; max-height: 300px; overflow-y: auto; margin-top: 15px; }
-        .saved-cert { background: var(--c); border: 1px solid #333; padding: 10px; margin: 5px 0; border-radius: 8px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* CRAZY PROFESSIONAL CERTIFICATE */
+        #cert-overlay { display:none; background: #000; padding: 10px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; width: 95%; max-width: 500px; }
+        #cert-canvas-area { background: linear-gradient(135deg, #0a0e17 0%, #1a2533 100%); color: var(--gold); border: 8px double var(--gold); padding: 40px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+        #cert-canvas-area::before { content: 'ARCHITECT'; position: absolute; font-size: 80px; opacity: 0.03; top: 20%; left: -10%; transform: rotate(-30deg); font-weight: 900; pointer-events: none; }
+        .cert-header { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-shadow: 0 0 10px var(--gold); border-bottom: 2px solid var(--gold); display: inline-block; padding-bottom: 5px; }
+        .cert-body { font-family: 'Orbitron'; letter-spacing: 2px; line-height: 1.6; }
+        .cert-name { font-size: 32px; color: white; margin: 15px 0; text-decoration: underline; text-transform: uppercase; font-weight: 900; }
+        .cert-footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; }
+        .signature { font-family: 'cursive'; font-size: 20px; border-top: 1px solid var(--gold); padding-top: 5px; color: white; }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -45,6 +51,10 @@
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        
+        /* VOICE UI */
+        #voice-btn { background: #f44336; }
+        #voice-btn.active { background: #4caf50; box-shadow: 0 0 10px #4caf50; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -52,7 +62,7 @@
     <div id="global-nav" class="nav-ui" style="display:none">
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
-        <div class="btn-ui" id="view-board-ui" style="display:none" onclick="toggleWinScreen()">👁️ TOGGLE BOARD</div>
+        <div class="btn-ui" id="voice-call-btn" style="display:none" onclick="toggleVoice()">🎙️ VOICE: OFF</div>
     </div>
 
     <div id="auth-screen" class="overlay">
@@ -84,21 +94,33 @@
         </div>
     </div>
 
+    <div id="cert-overlay">
+        <div id="cert-canvas-area">
+            <div class="cert-header">ARCHITECT MASTERY</div>
+            <div class="cert-body">
+                <p style="font-size: 10px; margin:0">THIS SUPREME PROTOCOL CONFIRMS THAT</p>
+                <div class="cert-name" id="cert-name">PLAYER</div>
+                <p style="font-size: 11px;">HAS DECIMATED THE ARCHITECT NEURAL ENGINE</p>
+                <p style="font-size: 9px; opacity:0.8">LEVEL: ARCHITECT (MAXIMUM ENTROPY)</p>
+            </div>
+            <div class="cert-footer">
+                <div>ID: <span id="cert-id">#0000</span><br><span id="cert-date">2024.01.01</span></div>
+                <div style="text-align:right">
+                    <div class="signature">Mautasim</div>
+                    <div style="font-size:7px">CHIEF ARCHITECT</div>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-main" style="flex:1" onclick="downloadCert()">💾 DOWNLOAD PNG</button>
+            <button class="btn-main" style="flex:1; background:#444; color:white" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
+        </div>
+    </div>
+
     <div id="gallery-screen" class="overlay" style="display:none">
         <div class="architect-tag">MASTERY GALLERY</div>
         <div class="gallery-list" id="gallery-content"></div>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
-    </div>
-
-    <div id="cert-overlay">
-        <h2 style="margin:0">CERTIFICATE OF MASTERY</h2>
-        <div style="border: 1px solid var(--p); margin: 20px 0; padding: 20px;">
-            <p style="font-size: 12px;">THIS IS TO CERTIFY THAT</p>
-            <h3 id="cert-name" style="letter-spacing: 5px;">---</h3>
-            <p style="font-size: 12px;">HAS DEFEATED THE ARCHITECT AI</p>
-            <p style="font-size: 9px; opacity: 0.6;" id="cert-date">DATE: ---</p>
-        </div>
-        <button class="btn-main" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
     </div>
 
     <div id="ai-setup" class="overlay" style="display:none">
@@ -126,8 +148,8 @@
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
-        <button id="cert-btn" class="btn-main" style="display:none; background:#ffeb3b" onclick="claimCert()">CLAIM & SAVE CERTIFICATE</button>
-        <button class="btn-ui" style="margin-top:10px" onclick="toggleWinScreen()">VIEW BOARD POSITION</button>
+        <button id="cert-btn" class="btn-main" style="display:none; background:var(--gold)" onclick="claimCert()">CLAIM SUPREME CERTIFICATE</button>
+        <button class="btn-ui" style="margin-top:10px" onclick="toggleWinScreen()">👁️ VIEW LAST POSITION</button>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
         <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
     </div>
@@ -153,6 +175,7 @@
     const boardEl = document.getElementById('board');
     let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
+    let localStream = null, remoteAudio = new Audio();
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
@@ -180,6 +203,32 @@
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
             document.getElementById('p2-label').innerText = currentUser; startGame();
         });
+        peer.on('call', call => {
+            if(confirm("INCOMING VOICE COMM... ACCEPT?")) {
+                navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                    localStream = stream;
+                    call.answer(stream);
+                    call.on('stream', remoteStream => { remoteAudio.srcObject = remoteStream; remoteAudio.play(); });
+                    document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
+                });
+            }
+        });
+    }
+
+    function toggleVoice() {
+        if(!conn) return;
+        if(localStream) {
+            localStream.getTracks().forEach(t => t.stop());
+            localStream = null;
+            document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
+        } else {
+            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                localStream = stream;
+                const call = peer.call(conn.peer, stream);
+                call.on('stream', remoteStream => { remoteAudio.srcObject = remoteStream; remoteAudio.play(); });
+                document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
+            });
+        }
     }
 
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
@@ -238,6 +287,7 @@
 
     function setupConnection() {
         document.getElementById('chat-btn').style.display = 'flex';
+        document.getElementById('voice-call-btn').style.display = 'block';
         document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
         conn.on('data', data => {
             if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
@@ -265,7 +315,6 @@
         document.getElementById('global-nav').style.display = 'none';
         document.getElementById('chat-btn').style.display = 'none';
         document.getElementById('chat-window').style.display = 'none';
-        document.getElementById('view-board-ui').style.display = 'none';
         renderFriends();
     }
 
@@ -316,15 +365,28 @@
                 img.className = 'piece' + (p.color === 'b' ? ' black' : ''); s.appendChild(img);
             }
         });
+        
         if(game.game_over()) { 
             setTimeout(() => {
                 const winScr = document.getElementById('win-screen');
                 winScr.style.display = 'flex';
-                document.getElementById('view-board-ui').style.display = 'block';
-                const playerWon = (game.turn() === 'b' && playerColor === 'w');
-                let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
-                document.getElementById('winner-text').innerText = winnerStr;
-                if(playerWon && currentMode === 'bot' && aiDifficulty === 'architect') document.getElementById('cert-btn').style.display = 'block';
+                
+                let isDraw = game.in_draw() || game.in_stalemate() || game.in_threefold_repetition();
+                let winner;
+
+                if(isDraw) {
+                    winner = "DRAW / STALEMATE";
+                } else {
+                    // Turn is the person who is currently in checkmate (they lost)
+                    winner = (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS";
+                }
+                
+                document.getElementById('winner-text').innerText = winner;
+                
+                // If Human (White) beats AI (Black) on Architect Level
+                if(!isDraw && game.turn() === 'b' && currentMode === 'bot' && aiDifficulty === 'architect') {
+                    document.getElementById('cert-btn').style.display = 'block';
+                }
                 playSound(600);
             }, 500);
         }
@@ -337,15 +399,31 @@
 
     function claimCert() {
         const date = new Date().toLocaleDateString();
-        const cert = { name: currentUser, date: date, id: Date.now() };
+        const id = "#" + Math.floor(1000 + Math.random() * 9000);
+        const cert = { name: currentUser, date: date, id: id, timestamp: Date.now() };
         let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         gallery.push(cert);
         localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
         
-        document.getElementById('cert-name').innerText = cert.name;
-        document.getElementById('cert-date').innerText = "DATE: " + cert.date;
-        document.getElementById('cert-overlay').style.display = 'block';
+        displayCert(cert);
         document.getElementById('cert-btn').style.display = 'none';
+    }
+
+    function displayCert(c) {
+        document.getElementById('cert-name').innerText = c.name;
+        document.getElementById('cert-date').innerText = c.date;
+        document.getElementById('cert-id').innerText = c.id;
+        document.getElementById('cert-overlay').style.display = 'block';
+    }
+
+    function downloadCert() {
+        const area = document.getElementById('cert-canvas-area');
+        html2canvas(area).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Architect_Mastery_${currentUser}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
     }
 
     function showGallery() {
@@ -355,20 +433,16 @@
         content.innerHTML = gallery.length ? '' : '<p style="font-size:10px; opacity:0.5">NO CERTIFICATES EARNED YET</p>';
         gallery.forEach(c => {
             const div = document.createElement('div'); div.className = 'saved-cert';
-            div.innerHTML = `<div><b>${c.name}</b><br><span style="opacity:0.6; font-size:8px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.id}')">VIEW</button>`;
+            div.innerHTML = `<div><b>${c.name}</b><br><span style="opacity:0.6; font-size:8px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.timestamp}')">VIEW</button>`;
             content.appendChild(div);
         });
         document.getElementById('gallery-screen').style.display = 'flex';
     }
 
-    function viewSavedCert(id) {
+    function viewSavedCert(ts) {
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        const cert = gallery.find(c => c.id == id);
-        if(cert) {
-            document.getElementById('cert-name').innerText = cert.name;
-            document.getElementById('cert-date').innerText = "DATE: " + cert.date;
-            document.getElementById('cert-overlay').style.display = 'block';
-        }
+        const cert = gallery.find(c => c.timestamp == ts);
+        if(cert) displayCert(cert);
     }
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
