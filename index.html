@@ -34,6 +34,7 @@
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
+        /* CERTIFICATE */
         #cert-overlay { display:none; background: #000; padding: 10px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; width: 95%; max-width: 500px; }
         #cert-canvas-area { background: linear-gradient(135deg, #0a0e17 0%, #1a2533 100%); color: var(--gold); border: 8px double var(--gold); padding: 40px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(255,215,0,0.3); }
         .cert-header { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-shadow: 0 0 10px var(--gold); border-bottom: 2px solid var(--gold); display: inline-block; padding-bottom: 5px; }
@@ -48,12 +49,15 @@
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        
+        .saved-cert { background: rgba(255,215,0,0.05); border: 1px solid #333; padding: 10px; margin-bottom: 5px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body onclick="initAudio()">
 
     <div id="global-nav" class="nav-ui" style="display:none">
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
+        <div class="btn-ui" onclick="saveMatch()">💾 SAVE</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
         <div class="btn-ui" id="voice-call-btn" style="display:none" onclick="toggleVoice()">🎙️ VOICE: OFF</div>
     </div>
@@ -66,18 +70,18 @@
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth('login')">LOGIN</button>
             <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP</button>
-            <button class="btn-main" style="background:#333; color:#fff; border:1px solid #555" onclick="bootOffline()">GUEST / OFFLINE</button>
+            <button class="btn-main" style="background:#222; color:#fff; border:1px solid #444; margin-top:20px" onclick="bootOffline()">GUEST / OFFLINE</button>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">ARCHITECT CHESS PRO</div>
         <div id="user-display" style="font-size: 10px; color: var(--p); margin-bottom: 10px;">USER: ---</div>
-        <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
             <div onclick="prepareGame('pass')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
             <div onclick="showGallery()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid var(--p); cursor:pointer"><span style="color:var(--p)">GALLERY</span></div>
+            <div onclick="loadMatch()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #ffd70033; cursor:pointer"><span style="color:var(--gold)">LOAD LAST</span></div>
             <div id="social-node" onclick="toggleSocial()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
             <div onclick="doLogout()" style="grid-column: span 2; background:rgba(244,67,54,0.1); padding:10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
@@ -113,7 +117,7 @@
 
     <div id="gallery-screen" class="overlay" style="display:none">
         <div class="architect-tag">MASTERY GALLERY</div>
-        <div class="gallery-list" id="gallery-content" style="width: 80%; margin-bottom: 20px;"></div>
+        <div id="gallery-content" style="width:90%; max-height: 300px; overflow-y:auto; margin-bottom: 20px;"></div>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
     </div>
 
@@ -132,8 +136,8 @@
     <div id="pass-setup" class="overlay" style="display:none">
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
-            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
-            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
+            <input type="text" id="p1-in" placeholder="PLAYER 1">
+            <input type="text" id="p2-in" placeholder="PLAYER 2">
             <button class="btn-main" onclick="startPass()">START MATCH</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
@@ -165,7 +169,7 @@
     const game = new Chess();
     const boardEl = document.getElementById('board');
     let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
-    let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w', isOffline = false;
+    let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
     let localStream = null, remoteAudio = new Audio();
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -173,7 +177,7 @@
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
     function bootOffline() {
-        isOffline = true; currentUser = "OFFLINE_GUEST";
+        currentUser = "GUEST";
         showDashboard();
     }
 
@@ -181,30 +185,27 @@
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
         if(!u || !p) return;
-        const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
-            if(storedPass) { alert("ID TAKEN"); return; }
+            if(localStorage.getItem('pwd_' + u)) return alert("ID TAKEN");
             localStorage.setItem('pwd_' + u, p); alert("ACCOUNT SECURED");
         } else {
-            if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
+            if(localStorage.getItem('pwd_' + u) !== p) return alert("DENIED");
         }
-        isOffline = false; currentUser = u; localStorage.setItem('arch_user', u); initPeer(); showDashboard();
+        currentUser = u; localStorage.setItem('arch_user', u); initPeer(); showDashboard();
     }
 
     function initPeer() {
-        if(peer || isOffline) return;
-        peer = new Peer('ARCH-' + currentUser);
-        peer.on('connection', c => { 
-            conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); 
-            startGame();
-        });
-        peer.on('call', call => {
-            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                localStream = stream; call.answer(stream);
-                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); });
-                document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
+        if(peer || currentUser === "GUEST") return;
+        try {
+            peer = new Peer('ARCH-' + currentUser);
+            peer.on('connection', c => { conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); startGame(); });
+            peer.on('call', call => {
+                navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                    localStream = stream; call.answer(stream);
+                    call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
+                });
             });
-        });
+        } catch(e) {}
     }
 
     function toggleVoice() {
@@ -215,8 +216,7 @@
         } else {
             navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
                 localStream = stream; const call = peer.call(conn.peer, stream);
-                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); });
-                document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
+                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
             });
         }
     }
@@ -231,7 +231,7 @@
         if (selectedSq) {
             if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
                 playSound(400); selectedSq = null; render();
-                if (currentMode === 'online' && conn) conn.send({ type: 'move', data: {from: selectedSq, to: id} });
+                if (conn) conn.send({ type: 'move', data: {from: selectedSq, to: id} });
                 if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 250);
                 return;
             }
@@ -239,18 +239,27 @@
         const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
     }
 
+    function saveMatch() {
+        localStorage.setItem('saved_game_' + currentUser, game.fen());
+        alert("POSITION SAVED");
+    }
+
+    function loadMatch() {
+        const saved = localStorage.getItem('saved_game_' + currentUser);
+        if(!saved) return alert("NO DATA");
+        game.load(saved); startGame();
+    }
+
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = "USER: " + currentUser;
-        document.getElementById('social-node').style.display = isOffline ? 'none' : 'block';
-        document.getElementById('global-nav').style.display = 'none';
+        document.getElementById('social-node').style.display = (currentUser === "GUEST") ? "none" : "block";
     }
 
     function prepareGame(mode) {
         currentMode = mode;
-        if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else document.getElementById('pass-setup').style.display = 'flex';
+        document.getElementById(mode === 'bot' ? 'ai-setup' : 'pass-setup').style.display = 'flex';
     }
 
     function startAI() { 
@@ -258,6 +267,7 @@
         document.getElementById('p1-label').innerText = currentUser;
         document.getElementById('p2-label').innerText = "NEURAL AI"; startGame(); 
     }
+
     function startPass() { 
         document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1";
         document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2"; startGame(); 
@@ -266,7 +276,7 @@
     function startGame() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        game.reset(); initBoard();
+        initBoard();
     }
 
     function initBoard() {
@@ -283,8 +293,7 @@
     function render() {
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
-            s.classList.remove('selected', 'hint');
-            if(s.dataset.id === selectedSq) s.classList.add('selected');
+            if(s.dataset.id === selectedSq) s.classList.add('selected'); else s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
@@ -293,15 +302,13 @@
         });
         if(game.game_over()) {
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = game.in_checkmate() ? "CHECKMATE" : "DRAW";
-            if(game.in_checkmate() && game.turn() === 'b' && aiDifficulty === 'architect' && !isOffline) {
-                document.getElementById('cert-btn').style.display = 'block';
-            }
+            document.getElementById('winner-text').innerText = "CHECKMATE";
+            if(aiDifficulty === 'architect' && game.turn() === 'b') document.getElementById('cert-btn').style.display = 'block';
         }
     }
 
     function claimCert() {
-        const cert = { name: currentUser, date: new Date().toLocaleDateString(), id: "#"+Math.floor(Math.random()*9000), timestamp: Date.now() };
+        const cert = { name: currentUser, date: new Date().toLocaleDateString(), id: "#"+Math.floor(Math.random()*9000), ts: Date.now() };
         let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         gallery.push(cert); localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
         showGallery();
@@ -311,16 +318,16 @@
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         const content = document.getElementById('gallery-content');
-        content.innerHTML = gallery.length ? '' : '<p>NO DATA FOUND</p>';
+        content.innerHTML = gallery.length ? '' : '<p>EMPTY</p>';
         gallery.forEach(c => {
-            content.innerHTML += `<div style="padding:10px; border-bottom:1px solid #222; display:flex; justify-content:space-between;"><span>${c.id}</span><button class="btn-ui" onclick="viewSavedCert('${c.timestamp}')">VIEW</button></div>`;
+            content.innerHTML += `<div class="saved-cert"><span>${c.id} - ${c.date}</span><button class="btn-ui" onclick="viewCert('${c.ts}')">VIEW</button></div>`;
         });
         document.getElementById('gallery-screen').style.display = 'flex';
     }
 
-    function viewSavedCert(ts) {
+    function viewCert(ts) {
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        const c = gallery.find(x => x.timestamp == ts);
+        const c = gallery.find(x => x.ts == ts);
         document.getElementById('cert-name').innerText = c.name;
         document.getElementById('cert-id').innerText = c.id;
         document.getElementById('cert-date').innerText = c.date;
@@ -335,11 +342,7 @@
 
     function confirmExit() { if(confirm("ABORT?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-
-    window.onload = () => { 
-        const s = localStorage.getItem('arch_user'); 
-        if(s) { currentUser = s; initPeer(); showDashboard(); } 
-    };
+    window.onload = () => { if(localStorage.getItem('arch_user')) { currentUser = localStorage.getItem('arch_user'); initPeer(); showDashboard(); } };
 </script>
 </body>
 </html>
