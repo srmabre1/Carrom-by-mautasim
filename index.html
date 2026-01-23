@@ -34,7 +34,6 @@
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
-        /* CERTIFICATE */
         #cert-overlay { display:none; background: #000; padding: 10px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; width: 95%; max-width: 500px; }
         #cert-canvas-area { background: linear-gradient(135deg, #0a0e17 0%, #1a2533 100%); color: var(--gold); border: 8px double var(--gold); padding: 40px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(255,215,0,0.3); }
         .cert-header { font-size: 28px; font-weight: 900; margin-bottom: 20px; text-shadow: 0 0 10px var(--gold); border-bottom: 2px solid var(--gold); display: inline-block; padding-bottom: 5px; }
@@ -77,6 +76,7 @@
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">ARCHITECT CHESS PRO</div>
         <div id="user-display" style="font-size: 10px; color: var(--p); margin-bottom: 10px;">USER: ---</div>
+        <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
             <div onclick="prepareGame('pass')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
@@ -121,33 +121,12 @@
         <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
     </div>
 
-    <div id="ai-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
-            <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (GET CERTIFICATE)</option>
-                <option value="casual">LVL: CASUAL</option>
-            </select>
-            <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
-            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
-        </div>
-    </div>
-
-    <div id="pass-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
-            <input type="text" id="p1-in" placeholder="PLAYER 1">
-            <input type="text" id="p2-in" placeholder="PLAYER 2">
-            <button class="btn-main" onclick="startPass()">START MATCH</button>
-            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
-        </div>
-    </div>
-
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
         <button id="cert-btn" class="btn-main" style="display:none; background:var(--gold)" onclick="claimCert()">CLAIM SUPREME CERTIFICATE</button>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
+        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
     </div>
 
     <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">
@@ -176,10 +155,7 @@
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
-    function bootOffline() {
-        currentUser = "GUEST";
-        showDashboard();
-    }
+    function bootOffline() { currentUser = "GUEST"; showDashboard(); }
 
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
@@ -196,59 +172,68 @@
 
     function initPeer() {
         if(peer || currentUser === "GUEST") return;
-        try {
-            peer = new Peer('ARCH-' + currentUser);
-            peer.on('connection', c => { conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); startGame(); });
-            peer.on('call', call => {
-                navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                    localStream = stream; call.answer(stream);
-                    call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
-                });
+        peer = new Peer('ARCH-' + currentUser);
+        peer.on('connection', c => { conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); startGame(); });
+        peer.on('call', call => {
+            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                localStream = stream; call.answer(stream);
+                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
             });
-        } catch(e) {}
+        });
+    }
+
+    function setupConnection() {
+        document.getElementById('chat-btn').style.display = 'flex';
+        document.getElementById('voice-call-btn').style.display = 'block';
+        conn.on('data', data => {
+            if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
+            if(data.type === 'chat') {
+                const msg = document.createElement('div'); msg.innerHTML = `<span style="color:var(--p)">PEER:</span> ${data.data}`;
+                document.getElementById('chat-msgs').appendChild(msg);
+            }
+        });
+    }
+
+    function startOnlineGame(id) {
+        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
+        conn.on('open', () => { setupConnection(); startGame(); });
+    }
+
+    function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; renderFriends(); }
+    function addFriend() {
+        const id = document.getElementById('friend-id').value.trim().toUpperCase(); if(!id) return;
+        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+        if(!friends.includes(id)) friends.push(id); localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); renderFriends();
+    }
+    function renderFriends() {
+        const list = document.getElementById('friends-list'); list.innerHTML = '';
+        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+        friends.forEach(f => {
+            const div = document.createElement('div'); div.className = 'friend-item';
+            div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">CHALLENGE</span>`;
+            div.onclick = () => startOnlineGame(f); list.appendChild(div);
+        });
+    }
+
+    function toggleChatWindow() { const win = document.getElementById('chat-window'); win.style.display = win.style.display === 'flex' ? 'none' : 'flex'; }
+    function sendChat() {
+        const inp = document.getElementById('chat-input'); if(!conn || !inp.value) return;
+        conn.send({type: 'chat', data: inp.value});
+        const msg = document.createElement('div'); msg.innerHTML = `<span>YOU:</span> ${inp.value}`;
+        document.getElementById('chat-msgs').appendChild(msg); inp.value = '';
     }
 
     function toggleVoice() {
         if(!conn) return;
-        if(localStream) {
-            localStream.getTracks().forEach(t => t.stop()); localStream = null;
-            document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
-        } else {
-            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                localStream = stream; const call = peer.call(conn.peer, stream);
-                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
-            });
-        }
+        if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF"; }
+        else { navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+            localStream = stream; const call = peer.call(conn.peer, stream);
+            call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
+        }); }
     }
 
-    function aiMove() {
-        const moves = game.moves(); if(!moves.length) return;
-        game.move(moves[Math.floor(Math.random()*moves.length)]);
-        playSound(300); render();
-    }
-
-    function handleInput(id) {
-        if (selectedSq) {
-            if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
-                playSound(400); selectedSq = null; render();
-                if (conn) conn.send({ type: 'move', data: {from: selectedSq, to: id} });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 250);
-                return;
-            }
-        }
-        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
-    }
-
-    function saveMatch() {
-        localStorage.setItem('saved_game_' + currentUser, game.fen());
-        alert("POSITION SAVED");
-    }
-
-    function loadMatch() {
-        const saved = localStorage.getItem('saved_game_' + currentUser);
-        if(!saved) return alert("NO DATA");
-        game.load(saved); startGame();
-    }
+    function saveMatch() { localStorage.setItem('saved_game_' + currentUser, game.fen()); alert("SAVED"); }
+    function loadMatch() { const saved = localStorage.getItem('saved_game_' + currentUser); if(saved) { game.load(saved); startGame(); } }
 
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
@@ -257,61 +242,49 @@
         document.getElementById('social-node').style.display = (currentUser === "GUEST") ? "none" : "block";
     }
 
-    function prepareGame(mode) {
-        currentMode = mode;
-        document.getElementById(mode === 'bot' ? 'ai-setup' : 'pass-setup').style.display = 'flex';
-    }
+    function prepareGame(mode) { currentMode = mode; document.getElementById(mode === 'bot' ? 'ai-setup' : 'pass-setup').style.display = 'flex'; }
+    function startAI() { aiDifficulty = document.getElementById('ai-level-select').value; startGame(); }
+    function startPass() { startGame(); }
 
-    function startAI() { 
-        aiDifficulty = document.getElementById('ai-level-select').value;
-        document.getElementById('p1-label').innerText = currentUser;
-        document.getElementById('p2-label').innerText = "NEURAL AI"; startGame(); 
-    }
-
-    function startPass() { 
-        document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1";
-        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2"; startGame(); 
-    }
-
-    function startGame() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        document.getElementById('global-nav').style.display = 'flex';
-        initBoard();
-    }
-
+    function startGame() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); document.getElementById('global-nav').style.display = 'flex'; initBoard(); }
     function initBoard() {
         boardEl.innerHTML = '';
         for (let i = 0; i < 64; i++) {
-            const sq = document.createElement('div');
-            sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`;
+            const sq = document.createElement('div'); sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`;
             sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8));
             sq.onclick = () => handleInput(sq.dataset.id); boardEl.appendChild(sq);
         }
         render();
     }
 
+    function handleInput(id) {
+        if (selectedSq) {
+            if (game.move({ from: selectedSq, to: id, promotion: 'q' })) {
+                playSound(400); selectedSq = null; render();
+                if (conn) conn.send({ type: 'move', data: {from: selectedSq, to: id} });
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(() => { const moves = game.moves(); game.move(moves[Math.floor(Math.random()*moves.length)]); render(); }, 300);
+                return;
+            }
+        }
+        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
+    }
+
     function render() {
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
-            if(s.dataset.id === selectedSq) s.classList.add('selected'); else s.classList.remove('selected');
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
                 img.className = 'piece' + (p.color === 'b' ? ' black' : ''); s.appendChild(img);
             }
         });
-        if(game.game_over()) {
-            document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = "CHECKMATE";
-            if(aiDifficulty === 'architect' && game.turn() === 'b') document.getElementById('cert-btn').style.display = 'block';
-        }
+        if(game.game_over()) { document.getElementById('win-screen').style.display = 'flex'; if(aiDifficulty==='architect') document.getElementById('cert-btn').style.display='block'; }
     }
 
     function claimCert() {
         const cert = { name: currentUser, date: new Date().toLocaleDateString(), id: "#"+Math.floor(Math.random()*9000), ts: Date.now() };
         let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        gallery.push(cert); localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
-        showGallery();
+        gallery.push(cert); localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery)); showGallery();
     }
 
     function showGallery() {
@@ -319,27 +292,18 @@
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         const content = document.getElementById('gallery-content');
         content.innerHTML = gallery.length ? '' : '<p>EMPTY</p>';
-        gallery.forEach(c => {
-            content.innerHTML += `<div class="saved-cert"><span>${c.id} - ${c.date}</span><button class="btn-ui" onclick="viewCert('${c.ts}')">VIEW</button></div>`;
-        });
+        gallery.forEach(c => { content.innerHTML += `<div class="saved-cert"><span>${c.id}</span><button class="btn-ui" onclick="viewCert('${c.ts}')">VIEW</button></div>`; });
         document.getElementById('gallery-screen').style.display = 'flex';
     }
 
     function viewCert(ts) {
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         const c = gallery.find(x => x.ts == ts);
-        document.getElementById('cert-name').innerText = c.name;
-        document.getElementById('cert-id').innerText = c.id;
-        document.getElementById('cert-date').innerText = c.date;
-        document.getElementById('cert-overlay').style.display = 'block';
+        document.getElementById('cert-name').innerText = c.name; document.getElementById('cert-id').innerText = c.id;
+        document.getElementById('cert-date').innerText = c.date; document.getElementById('cert-overlay').style.display = 'block';
     }
 
-    function downloadCert() {
-        html2canvas(document.getElementById('cert-canvas-area')).then(canvas => {
-            const link = document.createElement('a'); link.download = 'Mastery.png'; link.href = canvas.toDataURL(); link.click();
-        });
-    }
-
+    function downloadCert() { html2canvas(document.getElementById('cert-canvas-area')).then(canvas => { const link = document.createElement('a'); link.download = 'Mastery.png'; link.href = canvas.toDataURL(); link.click(); }); }
     function confirmExit() { if(confirm("ABORT?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
     window.onload = () => { if(localStorage.getItem('arch_user')) { currentUser = localStorage.getItem('arch_user'); initPeer(); showDashboard(); } };
