@@ -29,10 +29,14 @@
         #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
         .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; cursor: pointer; }
         
-        /* CHAT UI IMPROVEMENTS */
         #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
+
+        /* CERTIFICATE & GALLERY */
+        #cert-overlay { display:none; background: #000; color: var(--p); border: 4px double var(--p); padding: 30px; text-align: center; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; width: 85%; max-width: 400px; box-shadow: 0 0 50px var(--p); }
+        .gallery-list { width: 90%; max-height: 300px; overflow-y: auto; margin-top: 15px; }
+        .saved-cert { background: var(--c); border: 1px solid #333; padding: 10px; margin: 5px 0; border-radius: 8px; font-size: 10px; display: flex; justify-content: space-between; align-items: center; }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -48,28 +52,30 @@
     <div id="global-nav" class="nav-ui" style="display:none">
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
+        <div class="btn-ui" id="view-board-ui" style="display:none" onclick="toggleWinScreen()">👁️ TOGGLE BOARD</div>
     </div>
 
     <div id="auth-screen" class="overlay">
-        <div class="architect-tag">ARCHITECT PRO</div>
+        <div class="architect-tag">ARCHITECT CHESS PRO</div>
         <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="auth-card">
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
             <button class="btn-main" onclick="handleAuth('login')">LOGIN</button>
             <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP</button>
-            <p id="auth-status" style="font-size: 10px; color: var(--p); margin-top: 15px;">SECURE ACCESS PROTOCOL</p>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
-        <div class="architect-tag" id="user-display">---</div>
+        <div class="architect-tag">ARCHITECT CHESS PRO</div>
+        <div id="user-display" style="font-size: 10px; color: var(--p); margin-bottom: 10px;">USER: ---</div>
         <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
-            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
-            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
-            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
-            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
+            <div onclick="prepareGame('bot')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
+            <div onclick="prepareGame('pass')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
+            <div onclick="showGallery()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid var(--p); cursor:pointer"><span style="color:var(--p)">GALLERY</span></div>
+            <div onclick="toggleSocial()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
+            <div onclick="doLogout()" style="grid-column: span 2; background:rgba(244,67,54,0.1); padding:10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
         <div id="social-panel">
             <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
@@ -78,11 +84,28 @@
         </div>
     </div>
 
+    <div id="gallery-screen" class="overlay" style="display:none">
+        <div class="architect-tag">MASTERY GALLERY</div>
+        <div class="gallery-list" id="gallery-content"></div>
+        <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
+    </div>
+
+    <div id="cert-overlay">
+        <h2 style="margin:0">CERTIFICATE OF MASTERY</h2>
+        <div style="border: 1px solid var(--p); margin: 20px 0; padding: 20px;">
+            <p style="font-size: 12px;">THIS IS TO CERTIFY THAT</p>
+            <h3 id="cert-name" style="letter-spacing: 5px;">---</h3>
+            <p style="font-size: 12px;">HAS DEFEATED THE ARCHITECT AI</p>
+            <p style="font-size: 9px; opacity: 0.6;" id="cert-date">DATE: ---</p>
+        </div>
+        <button class="btn-main" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
+    </div>
+
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (INSTANT/EXTREME)</option>
+                <option value="architect">LVL: ARCHITECT (GET CERTIFICATE)</option>
                 <option value="casual">LVL: CASUAL</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
@@ -103,17 +126,17 @@
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
-        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
+        <button id="cert-btn" class="btn-main" style="display:none; background:#ffeb3b" onclick="claimCert()">CLAIM & SAVE CERTIFICATE</button>
+        <button class="btn-ui" style="margin-top:10px" onclick="toggleWinScreen()">VIEW BOARD POSITION</button>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
+        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
     </div>
 
     <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     </div>
     <div id="chat-window">
-        <div style="padding: 12px; border-bottom: 1px solid var(--p); font-size: 10px; font-weight: 900; background:rgba(0,212,255,0.1)">
-            COMM-LINK: <span id="chatting-with" style="color:var(--p)"></span>
-        </div>
+        <div style="padding: 12px; border-bottom: 1px solid var(--p); font-size: 10px; font-weight: 900; background:rgba(0,212,255,0.1)">COMM-LINK: <span id="chatting-with" style="color:var(--p)"></span></div>
         <div id="chat-msgs"></div>
         <input type="text" id="chat-input" placeholder="SEND DATA..." onkeydown="if(event.key==='Enter') sendChat()">
     </div>
@@ -138,79 +161,51 @@
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
-        if(!u || !p) { alert("DATA MISSING"); return; }
+        if(!u || !p) return;
         const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
             if(storedPass) { alert("ID TAKEN"); return; }
-            localStorage.setItem('pwd_' + u, p);
-            alert("ACCOUNT SECURED");
+            localStorage.setItem('pwd_' + u, p); alert("ACCOUNT SECURED");
         } else {
             if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
         }
-        currentUser = u;
-        localStorage.setItem('arch_user', u);
-        initPeer();
-        showDashboard();
+        currentUser = u; localStorage.setItem('arch_user', u); initPeer(); showDashboard();
     }
 
     function initPeer() {
         if(peer) return;
         peer = new Peer('ARCH-' + currentUser);
         peer.on('connection', c => { 
-            conn = c; currentMode = 'online'; playerColor = 'b';
-            setupConnection(); 
+            conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); 
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
-            document.getElementById('p2-label').innerText = currentUser;
-            startGame();
+            document.getElementById('p2-label').innerText = currentUser; startGame();
         });
     }
 
-    // --- INSTANT ARCHITECT AI ENGINE ---
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-    
     function evaluateBoard(g) {
         let total = 0; const b = g.board();
-        for(let i=0; i<8; i++) {
-            for(let j=0; j<8; j++) {
-                if(b[i][j]) {
-                    const val = pieceValues[b[i][j].type];
-                    total += (b[i][j].color === 'w' ? val : -val);
-                }
-            }
+        for(let i=0; i<8; i++) for(let j=0; j<8; j++) if(b[i][j]) {
+            const val = pieceValues[b[i][j].type]; total += (b[i][j].color === 'w' ? val : -val);
         }
         return total;
     }
 
-    // Move Ordering for Speed
-    function getMoveScore(g, m) {
-        let score = 0;
-        const target = g.get(m.to);
-        if (target) score += 10 * pieceValues[target.type]; // Prioritize captures
-        if (m.flags.includes('c')) score += 50; // Prioritize checks
-        return score;
-    }
-
     function minimax(g, depth, alpha, beta, isMax) {
         if(depth === 0) return -evaluateBoard(g);
-        let moves = g.moves({verbose: true});
-        moves.sort((a, b) => getMoveScore(g, b) - getMoveScore(g, a)); // Speed optimization
-
+        let moves = g.moves();
         if(isMax) {
             let best = -Infinity;
             for(let m of moves) {
-                g.move(m);
-                best = Math.max(best, minimax(g, depth-1, alpha, beta, false));
-                g.undo(); alpha = Math.max(alpha, best);
-                if(beta <= alpha) break;
+                g.move(m); best = Math.max(best, minimax(g, depth-1, alpha, beta, false));
+                g.undo(); alpha = Math.max(alpha, best); if(beta <= alpha) break;
             }
             return best;
         } else {
             let best = Infinity;
             for(let m of moves) {
-                g.move(m);
-                best = Math.min(best, minimax(g, depth-1, alpha, beta, true));
-                g.undo(); beta = Math.min(beta, best);
-                if(beta <= alpha) break;
+                g.move(m); best = Math.min(best, minimax(g, depth-1, alpha, beta, true));
+                g.undo(); beta = Math.min(beta, best); if(beta <= alpha) break;
             }
             return best;
         }
@@ -220,11 +215,8 @@
         if(game.game_over()) return;
         const moves = game.moves();
         let bestMove = null, bestVal = -Infinity;
-        // Optimized depth for instant response
         for(let m of moves) {
-            game.move(m);
-            let v = minimax(game, 2, -Infinity, Infinity, false);
-            game.undo();
+            game.move(m); let v = minimax(game, 2, -Infinity, Infinity, false); game.undo();
             if(v > bestVal) { bestVal = v; bestMove = m; }
         }
         game.move(bestMove || moves[0]); playSound(300); render();
@@ -234,16 +226,14 @@
         if (currentMode === 'online' && game.turn() !== playerColor) return;
         if (selectedSq) {
             const moveData = { from: selectedSq, to: id, promotion: 'q' };
-            const move = game.move(moveData);
-            if (move) {
+            if (game.move(moveData)) {
                 playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 10); // Reduced delay
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 50);
                 return;
             }
         }
-        const p = game.get(id);
-        if (p && p.color === game.turn()) { selectedSq = id; render(); }
+        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
     }
 
     function setupConnection() {
@@ -261,23 +251,21 @@
     }
 
     function startOnlineGame(id) {
-        conn = peer.connect('ARCH-'+id);
-        currentMode = 'online'; playerColor = 'w';
+        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
         conn.on('open', () => {
-            setupConnection();
-            document.getElementById('p1-label').innerText = currentUser;
-            document.getElementById('p2-label').innerText = id;
-            startGame();
+            setupConnection(); document.getElementById('p1-label').innerText = currentUser;
+            document.getElementById('p2-label').innerText = id; startGame();
         });
     }
 
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = currentUser;
+        document.getElementById('user-display').innerText = "USER: " + currentUser;
         document.getElementById('global-nav').style.display = 'none';
         document.getElementById('chat-btn').style.display = 'none';
         document.getElementById('chat-window').style.display = 'none';
+        document.getElementById('view-board-ui').style.display = 'none';
         renderFriends();
     }
 
@@ -289,17 +277,14 @@
 
     function startAI() {
         aiDifficulty = document.getElementById('ai-level-select').value;
-        playerColor = 'w';
-        document.getElementById('p1-label').innerText = currentUser;
-        document.getElementById('p2-label').innerText = "ARCH-AI";
-        startGame();
+        playerColor = 'w'; document.getElementById('p1-label').innerText = currentUser;
+        document.getElementById('p2-label').innerText = "ARCH-AI"; startGame();
     }
 
     function startPass() {
         playerColor = 'w';
         document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1";
-        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2";
-        startGame();
+        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2"; startGame();
     }
 
     function startGame() {
@@ -314,8 +299,7 @@
             const sq = document.createElement('div');
             sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`;
             sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8));
-            sq.onclick = () => handleInput(sq.dataset.id);
-            boardEl.appendChild(sq);
+            sq.onclick = () => handleInput(sq.dataset.id); boardEl.appendChild(sq);
         }
         render();
     }
@@ -329,14 +313,61 @@
             if (p) {
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
-                img.className = 'piece' + (p.color === 'b' ? ' black' : '');
-                s.appendChild(img);
+                img.className = 'piece' + (p.color === 'b' ? ' black' : ''); s.appendChild(img);
             }
         });
         if(game.game_over()) { 
-            document.getElementById('win-screen').style.display = 'flex'; 
-            let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
-            document.getElementById('winner-text').innerText = winnerStr; playSound(600); 
+            setTimeout(() => {
+                const winScr = document.getElementById('win-screen');
+                winScr.style.display = 'flex';
+                document.getElementById('view-board-ui').style.display = 'block';
+                const playerWon = (game.turn() === 'b' && playerColor === 'w');
+                let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW";
+                document.getElementById('winner-text').innerText = winnerStr;
+                if(playerWon && currentMode === 'bot' && aiDifficulty === 'architect') document.getElementById('cert-btn').style.display = 'block';
+                playSound(600);
+            }, 500);
+        }
+    }
+
+    function toggleWinScreen() {
+        const winScr = document.getElementById('win-screen');
+        winScr.style.display = winScr.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function claimCert() {
+        const date = new Date().toLocaleDateString();
+        const cert = { name: currentUser, date: date, id: Date.now() };
+        let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
+        gallery.push(cert);
+        localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
+        
+        document.getElementById('cert-name').innerText = cert.name;
+        document.getElementById('cert-date').innerText = "DATE: " + cert.date;
+        document.getElementById('cert-overlay').style.display = 'block';
+        document.getElementById('cert-btn').style.display = 'none';
+    }
+
+    function showGallery() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+        const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
+        const content = document.getElementById('gallery-content');
+        content.innerHTML = gallery.length ? '' : '<p style="font-size:10px; opacity:0.5">NO CERTIFICATES EARNED YET</p>';
+        gallery.forEach(c => {
+            const div = document.createElement('div'); div.className = 'saved-cert';
+            div.innerHTML = `<div><b>${c.name}</b><br><span style="opacity:0.6; font-size:8px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.id}')">VIEW</button>`;
+            content.appendChild(div);
+        });
+        document.getElementById('gallery-screen').style.display = 'flex';
+    }
+
+    function viewSavedCert(id) {
+        const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
+        const cert = gallery.find(c => c.id == id);
+        if(cert) {
+            document.getElementById('cert-name').innerText = cert.name;
+            document.getElementById('cert-date').innerText = "DATE: " + cert.date;
+            document.getElementById('cert-overlay').style.display = 'block';
         }
     }
 
@@ -346,8 +377,7 @@
         if(!id) return;
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
         if(!friends.includes(id)) friends.push(id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
-        renderFriends();
+        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); renderFriends();
     }
     function renderFriends() {
         const list = document.getElementById('friends-list'); list.innerHTML = '';
