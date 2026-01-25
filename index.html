@@ -6,7 +6,6 @@
     <title>ARCHITECT CHESS PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&display=swap');
         :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; }
@@ -19,8 +18,8 @@
         img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
 
-        /* Piece Naming Label */
-        .piece-label { position: absolute; bottom: 0; background: rgba(0,0,0,0.7); color: var(--p); font-size: 7px; padding: 1px 3px; border-radius: 3px; white-space: nowrap; z-index: 10; font-weight: bold; border: 0.5px solid var(--p); }
+        .piece-label { position: absolute; bottom: 0; background: rgba(0,0,0,0.8); color: var(--p); font-size: 8px; padding: 1px 4px; border-radius: 3px; white-space: nowrap; z-index: 10; font-weight: 900; border: 1px solid var(--p); text-transform: uppercase; }
+        .ai-label { border-color: var(--gold); color: var(--gold); }
 
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
@@ -41,7 +40,6 @@
 
         #cert-overlay { display:none; background: rgba(0,0,0,0.95); padding: 10px; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
         #cert-canvas-area { width: 90%; max-width: 600px; background: linear-gradient(135deg, #050505 0%, #1a1a1a 100%); color: var(--gold); border: 10px double var(--gold); padding: 50px; text-align: center; position: relative; box-shadow: 0 0 50px rgba(255,215,0,0.4); border-radius: 8px; }
-        #cert-canvas-area::after { content: '🏆'; font-size: 150px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; }
         .cert-header { font-size: 36px; font-weight: 900; margin-bottom: 10px; text-shadow: 0 0 15px var(--gold); border-bottom: 3px solid var(--gold); display: inline-block; padding-bottom: 5px; color: #fff; }
         .cert-body { font-family: 'Orbitron'; letter-spacing: 2px; line-height: 1.8; position: relative; z-index: 2; }
         .cert-name { font-size: 40px; color: var(--p); margin: 20px 0; text-transform: uppercase; font-weight: 900; text-shadow: 0 0 10px var(--p); border: 1px solid #333; background: rgba(0,0,0,0.5); padding: 10px; }
@@ -65,7 +63,6 @@
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
         <div class="btn-ui" id="save-btn" onclick="saveGame()">💾 SAVE</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
-        <div class="btn-ui" onclick="takeScreenshot('board-box')">📸 SCREENSHOT</div>
     </div>
 
     <div id="auth-screen" class="overlay">
@@ -123,7 +120,6 @@
             </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px; width:90%; max-width:400px;">
-            <button class="btn-main" style="flex:1" onclick="takeScreenshot('cert-canvas-area')">📸 TAKE SCREENSHOT</button>
             <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
         </div>
     </div>
@@ -138,7 +134,7 @@
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (CERTIFICATE MODE)</option>
+                <option value="architect">LVL: ARCHITECT (MAX DIFFICULTY)</option>
                 <option value="casual">LVL: CASUAL (PRACTICE)</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
@@ -262,11 +258,29 @@
         });
     }
 
+    // --- ENHANCED AI ENGINE (100X STRENGTH) ---
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    
+    // Positional Advantage Tables
+    const pst = {
+        p: [ [0,0,0,0,0,0,0,0], [50,50,50,50,50,50,50,50], [10,10,20,30,30,20,10,10], [5,5,10,25,25,10,5,5], [0,0,0,20,20,0,0,0], [5,-5,-10,0,0,-10,-5,5], [5,10,10,-20,-20,10,10,5], [0,0,0,0,0,0,0,0] ],
+        n: [ [-50,-40,-30,-30,-30,-30,-40,-50], [-40,-20,0,0,0,0,-20,-40], [-30,0,10,15,15,10,0,-30], [-30,5,15,20,20,15,5,-30], [-30,0,15,20,20,15,0,-30], [-30,5,10,15,15,10,5,-30], [-40,-20,0,5,5,0,-20,-40], [-50,-40,-30,-30,-30,-30,-40,-50] ]
+    };
+
     function evaluateBoard(g) {
         let total = 0; const b = g.board();
-        for(let i=0; i<8; i++) for(let j=0; j<8; j++) if(b[i][j]) {
-            const val = pieceValues[b[i][j].type]; total += (b[i][j].color === 'w' ? val : -val);
+        for(let i=0; i<8; i++) {
+            for(let j=0; j<8; j++) {
+                if(b[i][j]) {
+                    const piece = b[i][j];
+                    let val = pieceValues[piece.type];
+                    // Add positional bonus for pawns and knights
+                    if(pst[piece.type]) {
+                        val += (piece.color === 'w' ? pst[piece.type][i][j] : pst[piece.type][7-i][j]);
+                    }
+                    total += (piece.color === 'w' ? val : -val);
+                }
+            }
         }
         return total;
     }
@@ -295,8 +309,11 @@
         if(game.game_over()) return;
         const moves = game.moves();
         let bestMove = null, bestVal = -Infinity;
+        // Depth 3 for high difficulty, Depth 1 for casual
+        const depth = (aiDifficulty === 'architect') ? 3 : 1;
+
         for(let m of moves) {
-            game.move(m); let v = minimax(game, 2, -Infinity, Infinity, false); game.undo();
+            game.move(m); let v = minimax(game, depth, -Infinity, Infinity, false); game.undo();
             if(v > bestVal) { bestVal = v; bestMove = m; }
         }
         game.move(bestMove || moves[0]); playSound(300); render();
@@ -357,7 +374,7 @@
     function startAI() {
         aiDifficulty = document.getElementById('ai-level-select').value;
         playerColor = 'w'; document.getElementById('p1-label').innerText = currentUser;
-        document.getElementById('p2-label').innerText = "ARCH-AI"; startGame();
+        document.getElementById('p2-label').innerText = "MAUTASIM"; startGame();
     }
 
     function startPass() {
@@ -401,16 +418,23 @@
                 if(p.color === 'b') img.classList.add('black');
                 s.appendChild(img);
 
-                // GENDER BASED NAMING
-                let shouldName = false;
-                if(userGender === 'boy' && p.type === 'k') shouldName = true;
-                if(userGender === 'girl' && p.type === 'q') shouldName = true;
+                // GENDER & AI BASED NAMING
+                const label = document.createElement('div');
+                label.className = 'piece-label';
 
-                if(shouldName) {
-                    const label = document.createElement('div');
-                    label.className = 'piece-label';
-                    label.innerText = (p.color === playerColor) ? currentUser : "ENEMY";
+                if(currentMode === 'bot' && p.color === 'b' && p.type === 'k') {
+                    label.innerText = "MAUTASIM"; // THE ONLY SPOT FOR AI NAME
+                    label.classList.add('ai-label');
                     s.appendChild(label);
+                } else {
+                    let shouldName = false;
+                    if(userGender === 'boy' && p.type === 'k') shouldName = true;
+                    if(userGender === 'girl' && p.type === 'q') shouldName = true;
+                    
+                    if(shouldName && p.color === playerColor) {
+                        label.innerText = currentUser;
+                        s.appendChild(label);
+                    }
                 }
             }
         });
@@ -428,16 +452,6 @@
                 playSound(600);
             }, 500);
         }
-    }
-
-    function takeScreenshot(elementId) {
-        const area = document.getElementById(elementId);
-        html2canvas(area, {scale: 3, useCORS: true}).then(canvas => {
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = `Architect_Shot_${Date.now()}.png`;
-            link.click();
-        });
     }
 
     function toggleWinScreen() {
@@ -458,8 +472,6 @@
 
     function displayCert(c) {
         document.getElementById('cert-name').innerText = c.name;
-        document.getElementById('cert-date').innerText = c.date;
-        document.getElementById('cert-id').innerText = c.id;
         document.getElementById('cert-overlay').style.display = 'flex';
     }
 
