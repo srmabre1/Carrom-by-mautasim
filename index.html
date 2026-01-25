@@ -36,7 +36,6 @@
         #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
-        /* CERTIFICATE DESIGN - HIGH LEVEL */
         #cert-overlay { display:none; background: rgba(0,0,0,0.95); padding: 10px; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
         #cert-canvas-area { width: 90%; max-width: 600px; background: linear-gradient(135deg, #050505 0%, #1a1a1a 100%); color: var(--gold); border: 10px double var(--gold); padding: 50px; text-align: center; position: relative; box-shadow: 0 0 50px rgba(255,215,0,0.4); border-radius: 8px; }
         #cert-canvas-area::after { content: '🏆'; font-size: 150px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; }
@@ -54,7 +53,6 @@
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
         
-        /* SAVED CERTS LIST */
         .saved-cert { background: #111; border-left: 3px solid var(--gold); padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
     </style>
 </head>
@@ -246,20 +244,19 @@
         });
     }
 
+    // --- APP-SPECIFIC VOICE FIX ---
     function toggleVoice() {
-        // BUG FIX: Only allow in Online play
         if(currentMode !== 'online' || !conn) {
             alert("MIC ONLY AVAILABLE IN ONLINE PVP MATCHES");
             return;
         }
         
         if (currentCall) {
-            currentCall.close();
-            currentCall = null;
+            currentCall.close(); currentCall = null;
             if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
             document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
         } else {
-            document.getElementById('voice-call-btn').innerText = "🎙️ CONNECTING...";
+            document.getElementById('voice-call-btn').innerText = "🎙️ REQUESTING...";
             navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
                 localStream = stream;
                 const call = peer.call(conn.peer, stream);
@@ -271,8 +268,8 @@
                 });
                 call.on('close', () => { document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF"; currentCall = null; });
             }).catch(e => {
-                alert("MIC ACCESS DENIED. PLEASE ENABLE PERMISSIONS IN SETTINGS.");
                 document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
+                alert("VOICE BLOCKED: Check your PHONE SETTINGS. Go to Apps > Architect Chess Pro > Permissions and allow Microphone.");
             });
         }
     }
@@ -385,11 +382,8 @@
     function startGame(isLoad = false) {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        
-        // BUG FIX: Hide Save Button in Online mode
         const saveBtn = document.getElementById('save-btn');
         saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
-        
         if(!isLoad) game.reset(); 
         initBoard();
     }
@@ -456,22 +450,24 @@
         document.getElementById('cert-overlay').style.display = 'flex';
     }
 
-    // BUG FIX: Improved Download logic for File Manager
+    // --- APP-SPECIFIC DOWNLOAD FIX ---
     function downloadCert() {
         const area = document.getElementById('cert-canvas-area');
         html2canvas(area, {scale: 2, useCORS: true}).then(canvas => {
-            canvas.toBlob(function(blob) {
+            canvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.download = `Architect_GM_Cert_${currentUser}.png`;
                 link.href = url;
+                link.download = `Architect_GM_${currentUser}_${Date.now()}.png`;
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                alert("CERTIFICATE SENT TO DOWNLOADS");
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    alert("CERTIFICATE SAVED. Check your File Manager / Downloads folder.");
+                }, 100);
             }, 'image/png');
-        });
+        }).catch(err => alert("App Storage Error: " + err));
     }
 
     function showGallery() {
@@ -507,7 +503,6 @@
         }
     }
 
-    // BUG FIX: Add Remove Friend functionality
     function removeFriend(id) {
         if(confirm("REMOVE " + id + " FROM FRIENDS?")) {
             let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
