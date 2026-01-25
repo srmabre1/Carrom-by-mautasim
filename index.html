@@ -19,6 +19,9 @@
         img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
 
+        /* Piece Naming Label */
+        .piece-label { position: absolute; bottom: 0; background: rgba(0,0,0,0.7); color: var(--p); font-size: 7px; padding: 1px 3px; border-radius: 3px; white-space: nowrap; z-index: 10; font-weight: bold; border: 0.5px solid var(--p); }
+
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
         .btn-ui:active { background: var(--p); color: #000; }
@@ -62,7 +65,7 @@
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
         <div class="btn-ui" id="save-btn" onclick="saveGame()">💾 SAVE</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
-        <div class="btn-ui" id="voice-call-btn" style="display:none" onclick="toggleVoice()">🎙️ VOICE: OFF</div>
+        <div class="btn-ui" onclick="takeScreenshot('board-box')">📸 SCREENSHOT</div>
     </div>
 
     <div id="auth-screen" class="overlay">
@@ -71,6 +74,10 @@
         <div class="auth-card">
             <input type="text" id="user-in" placeholder="USERNAME">
             <input type="password" id="pass-in" placeholder="PASSKEY">
+            <select id="gender-in">
+                <option value="boy">I AM A BOY (NAME ON KING)</option>
+                <option value="girl">I AM A GIRL (NAME ON QUEEN)</option>
+            </select>
             <button class="btn-main" onclick="handleAuth('login')">LOGIN (ONLINE)</button>
             <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP</button>
             <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
@@ -116,7 +123,7 @@
             </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px; width:90%; max-width:400px;">
-            <button class="btn-main" style="flex:1" onclick="downloadCert()">⬇️ DOWNLOAD HIGH-RES</button>
+            <button class="btn-main" style="flex:1" onclick="takeScreenshot('cert-canvas-area')">📸 TAKE SCREENSHOT</button>
             <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
         </div>
     </div>
@@ -179,10 +186,8 @@
     try { game = new Chess(); } catch(e) { console.error("Chess logic failed to load."); }
 
     const boardEl = document.getElementById('board');
-    let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
+    let currentUser = null, userGender = 'boy', currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
-    let localStream = null, currentCall = null;
-    const remoteAudio = new Audio();
 
     const pieces = {
         wP: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
@@ -224,21 +229,27 @@
 
     function bootOffline() {
         currentUser = "GUEST_OFFLINE";
+        userGender = 'boy';
         showDashboard();
     }
 
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
+        const g = document.getElementById('gender-in').value;
         if(!u || !p) return;
         const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
             if(storedPass) { alert("ID TAKEN"); return; }
-            localStorage.setItem('pwd_' + u, p); alert("ACCOUNT SECURED");
+            localStorage.setItem('pwd_' + u, p); 
+            localStorage.setItem('gender_' + u, g);
+            alert("ACCOUNT SECURED");
         } else {
             if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
         }
-        currentUser = u; localStorage.setItem('arch_user', u); initPeer(); showDashboard();
+        currentUser = u; 
+        userGender = localStorage.getItem('gender_' + u) || 'boy';
+        localStorage.setItem('arch_user', u); initPeer(); showDashboard();
     }
 
     function initPeer() {
@@ -249,39 +260,6 @@
             document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
             document.getElementById('p2-label').innerText = currentUser; startGame();
         });
-        peer.on('call', call => {
-            if(currentMode === 'online' && confirm("INCOMING VOICE COMM... ACCEPT?")) {
-                navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                    localStream = stream; currentCall = call;
-                    call.answer(stream);
-                    call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); });
-                    document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
-                });
-            }
-        });
-    }
-
-    function toggleVoice() {
-        if(currentMode !== 'online' || !conn) { alert("MIC ONLY AVAILABLE IN ONLINE PVP MATCHES"); return; }
-        if (currentCall) {
-            currentCall.close(); currentCall = null;
-            if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-            document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
-        } else {
-            document.getElementById('voice-call-btn').innerText = "🎙️ REQUESTING...";
-            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                localStream = stream;
-                const call = peer.call(conn.peer, stream);
-                currentCall = call;
-                call.on('stream', remoteStream => { 
-                    remoteAudio.srcObject = remoteStream; remoteAudio.play(); 
-                    document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
-                });
-            }).catch(e => {
-                document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
-                alert("VOICE BLOCKED: Peer connection or Mic permission error.");
-            });
-        }
     }
 
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
@@ -340,7 +318,6 @@
 
     function setupConnection() {
         document.getElementById('chat-btn').style.display = 'flex';
-        document.getElementById('voice-call-btn').style.display = 'block';
         document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
         conn.on('data', data => {
             if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
@@ -364,7 +341,7 @@
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = "USER: " + currentUser;
+        document.getElementById('user-display').innerText = "USER: " + currentUser + " (" + userGender.toUpperCase() + ")";
         document.getElementById('global-nav').style.display = 'none';
         document.getElementById('chat-btn').style.display = 'none';
         document.getElementById('social-node').style.display = currentUser.includes('GUEST') ? 'none' : 'block';
@@ -394,11 +371,6 @@
         document.getElementById('global-nav').style.display = 'flex';
         const saveBtn = document.getElementById('save-btn');
         saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
-        
-        // FIX: Ensure mic button visibility is reset based on mode
-        const voiceBtn = document.getElementById('voice-call-btn');
-        voiceBtn.style.display = (currentMode === 'online') ? 'block' : 'none';
-
         if(!isLoad) game.reset(); 
         initBoard();
     }
@@ -428,6 +400,18 @@
                 img.className = 'piece';
                 if(p.color === 'b') img.classList.add('black');
                 s.appendChild(img);
+
+                // GENDER BASED NAMING
+                let shouldName = false;
+                if(userGender === 'boy' && p.type === 'k') shouldName = true;
+                if(userGender === 'girl' && p.type === 'q') shouldName = true;
+
+                if(shouldName) {
+                    const label = document.createElement('div');
+                    label.className = 'piece-label';
+                    label.innerText = (p.color === playerColor) ? currentUser : "ENEMY";
+                    s.appendChild(label);
+                }
             }
         });
         
@@ -444,6 +428,16 @@
                 playSound(600);
             }, 500);
         }
+    }
+
+    function takeScreenshot(elementId) {
+        const area = document.getElementById(elementId);
+        html2canvas(area, {scale: 3, useCORS: true}).then(canvas => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `Architect_Shot_${Date.now()}.png`;
+            link.click();
+        });
     }
 
     function toggleWinScreen() {
@@ -467,24 +461,6 @@
         document.getElementById('cert-date').innerText = c.date;
         document.getElementById('cert-id').innerText = c.id;
         document.getElementById('cert-overlay').style.display = 'flex';
-    }
-
-    function downloadCert() {
-        const area = document.getElementById('cert-canvas-area');
-        // FIX: Improved download logic for cross-platform compatibility
-        html2canvas(area, {scale: 2, useCORS: true, logging: false}).then(canvas => {
-            try {
-                const url = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `Architect_GM_${currentUser}.png`;
-                document.body.appendChild(link); // Append to body to ensure click works on all browsers
-                link.click();
-                document.body.removeChild(link);
-            } catch (e) {
-                alert("Download blocked. Please long-press the certificate to save manually.");
-            }
-        });
     }
 
     function showGallery() {
@@ -567,6 +543,7 @@
         const s = localStorage.getItem('arch_user'); 
         if(s) { 
             currentUser = s; 
+            userGender = localStorage.getItem('gender_' + s) || 'boy';
             document.getElementById('user-in').value = s;
             document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
             initPeer(); showDashboard();
