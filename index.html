@@ -175,12 +175,31 @@
     <div id="board-box"><div id="board"></div></div>
 
 <script>
-    const game = new Chess();
+    // FIXED: Use window.Chess if needed, but standard new Chess() works with the 0.10.3 CDN
+    let game;
+    try { game = new Chess(); } catch(e) { console.error("Chess logic failed to load."); }
+
     const boardEl = document.getElementById('board');
     let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
     let localStream = null, currentCall = null;
     const remoteAudio = new Audio();
+
+    // FIXED PIECE ASSETS (Wikipedia URLs are much more stable for hotlinking)
+    const pieces = {
+        wP: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
+        wN: "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg",
+        wB: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg",
+        wR: "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg",
+        wQ: "https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg",
+        wK: "https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg",
+        bP: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg",
+        bN: "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg",
+        bB: "https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg",
+        bR: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg",
+        bQ: "https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg",
+        bK: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg"
+    };
 
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
@@ -244,13 +263,8 @@
         });
     }
 
-    // --- APP-SPECIFIC VOICE FIX ---
     function toggleVoice() {
-        if(currentMode !== 'online' || !conn) {
-            alert("MIC ONLY AVAILABLE IN ONLINE PVP MATCHES");
-            return;
-        }
-        
+        if(currentMode !== 'online' || !conn) { alert("MIC ONLY AVAILABLE IN ONLINE PVP MATCHES"); return; }
         if (currentCall) {
             currentCall.close(); currentCall = null;
             if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -262,14 +276,12 @@
                 const call = peer.call(conn.peer, stream);
                 currentCall = call;
                 call.on('stream', remoteStream => { 
-                    remoteAudio.srcObject = remoteStream; 
-                    remoteAudio.play(); 
+                    remoteAudio.srcObject = remoteStream; remoteAudio.play(); 
                     document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
                 });
-                call.on('close', () => { document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF"; currentCall = null; });
             }).catch(e => {
                 document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
-                alert("VOICE BLOCKED: Check your PHONE SETTINGS. Go to Apps > Architect Chess Pro > Permissions and allow Microphone.");
+                alert("VOICE BLOCKED: Check your Permissions.");
             });
         }
     }
@@ -321,7 +333,7 @@
             if (game.move(moveData)) {
                 playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 50);
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 250);
                 return;
             }
         }
@@ -392,8 +404,10 @@
         boardEl.innerHTML = '';
         for (let i = 0; i < 64; i++) {
             const sq = document.createElement('div');
-            sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`;
-            sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8));
+            const row = Math.floor(i/8);
+            const col = i%8;
+            sq.className = `sq ${(row + col) % 2 === 0 ? 'l' : 'd'}`;
+            sq.dataset.id = String.fromCharCode(97 + col) + (8 - row);
             sq.onclick = () => handleInput(sq.dataset.id); boardEl.appendChild(sq);
         }
         render();
@@ -407,8 +421,10 @@
             if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) s.classList.add('hint');
             if (p) {
                 const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`;
-                img.className = 'piece' + (p.color === 'b' ? ' black' : ''); s.appendChild(img);
+                img.src = pieces[p.color + p.type.toUpperCase()];
+                img.className = 'piece';
+                if(p.color === 'b') img.classList.add('black');
+                s.appendChild(img);
             }
         });
         
@@ -450,24 +466,15 @@
         document.getElementById('cert-overlay').style.display = 'flex';
     }
 
-    // --- APP-SPECIFIC DOWNLOAD FIX ---
     function downloadCert() {
         const area = document.getElementById('cert-canvas-area');
         html2canvas(area, {scale: 2, useCORS: true}).then(canvas => {
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `Architect_GM_${currentUser}_${Date.now()}.png`;
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                    alert("CERTIFICATE SAVED. Check your File Manager / Downloads folder.");
-                }, 100);
-            }, 'image/png');
-        }).catch(err => alert("App Storage Error: " + err));
+            const url = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Architect_GM_${currentUser}.png`;
+            link.click();
+        });
     }
 
     function showGallery() {
