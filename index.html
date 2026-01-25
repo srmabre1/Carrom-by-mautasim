@@ -175,7 +175,6 @@
     <div id="board-box"><div id="board"></div></div>
 
 <script>
-    // FIXED: Use window.Chess if needed, but standard new Chess() works with the 0.10.3 CDN
     let game;
     try { game = new Chess(); } catch(e) { console.error("Chess logic failed to load."); }
 
@@ -185,7 +184,6 @@
     let localStream = null, currentCall = null;
     const remoteAudio = new Audio();
 
-    // FIXED PIECE ASSETS (Wikipedia URLs are much more stable for hotlinking)
     const pieces = {
         wP: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
         wN: "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg",
@@ -281,7 +279,7 @@
                 });
             }).catch(e => {
                 document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
-                alert("VOICE BLOCKED: Check your Permissions.");
+                alert("VOICE BLOCKED: Peer connection or Mic permission error.");
             });
         }
     }
@@ -396,6 +394,11 @@
         document.getElementById('global-nav').style.display = 'flex';
         const saveBtn = document.getElementById('save-btn');
         saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
+        
+        // FIX: Ensure mic button visibility is reset based on mode
+        const voiceBtn = document.getElementById('voice-call-btn');
+        voiceBtn.style.display = (currentMode === 'online') ? 'block' : 'none';
+
         if(!isLoad) game.reset(); 
         initBoard();
     }
@@ -468,12 +471,19 @@
 
     function downloadCert() {
         const area = document.getElementById('cert-canvas-area');
-        html2canvas(area, {scale: 2, useCORS: true}).then(canvas => {
-            const url = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Architect_GM_${currentUser}.png`;
-            link.click();
+        // FIX: Improved download logic for cross-platform compatibility
+        html2canvas(area, {scale: 2, useCORS: true, logging: false}).then(canvas => {
+            try {
+                const url = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Architect_GM_${currentUser}.png`;
+                document.body.appendChild(link); // Append to body to ensure click works on all browsers
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                alert("Download blocked. Please long-press the certificate to save manually.");
+            }
         });
     }
 
