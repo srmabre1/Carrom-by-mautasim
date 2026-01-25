@@ -21,26 +21,30 @@
 
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
-        
+        .btn-ui:active { background: var(--p); color: #000; }
+
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; text-align: center; }
         .auth-card { background: var(--c); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         
         input, select { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        #social-panel { width: 90%; max-height: 250px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
-        .friend-item { padding: 10px; border-bottom: 1px solid #111; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
+        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         
         #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; }
+        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
         .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
 
-        #cert-overlay { display:none; background: rgba(0,0,0,0.98); padding: 10px; position: fixed; inset: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
-        #cert-canvas-area { width: 90%; max-width: 600px; background: linear-gradient(135deg, #050505 0%, #1a1a1a 100%); color: var(--gold); border: 10px double var(--gold); padding: 40px; text-align: center; position: relative; }
-        .cert-header { font-size: clamp(18px, 5vw, 32px); font-weight: 900; margin-bottom: 10px; text-shadow: 0 0 15px var(--gold); border-bottom: 3px solid var(--gold); display: inline-block; padding-bottom: 5px; }
-        .cert-name { font-size: clamp(24px, 6vw, 40px); color: var(--p); margin: 20px 0; text-transform: uppercase; font-weight: 900; background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid #333; }
-        .cert-footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; }
-        .signature { font-family: 'cursive'; font-size: 22px; color: var(--gold); }
+        /* CERTIFICATE DESIGN - HIGH LEVEL */
+        #cert-overlay { display:none; background: rgba(0,0,0,0.95); padding: 10px; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
+        #cert-canvas-area { width: 90%; max-width: 600px; background: linear-gradient(135deg, #050505 0%, #1a1a1a 100%); color: var(--gold); border: 10px double var(--gold); padding: 50px; text-align: center; position: relative; box-shadow: 0 0 50px rgba(255,215,0,0.4); border-radius: 8px; }
+        #cert-canvas-area::after { content: '🏆'; font-size: 150px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; }
+        .cert-header { font-size: 36px; font-weight: 900; margin-bottom: 10px; text-shadow: 0 0 15px var(--gold); border-bottom: 3px solid var(--gold); display: inline-block; padding-bottom: 5px; color: #fff; }
+        .cert-body { font-family: 'Orbitron'; letter-spacing: 2px; line-height: 1.8; position: relative; z-index: 2; }
+        .cert-name { font-size: 40px; color: var(--p); margin: 20px 0; text-transform: uppercase; font-weight: 900; text-shadow: 0 0 10px var(--p); border: 1px solid #333; background: rgba(0,0,0,0.5); padding: 10px; }
+        .cert-footer { margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #888; border-top: 1px solid #333; padding-top: 20px; }
+        .signature { font-family: 'cursive'; font-size: 24px; color: var(--gold); }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -49,6 +53,8 @@
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        
+        /* SAVED CERTS LIST */
         .saved-cert { background: #111; border-left: 3px solid var(--gold); padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
     </style>
 </head>
@@ -56,7 +62,7 @@
 
     <div id="global-nav" class="nav-ui" style="display:none">
         <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div>
-        <div class="btn-ui" id="save-match-btn" onclick="saveGame()">💾 SAVE</div>
+        <div class="btn-ui" id="save-btn" onclick="saveGame()">💾 SAVE</div>
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div>
         <div class="btn-ui" id="voice-call-btn" style="display:none" onclick="toggleVoice()">🎙️ VOICE: OFF</div>
     </div>
@@ -78,6 +84,7 @@
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">ARCHITECT CHESS PRO</div>
         <div id="user-display" style="font-size: 10px; color: var(--p); margin-bottom: 10px;">USER: ---</div>
+        <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
             <div onclick="prepareGame('pass')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
@@ -87,69 +94,79 @@
             <div onclick="doLogout()" style="grid-column: span 2; background:rgba(244,67,54,0.1); padding:10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
         <div id="social-panel">
-            <input type="text" id="friend-id" placeholder="ENTER ID">
+            <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
             <div id="friends-list"></div>
         </div>
     </div>
 
-    <div id="cert-overlay">
+    <div id="cert-overlay" style="display: none;">
         <div id="cert-canvas-area">
             <div class="cert-header">GRANDMASTER CERTIFICATION</div>
             <div class="cert-body">
-                <p style="font-size: 10px; color: #888; margin:0">SUPREME INTELLECT PROTOCOL</p>
+                <p style="font-size: 10px; color: #888; margin:0">OFFICIAL RECOGNITION OF SUPREME INTELLECT</p>
                 <div class="cert-name" id="cert-name">PLAYER</div>
-                <p style="font-size: 12px;">ENGINE DISMANTLED SUCCESSFULLY</p>
-                <p style="font-size: 10px; color: var(--gold); letter-spacing: 3px;">RATING: ARCHITECT</p>
+                <p style="font-size: 12px; margin: 5px 0;">HAS SUCCESSFULLY DISMANTLED THE ARCHITECT ENGINE</p>
+                <p style="font-size: 10px; color: var(--gold); letter-spacing: 3px;">RATING: MAXIMUM ENTROPY</p>
             </div>
             <div class="cert-footer">
                 <div style="text-align:left">ID: <span id="cert-id">#0000</span><br><span id="cert-date">2024.01.01</span></div>
                 <div style="text-align:right">
                     <div class="signature">Mautasim</div>
-                    <div style="font-size:8px; color:var(--p)">CHIEF ARCHITECT</div>
+                    <div style="font-size:8px; letter-spacing:2px; color:var(--p)">CHIEF ARCHITECT</div>
                 </div>
             </div>
         </div>
-        <button class="btn-main" style="width:250px" onclick="downloadCert()">💾 SAVE TO FILE MANAGER</button>
-        <button class="btn-main" style="width:250px; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">BACK</button>
+        <div style="display:flex; gap:10px; margin-top:20px; width:90%; max-width:400px;">
+            <button class="btn-main" style="flex:1" onclick="downloadCert()">⬇️ DOWNLOAD HIGH-RES</button>
+            <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
+        </div>
     </div>
 
     <div id="gallery-screen" class="overlay" style="display:none">
-        <div class="architect-tag">GALLERY</div>
-        <div id="gallery-content" style="width: 90%; max-height: 400px; overflow-y: auto;"></div>
+        <div class="architect-tag">MASTERY GALLERY</div>
+        <div class="gallery-list" id="gallery-content" style="width: 90%; max-height: 400px; overflow-y: auto;"></div>
         <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
     </div>
 
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p)">AI LEVEL</h3>
-            <select id="ai-level-select"><option value="architect">ARCHITECT (CERT)</option><option value="casual">CASUAL</option></select>
-            <button class="btn-main" onclick="startAI()">START</button>
-            <button class="btn-main" style="background:none; border:1px solid #444" onclick="showDashboard()">BACK</button>
+            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
+            <select id="ai-level-select">
+                <option value="architect">LVL: ARCHITECT (CERTIFICATE MODE)</option>
+                <option value="casual">LVL: CASUAL (PRACTICE)</option>
+            </select>
+            <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
+            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
+
     <div id="pass-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p)">PASS & PLAY</h3>
-            <input type="text" id="p1-in" placeholder="P1"><input type="text" id="p2-in" placeholder="P2">
-            <button class="btn-main" onclick="startPass()">START</button>
-            <button class="btn-main" style="background:none; border:1px solid #444" onclick="showDashboard()">BACK</button>
+            <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
+            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
+            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
+            <button class="btn-main" onclick="startPass()">START MATCH</button>
+            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
-        <div id="winner-text" style="font-size: 20px; color: var(--p);">---</div>
-        <button id="cert-btn" class="btn-main" style="display:none; background:var(--gold); color: black;" onclick="claimCert()">🏆 CLAIM CERTIFICATE</button>
+        <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
+        <button id="cert-btn" class="btn-main" style="display:none; background:var(--gold); color: black;" onclick="claimCert()">🏆 CLAIM SUPREME CERTIFICATE</button>
         <button class="btn-ui" style="margin-top:10px" onclick="toggleWinScreen()">👁️ VIEW BOARD</button>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT</button>
+        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
+        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div>
     </div>
 
-    <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">🗨️</div>
+    <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    </div>
     <div id="chat-window">
-        <div style="padding:10px; border-bottom:1px solid var(--p); font-size:10px;">COMM-LINK: <span id="chatting-with"></span></div>
+        <div style="padding: 12px; border-bottom: 1px solid var(--p); font-size: 10px; font-weight: 900; background:rgba(0,212,255,0.1)">COMM-LINK: <span id="chatting-with" style="color:var(--p)"></span></div>
         <div id="chat-msgs"></div>
-        <input type="text" id="chat-input" placeholder="DATA..." onkeydown="if(event.key==='Enter') sendChat()">
+        <input type="text" id="chat-input" placeholder="SEND DATA..." onkeydown="if(event.key==='Enter') sendChat()">
     </div>
 
     <div class="hud">
@@ -172,33 +189,39 @@
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
     function saveGame() {
-        if(!currentUser) return;
-        const data = { fen: game.fen(), p1: document.getElementById('p1-label').innerText, p2: document.getElementById('p2-label').innerText, mode: currentMode };
-        localStorage.setItem('saved_game_' + currentUser, JSON.stringify(data));
-        alert("MATCH SECURED IN LOCAL STORAGE");
+        if(!currentUser) return alert("LOGIN REQUIRED TO SAVE");
+        const saveData = { fen: game.fen(), p1: document.getElementById('p1-label').innerText, p2: document.getElementById('p2-label').innerText, mode: currentMode };
+        localStorage.setItem('saved_game_' + currentUser, JSON.stringify(saveData));
+        alert("GAME SAVED SUCCESSFULLY");
     }
 
     function loadGame() {
+        if(!currentUser) return;
         const raw = localStorage.getItem('saved_game_' + currentUser);
-        if(!raw) return alert("NO SAVED DATA");
+        if(!raw) return alert("NO SAVED GAME FOUND");
         const data = JSON.parse(raw);
-        game.load(data.fen); currentMode = data.mode;
+        game.load(data.fen);
+        currentMode = data.mode;
         document.getElementById('p1-label').innerText = data.p1;
         document.getElementById('p2-label').innerText = data.p2;
-        startGame(true);
+        startGame(true); 
     }
 
-    function bootOffline() { currentUser = "GUEST_OFFLINE"; showDashboard(); }
+    function bootOffline() {
+        currentUser = "GUEST_OFFLINE";
+        showDashboard();
+    }
 
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
         if(!u || !p) return;
+        const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
-            if(localStorage.getItem('pwd_' + u)) return alert("TAKEN");
-            localStorage.setItem('pwd_' + u, p); alert("CREATED");
+            if(storedPass) { alert("ID TAKEN"); return; }
+            localStorage.setItem('pwd_' + u, p); alert("ACCOUNT SECURED");
         } else {
-            if(localStorage.getItem('pwd_' + u) !== p) return alert("WRONG");
+            if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
         }
         currentUser = u; localStorage.setItem('arch_user', u); initPeer(); showDashboard();
     }
@@ -212,9 +235,10 @@
             document.getElementById('p2-label').innerText = currentUser; startGame();
         });
         peer.on('call', call => {
-            if(confirm("INCOMING VOICE?")) {
-                navigator.mediaDevices.getUserMedia({audio: true}).then(s => {
-                    localStream = s; currentCall = call; call.answer(s);
+            if(currentMode === 'online' && confirm("INCOMING VOICE COMM... ACCEPT?")) {
+                navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                    localStream = stream; currentCall = call;
+                    call.answer(stream);
                     call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); });
                     document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
                 });
@@ -223,18 +247,111 @@
     }
 
     function toggleVoice() {
-        if(!conn || currentMode !== 'online') return alert("ONLINE ONLY");
-        if(currentCall) {
-            currentCall.close(); currentCall = null;
+        // BUG FIX: Only allow in Online play
+        if(currentMode !== 'online' || !conn) {
+            alert("MIC ONLY AVAILABLE IN ONLINE PVP MATCHES");
+            return;
+        }
+        
+        if (currentCall) {
+            currentCall.close();
+            currentCall = null;
             if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
             document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
         } else {
-            navigator.mediaDevices.getUserMedia({audio: true}).then(s => {
-                localStream = s; const call = peer.call(conn.peer, s); currentCall = call;
-                call.on('stream', rs => { remoteAudio.srcObject = rs; remoteAudio.play(); document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON"; });
+            document.getElementById('voice-call-btn').innerText = "🎙️ CONNECTING...";
+            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+                localStream = stream;
+                const call = peer.call(conn.peer, stream);
+                currentCall = call;
+                call.on('stream', remoteStream => { 
+                    remoteAudio.srcObject = remoteStream; 
+                    remoteAudio.play(); 
+                    document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: ON";
+                });
                 call.on('close', () => { document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF"; currentCall = null; });
-            }).catch(() => alert("MIC ACCESS DENIED BY DEVICE"));
+            }).catch(e => {
+                alert("MIC ACCESS DENIED. PLEASE ENABLE PERMISSIONS IN SETTINGS.");
+                document.getElementById('voice-call-btn').innerText = "🎙️ VOICE: OFF";
+            });
         }
+    }
+
+    const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    function evaluateBoard(g) {
+        let total = 0; const b = g.board();
+        for(let i=0; i<8; i++) for(let j=0; j<8; j++) if(b[i][j]) {
+            const val = pieceValues[b[i][j].type]; total += (b[i][j].color === 'w' ? val : -val);
+        }
+        return total;
+    }
+
+    function minimax(g, depth, alpha, beta, isMax) {
+        if(depth === 0) return -evaluateBoard(g);
+        let moves = g.moves();
+        if(isMax) {
+            let best = -Infinity;
+            for(let m of moves) {
+                g.move(m); best = Math.max(best, minimax(g, depth-1, alpha, beta, false));
+                g.undo(); alpha = Math.max(alpha, best); if(beta <= alpha) break;
+            }
+            return best;
+        } else {
+            let best = Infinity;
+            for(let m of moves) {
+                g.move(m); best = Math.min(best, minimax(g, depth-1, alpha, beta, true));
+                g.undo(); beta = Math.min(beta, best); if(beta <= alpha) break;
+            }
+            return best;
+        }
+    }
+
+    function aiMove() {
+        if(game.game_over()) return;
+        const moves = game.moves();
+        let bestMove = null, bestVal = -Infinity;
+        for(let m of moves) {
+            game.move(m); let v = minimax(game, 2, -Infinity, Infinity, false); game.undo();
+            if(v > bestVal) { bestVal = v; bestMove = m; }
+        }
+        game.move(bestMove || moves[0]); playSound(300); render();
+    }
+
+    function handleInput(id) {
+        if (currentMode === 'online' && game.turn() !== playerColor) return;
+        if (selectedSq) {
+            const moveData = { from: selectedSq, to: id, promotion: 'q' };
+            if (game.move(moveData)) {
+                playSound(400); selectedSq = null; render();
+                if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
+                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 50);
+                return;
+            }
+        }
+        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
+    }
+
+    function setupConnection() {
+        document.getElementById('chat-btn').style.display = 'flex';
+        document.getElementById('voice-call-btn').style.display = 'block';
+        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
+        conn.on('data', data => {
+            if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
+            else if (data.type === 'chat') {
+                const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+                msg.innerHTML = `<span style="color:var(--p)">STRANGER:</span> ${data.data}`;
+                document.getElementById('chat-msgs').appendChild(msg);
+                document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
+            }
+        });
+    }
+
+    function startOnlineGame(id) {
+        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
+        conn.on('open', () => {
+            setupConnection(); document.getElementById('p1-label').innerText = currentUser;
+            document.getElementById('p2-label').innerText = id; startGame();
+        });
     }
 
     function showDashboard() {
@@ -250,7 +367,7 @@
     function prepareGame(mode) {
         currentMode = mode;
         if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else document.getElementById('pass-setup').style.display = 'flex';
+        else { document.getElementById('pass-setup').style.display = 'flex'; document.getElementById('p1-in').value = currentUser; }
     }
 
     function startAI() {
@@ -268,9 +385,13 @@
     function startGame(isLoad = false) {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        // Hide SAVE button in online play
-        document.getElementById('save-match-btn').style.display = (currentMode === 'online') ? 'none' : 'block';
-        if(!isLoad) game.reset(); initBoard();
+        
+        // BUG FIX: Hide Save Button in Online mode
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
+        
+        if(!isLoad) game.reset(); 
+        initBoard();
     }
 
     function initBoard() {
@@ -296,6 +417,7 @@
                 img.className = 'piece' + (p.color === 'b' ? ' black' : ''); s.appendChild(img);
             }
         });
+        
         if(game.game_over()) { 
             setTimeout(() => {
                 const winScr = document.getElementById('win-screen');
@@ -303,25 +425,51 @@
                 let winner = (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS";
                 if(game.in_draw()) winner = "DRAW";
                 document.getElementById('winner-text').innerText = winner;
-                if(!game.in_draw() && game.turn() === 'b' && currentMode === 'bot' && aiDifficulty === 'architect') document.getElementById('cert-btn').style.display = 'block';
+                if(!game.in_draw() && game.turn() === 'b' && currentMode === 'bot' && aiDifficulty === 'architect') {
+                    document.getElementById('cert-btn').style.display = 'block';
+                }
                 playSound(600);
             }, 500);
         }
     }
 
+    function toggleWinScreen() {
+        const winScr = document.getElementById('win-screen');
+        winScr.style.display = winScr.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function claimCert() {
+        const date = new Date().toLocaleDateString();
+        const id = "#" + Math.floor(1000 + Math.random() * 9000);
+        const cert = { name: currentUser, date: date, id: id, timestamp: Date.now() };
+        let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
+        gallery.push(cert);
+        localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
+        displayCert(cert);
+        document.getElementById('cert-btn').style.display = 'none';
+    }
+
+    function displayCert(c) {
+        document.getElementById('cert-name').innerText = c.name;
+        document.getElementById('cert-date').innerText = c.date;
+        document.getElementById('cert-id').innerText = c.id;
+        document.getElementById('cert-overlay').style.display = 'flex';
+    }
+
+    // BUG FIX: Improved Download logic for File Manager
     function downloadCert() {
         const area = document.getElementById('cert-canvas-area');
         html2canvas(area, {scale: 2, useCORS: true}).then(canvas => {
-            canvas.toBlob(blob => {
+            canvas.toBlob(function(blob) {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.download = `Architect_Cert_${currentUser}_${Date.now()}.png`;
+                link.download = `Architect_GM_Cert_${currentUser}.png`;
                 link.href = url;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                alert("FILE SENT TO DOWNLOADS");
+                alert("CERTIFICATE SENT TO DOWNLOADS");
             }, 'image/png');
         });
     }
@@ -330,10 +478,10 @@
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         const content = document.getElementById('gallery-content');
-        content.innerHTML = gallery.length ? '' : '<p>EMPTY</p>';
+        content.innerHTML = gallery.length ? '' : '<p style="font-size:10px; opacity:0.5">NO CERTIFICATES EARNED YET</p>';
         gallery.forEach(c => {
             const div = document.createElement('div'); div.className = 'saved-cert';
-            div.innerHTML = `<div><b style="color:var(--gold)">${c.name}</b><br><span style="color:#777">${c.date}</span></div> <button class="btn-ui" onclick="viewSavedCert('${c.timestamp}')">VIEW</button>`;
+            div.innerHTML = `<div><b style="color:var(--gold)">${c.name}</b><br><span style="color:#777; font-size:10px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.timestamp}')">VIEW</button>`;
             content.appendChild(div);
         });
         document.getElementById('gallery-screen').style.display = 'flex';
@@ -346,110 +494,71 @@
     }
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+    
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim().toUpperCase();
         if(!id) return;
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        if(!friends.includes(id)) friends.push(id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); renderFriends();
+        if(!friends.includes(id)) {
+            friends.push(id);
+            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
+            renderFriends();
+            document.getElementById('friend-id').value = '';
+        }
     }
+
+    // BUG FIX: Add Remove Friend functionality
     function removeFriend(id) {
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        friends = friends.filter(f => f !== id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); renderFriends();
+        if(confirm("REMOVE " + id + " FROM FRIENDS?")) {
+            let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+            friends = friends.filter(f => f !== id);
+            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
+            renderFriends();
+        }
     }
+
     function renderFriends() {
         const list = document.getElementById('friends-list'); list.innerHTML = '';
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
         friends.forEach(f => {
             const div = document.createElement('div'); div.className = 'friend-item';
-            div.innerHTML = `<b>${f}</b> <div><button class="btn-ui" onclick="startOnlineGame('${f}')">PLAY</button> <button class="btn-ui" style="border-color:#f44336; color:#f44336" onclick="removeFriend('${f}')">X</button></div>`;
+            div.innerHTML = `
+                <span onclick="startOnlineGame('${f}')">${f}</span> 
+                <div style="display:flex; gap:5px;">
+                    <span style="color:var(--p)" onclick="startOnlineGame('${f}')">PLAY</span>
+                    <span style="color:#f44336; font-weight:bold; margin-left:10px;" onclick="removeFriend('${f}')">❌</span>
+                </div>`;
             list.appendChild(div);
         });
     }
 
-    function toggleChatWindow() { const win = document.getElementById('chat-window'); win.style.display = win.style.display === 'flex' ? 'none' : 'flex'; }
+    function toggleChatWindow() {
+        const win = document.getElementById('chat-window');
+        win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    }
+
     function sendChat() {
-        const inp = document.getElementById('chat-input'); if(!conn || !inp.value) return;
+        const inp = document.getElementById('chat-input');
+        if(!conn || !inp.value) return;
         conn.send({type: 'chat', data: inp.value});
-        const msg = document.createElement('div'); msg.innerHTML = `<span style="color:#777">YOU:</span> ${inp.value}`;
+        const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+        msg.innerHTML = `<span style="color:#777">YOU:</span> ${inp.value}`;
         document.getElementById('chat-msgs').appendChild(msg);
+        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
         inp.value = '';
     }
 
-    function handleInput(id) {
-        if (currentMode === 'online' && game.turn() !== playerColor) return;
-        if (selectedSq) {
-            const moveData = { from: selectedSq, to: id, promotion: 'q' };
-            if (game.move(moveData)) {
-                playSound(400); selectedSq = null; render();
-                if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 50);
-                return;
-            }
-        }
-        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
-    }
-
-    function evaluateBoard(g) {
-        let total = 0; const b = g.board();
-        for(let i=0; i<8; i++) for(let j=0; j<8; j++) if(b[i][j]) {
-            const val = pieceValues[b[i][j].type]; total += (b[i][j].color === 'w' ? val : -val);
-        }
-        return total;
-    }
-
-    function minimax(g, depth, alpha, beta, isMax) {
-        if(depth === 0) return -evaluateBoard(g);
-        let moves = g.moves();
-        if(isMax) {
-            let best = -Infinity;
-            for(let m of moves) { g.move(m); best = Math.max(best, minimax(g, depth-1, alpha, beta, false)); g.undo(); alpha = Math.max(alpha, best); if(beta <= alpha) break; }
-            return best;
-        } else {
-            let best = Infinity;
-            for(let m of moves) { g.move(m); best = Math.min(best, minimax(g, depth-1, alpha, beta, true)); g.undo(); beta = Math.min(beta, best); if(beta <= alpha) break; }
-            return best;
-        }
-    }
-
-    function aiMove() {
-        if(game.game_over()) return;
-        const moves = game.moves();
-        let bestMove = null, bestVal = -Infinity;
-        for(let m of moves) {
-            game.move(m); let v = minimax(game, 2, -Infinity, Infinity, false); game.undo();
-            if(v > bestVal) { bestVal = v; bestMove = m; }
-        }
-        game.move(bestMove || moves[0]); playSound(300); render();
-    }
-
-    function startOnlineGame(id) {
-        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
-        conn.on('open', () => { setupConnection(); document.getElementById('p1-label').innerText = currentUser; document.getElementById('p2-label').innerText = id; startGame(); });
-    }
-
-    function setupConnection() {
-        document.getElementById('chat-btn').style.display = 'flex';
-        document.getElementById('voice-call-btn').style.display = 'block';
-        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
-        conn.on('data', data => { if(data.type === 'move') { game.move(data.data); playSound(300); render(); } else if (data.type === 'chat') { const msg = document.createElement('div'); msg.innerHTML = `<span style="color:var(--p)">S:</span> ${data.data}`; document.getElementById('chat-msgs').appendChild(msg); } });
-    }
-
-    function toggleWinScreen() { const ws = document.getElementById('win-screen'); ws.style.display = ws.style.display === 'none' ? 'flex' : 'none'; }
-    function claimCert() {
-        const c = { name: currentUser, date: new Date().toLocaleDateString(), id: "#"+Math.floor(Math.random()*9000), timestamp: Date.now() };
-        let g = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]"); g.push(c);
-        localStorage.setItem('gallery_' + currentUser, JSON.stringify(g)); displayCert(c);
-        document.getElementById('cert-btn').style.display = 'none';
-    }
-    function displayCert(c) { document.getElementById('cert-name').innerText = c.name; document.getElementById('cert-date').innerText = c.date; document.getElementById('cert-id').innerText = c.id; document.getElementById('cert-overlay').style.display = 'flex'; }
-    function confirmExit() { if(confirm("EXIT?")) showDashboard(); }
+    function confirmExit() { if(confirm("ABORT MATCH?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
     
     window.onload = () => { 
         const s = localStorage.getItem('arch_user'); 
-        if(s) { currentUser = s; document.getElementById('user-in').value = s; document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s); initPeer(); showDashboard(); } 
+        if(s) { 
+            currentUser = s; 
+            document.getElementById('user-in').value = s;
+            document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
+            initPeer(); showDashboard();
+        } 
     };
 </script>
 </body>
