@@ -258,10 +258,8 @@
         });
     }
 
-    // --- ENHANCED AI ENGINE (100X STRENGTH) ---
+    // --- ENHANCED AI ENGINE (TURBO OPTIMIZED) ---
     const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-    
-    // Positional Advantage Tables
     const pst = {
         p: [ [0,0,0,0,0,0,0,0], [50,50,50,50,50,50,50,50], [10,10,20,30,30,20,10,10], [5,5,10,25,25,10,5,5], [0,0,0,20,20,0,0,0], [5,-5,-10,0,0,-10,-5,5], [5,10,10,-20,-20,10,10,5], [0,0,0,0,0,0,0,0] ],
         n: [ [-50,-40,-30,-30,-30,-30,-40,-50], [-40,-20,0,0,0,0,-20,-40], [-30,0,10,15,15,10,0,-30], [-30,5,15,20,20,15,5,-30], [-30,0,15,20,20,15,0,-30], [-30,5,10,15,15,10,5,-30], [-40,-20,0,5,5,0,-20,-40], [-50,-40,-30,-30,-30,-30,-40,-50] ]
@@ -274,7 +272,6 @@
                 if(b[i][j]) {
                     const piece = b[i][j];
                     let val = pieceValues[piece.type];
-                    // Add positional bonus for pawns and knights
                     if(pst[piece.type]) {
                         val += (piece.color === 'w' ? pst[piece.type][i][j] : pst[piece.type][7-i][j]);
                     }
@@ -308,15 +305,23 @@
     function aiMove() {
         if(game.game_over()) return;
         const moves = game.moves();
+        if(moves.length === 0) return;
+
         let bestMove = null, bestVal = -Infinity;
-        // Depth 3 for high difficulty, Depth 1 for casual
         const depth = (aiDifficulty === 'architect') ? 3 : 1;
 
+        // Shuffle moves to prevent predictable AI
+        moves.sort(() => Math.random() - 0.5);
+
         for(let m of moves) {
-            game.move(m); let v = minimax(game, depth, -Infinity, Infinity, false); game.undo();
+            game.move(m); 
+            let v = minimax(game, depth, -Infinity, Infinity, false); 
+            game.undo();
             if(v > bestVal) { bestVal = v; bestMove = m; }
         }
-        game.move(bestMove || moves[0]); playSound(300); render();
+        game.move(bestMove || moves[0]); 
+        playSound(300); 
+        render();
     }
 
     function handleInput(id) {
@@ -326,7 +331,10 @@
             if (game.move(moveData)) {
                 playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 250);
+                if (currentMode === 'bot' && !game.game_over()) {
+                    // Start AI calculation immediately for speed
+                    setTimeout(aiMove, 50); 
+                }
                 return;
             }
         }
@@ -406,6 +414,9 @@
     }
 
     function render() {
+        const p1Name = document.getElementById('p1-label').innerText;
+        const p2Name = document.getElementById('p2-label').innerText;
+
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
             s.classList.remove('selected', 'hint');
@@ -418,21 +429,27 @@
                 if(p.color === 'b') img.classList.add('black');
                 s.appendChild(img);
 
-                // GENDER & AI BASED NAMING
                 const label = document.createElement('div');
                 label.className = 'piece-label';
 
                 if(currentMode === 'bot' && p.color === 'b' && p.type === 'k') {
-                    label.innerText = "MAUTASIM"; // THE ONLY SPOT FOR AI NAME
+                    label.innerText = "MAUTASIM"; 
                     label.classList.add('ai-label');
                     s.appendChild(label);
                 } else {
-                    let shouldName = false;
-                    if(userGender === 'boy' && p.type === 'k') shouldName = true;
-                    if(userGender === 'girl' && p.type === 'q') shouldName = true;
+                    // UNIVERSAL NAMING LOGIC
+                    let targetName = (p.color === 'w') ? p1Name : p2Name;
                     
-                    if(shouldName && p.color === playerColor) {
-                        label.innerText = currentUser;
+                    // Logic: King gets name for Boy, Queen gets name for Girl
+                    // We check currentUser's gender for their own color, and assume 'boy' for opponents unless configured
+                    let sideGender = (p.color === playerColor) ? userGender : 'boy'; 
+
+                    let shouldName = false;
+                    if(sideGender === 'boy' && p.type === 'k') shouldName = true;
+                    if(sideGender === 'girl' && p.type === 'q') shouldName = true;
+                    
+                    if(shouldName) {
+                        label.innerText = targetName;
                         s.appendChild(label);
                     }
                 }
@@ -443,7 +460,7 @@
             setTimeout(() => {
                 const winScr = document.getElementById('win-screen');
                 winScr.style.display = 'flex';
-                let winner = (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS";
+                let winner = (game.turn() === 'b' ? p1Name : p2Name) + " WINS";
                 if(game.in_draw()) winner = "DRAW";
                 document.getElementById('winner-text').innerText = winner;
                 if(!game.in_draw() && game.turn() === 'b' && currentMode === 'bot' && aiDifficulty === 'architect') {
