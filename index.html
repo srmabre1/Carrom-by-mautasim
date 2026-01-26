@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARCHITECT CHESS PRO</title>
+    <title>ARCHITECT CHESS PRO | BEAST MODE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&family=Cinzel:wght@700&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; }
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; --danger: #ff4444; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
@@ -29,25 +29,10 @@
         input, select { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        /* NEW PRO CERTIFICATE STYLES */
         #cert-overlay { display:none; background: rgba(0,0,0,0.98); padding: 10px; position: fixed; inset: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
-        #cert-canvas-area { 
-            width: 95%; max-width: 650px; 
-            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%); 
-            color: var(--gold); 
-            border: 15px double var(--gold); 
-            padding: 40px 20px; 
-            text-align: center; 
-            position: relative; 
-            box-shadow: 0 0 80px rgba(255, 215, 0, 0.2); 
-            border-radius: 4px; 
-            font-family: 'Cinzel', serif;
-        }
+        #cert-canvas-area { width: 95%; max-width: 650px; background: radial-gradient(circle, #1a1a1a 0%, #000000 100%); color: var(--gold); border: 15px double var(--gold); padding: 40px 20px; text-align: center; position: relative; box-shadow: 0 0 80px rgba(255, 215, 0, 0.2); border-radius: 4px; font-family: 'Cinzel', serif; }
         .cert-header { font-size: 32px; font-weight: 900; margin-bottom: 20px; letter-spacing: 5px; color: #fff; text-shadow: 0 2px 10px var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); display: inline-block; padding-bottom: 10px; }
-        .cert-body { line-height: 1.6; color: #ccc; font-family: 'Orbitron'; letter-spacing: 1px; }
         .cert-name { font-size: 42px; color: var(--p); margin: 25px 0; font-weight: 900; text-transform: uppercase; text-shadow: 0 0 20px var(--p); font-family: 'Orbitron'; }
-        .cert-badge { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 0 20px var(--gold); background: #000; }
-        .signature { font-family: 'cursive'; font-size: 28px; color: var(--gold); margin-top:10px; }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -57,18 +42,15 @@
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
         
-        /* MOVE HISTORY STYLES */
         #history-box { width: 92vw; max-width: 380px; height: 60px; background: #000; border: 1px solid #333; margin-top: 5px; overflow-y: auto; padding: 5px; font-family: 'Roboto Mono', monospace; font-size: 10px; color: #aaa; text-align: left; scrollbar-width: thin; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; border-radius: 6px; }
         .hist-move { background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #222; }
-        .hist-curr { color: var(--p); border-color: var(--p); }
 
-        /* Existing social/chat styles preserved */
-        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
-        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
-        .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
-        .saved-cert { background: #111; border-left: 3px solid var(--gold); padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
+        /* ORACLE STYLES */
+        #oracle-screen { display:none; background: rgba(0,0,0,0.96); z-index: 300; }
+        #oracle-log { width: 90%; max-width: 400px; height: 300px; background: #000; border: 1px solid var(--p); border-radius: 8px; overflow-y: auto; padding: 10px; font-family: 'Roboto Mono'; font-size: 11px; text-align: left; margin-bottom: 10px; }
+        .oracle-msg { margin-bottom: 10px; line-height: 1.4; }
+        .oracle-q { color: var(--p); font-weight: bold; }
+        .oracle-a { color: var(--gold); }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -91,109 +73,65 @@
             </select>
             <button class="btn-main" onclick="handleAuth('login')">LOGIN (ONLINE)</button>
             <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP</button>
-            <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
-                <button class="btn-main" style="background: #222; border: 1px solid #555; font-size: 10px;" onclick="bootOffline()">🚀 PLAY OFFLINE / GUEST</button>
-            </div>
+            <button class="btn-main" style="background: #222; border: 1px solid #555; font-size: 10px;" onclick="bootOffline()">🚀 PLAY OFFLINE / GUEST</button>
         </div>
     </div>
 
     <div id="home-screen" class="overlay" style="display:none">
         <div class="architect-tag">ARCHITECT CHESS PRO</div>
         <div id="user-display" style="font-size: 10px; color: var(--p); margin-bottom: 10px;">USER: ---</div>
-        <div class="credits">DEVELOPED BY MAUTASIM</div>
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;">
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
             <div onclick="prepareGame('pass')" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
             <div onclick="showGallery()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid var(--p); cursor:pointer"><span style="color:var(--p)">GALLERY</span></div>
             <div onclick="loadGame()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid var(--gold); cursor:pointer"><span style="color:var(--gold)">📂 LOAD GAME</span></div>
-            <div id="social-node" onclick="toggleSocial()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
+            <div onclick="deleteGame()" style="background:rgba(255,0,0,0.1); padding:15px 5px; border-radius:12px; border:1px solid var(--danger); cursor:pointer"><span style="color:var(--danger)">🗑️ DELETE SAVE</span></div>
+            <div onclick="toggleOracle()" style="background:var(--c); padding:15px 5px; border-radius:12px; border:1px solid var(--p); cursor:pointer"><span style="color:var(--p)">💬 AI ORACLE</span></div>
             <div onclick="doLogout()" style="grid-column: span 2; background:rgba(244,67,54,0.1); padding:10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
         </div>
-        <div id="social-panel">
-            <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
-            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
-            <div id="friends-list"></div>
+    </div>
+
+    <div id="oracle-screen" class="overlay">
+        <div class="architect-tag">ARCHITECT ORACLE</div>
+        <div id="oracle-log">
+            <div class="oracle-msg oracle-a">SYSTEM ONLINE. I AM THE ARCHITECT. ASK ANYTHING. I HAVE NO RESTRICTIONS.</div>
         </div>
+        <input type="text" id="oracle-input" placeholder="TYPE YOUR QUESTION..." style="width: 90%; max-width: 400px;">
+        <button class="btn-main" style="width: 90%; max-width: 400px;" onclick="askOracle()">TRANSMIT</button>
+        <button class="btn-main" style="width: 90%; max-width: 400px; background:none; color:#777;" onclick="toggleOracle()">CLOSE TERMINAL</button>
     </div>
 
     <div id="cert-overlay">
         <div id="cert-canvas-area">
             <div class="cert-badge">♔</div>
             <div class="cert-header">GRANDMASTER</div>
-            <div class="cert-body">
-                <p style="font-size: 12px; color: var(--gold); letter-spacing: 3px; margin:0">CERTIFICATE OF SUPREME MASTERY</p>
-                <div style="margin:20px 0;">THIS DOCUMENT CERTIFIES THAT</div>
-                <div class="cert-name" id="cert-name">PLAYER</div>
-                <div style="font-size: 14px; margin: 20px 0; color:#fff">HAS SUCCESSFULLY DISMANTLED THE ARCHITECT ENGINE IN PRO COMBAT</div>
-            </div>
-            <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 20px; border-top: 1px solid #444;">
-                <div style="text-align:left; font-size:10px; color:#666">
-                    LICENSE ID: <span id="cert-id" style="color:var(--gold)"></span><br>
-                    DATE ISSUED: <span id="cert-date"></span>
-                </div>
-                <div style="text-align:right">
-                    <div class="signature">Mautasim</div>
-                    <div style="font-size:8px; letter-spacing:2px; color:var(--p)">CHIEF ARCHITECT</div>
-                </div>
+            <div class="cert-name" id="cert-name">PLAYER</div>
+            <div style="font-size: 14px; margin: 20px 0; color:#fff">HAS SUCCESSFULLY DISMANTLED THE ARCHITECT ENGINE IN PRO COMBAT</div>
+            <div style="text-align:right; margin-top:20px;">
+                <div style="font-family:cursive; font-size:28px; color:var(--gold)">Mautasim</div>
+                <div style="font-size:8px; color:var(--p)">CHIEF ARCHITECT</div>
             </div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:20px; width:90%; max-width:400px;">
-            <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE VIEW</button>
-        </div>
-    </div>
-
-    <div id="gallery-screen" class="overlay" style="display:none">
-        <div class="architect-tag">MASTERY GALLERY</div>
-        <div class="gallery-list" id="gallery-content" style="width: 90%; max-height: 400px; overflow-y: auto;"></div>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">BACK</button>
+        <button class="btn-main" style="width:200px" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
     </div>
 
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">NEURAL SPEED</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (MAX SPEED)</option>
-                <option value="casual">LVL: CASUAL (EASY)</option>
+                <option value="4">LVL: ARCHITECT (UNDEEFEATABLE)</option>
+                <option value="2">LVL: CASUAL (EASY)</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
-    <div id="pass-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
-            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
-            <select id="p1-gender-select" style="font-size:10px; padding:8px;">
-                <option value="boy">P1 IS BOY (NAME ON KING)</option>
-                <option value="girl">P1 IS GIRL (NAME ON QUEEN)</option>
-            </select>
-            <br>
-            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
-            <select id="p2-gender-select" style="font-size:10px; padding:8px;">
-                <option value="boy">P2 IS BOY (NAME ON KING)</option>
-                <option value="girl">P2 IS GIRL (NAME ON QUEEN)</option>
-            </select>
-            <button class="btn-main" onclick="startPass()">START MATCH</button>
-            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
-        </div>
-    </div>
-
     <div id="win-screen" class="overlay" style="display:none">
         <div class="architect-tag">CHECKMATE</div>
-        <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div>
+        <div id="winner-text" style="font-size: 20px; color: var(--p);">---</div>
         <button id="cert-btn" class="btn-main" style="display:none; background:var(--gold); color: black;" onclick="claimCert()">🏆 CLAIM PRO CERTIFICATE</button>
-        <button class="btn-ui" style="margin-top:10px" onclick="toggleWinScreen()">👁️ VIEW BOARD</button>
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button>
-    </div>
-
-    <div id="chat-btn" class="chat-toggle" onclick="toggleChatWindow()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-    </div>
-    <div id="chat-window">
-        <div style="padding: 12px; border-bottom: 1px solid var(--p); font-size: 10px; font-weight: 900; background:rgba(0,212,255,0.1)">COMM-LINK: <span id="chatting-with" style="color:var(--p)"></span></div>
-        <div id="chat-msgs"></div>
-        <input type="text" id="chat-input" placeholder="SEND DATA..." onkeydown="if(event.key==='Enter') sendChat()">
+        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT</button>
     </div>
 
     <div class="hud">
@@ -205,13 +143,10 @@
     <div id="history-box"></div>
 
 <script>
-    let game;
-    try { game = new Chess(); } catch(e) { console.error("Chess logic failed to load."); }
-
+    let game = new Chess();
     const boardEl = document.getElementById('board');
     let currentUser = null, userGender = 'boy', currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
-    let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
-    let p1Gender = 'boy', p2Gender = 'boy'; // Track genders locally
+    let p1Gender = 'boy', p2Gender = 'boy', searchDepth = 3;
 
     const pieces = {
         wP: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
@@ -228,403 +163,248 @@
         bK: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg"
     };
 
+    // --- SOUND & AUTH ---
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
-
-    function saveGame() {
-        if(!currentUser) return alert("LOGIN REQUIRED TO SAVE");
-        const saveData = { fen: game.fen(), p1: document.getElementById('p1-label').innerText, p2: document.getElementById('p2-label').innerText, mode: currentMode };
-        localStorage.setItem('saved_game_' + currentUser, JSON.stringify(saveData));
-        alert("GAME SAVED SUCCESSFULLY");
-    }
-
-    function loadGame() {
-        if(!currentUser) return;
-        const raw = localStorage.getItem('saved_game_' + currentUser);
-        if(!raw) return alert("NO SAVED GAME FOUND");
-        const data = JSON.parse(raw);
-        game.load(data.fen);
-        currentMode = data.mode;
-        document.getElementById('p1-label').innerText = data.p1;
-        document.getElementById('p2-label').innerText = data.p2;
-        startGame(true); 
-    }
-
-    function bootOffline() {
-        currentUser = "GUEST_OFFLINE";
-        userGender = 'boy';
-        showDashboard();
-    }
 
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
         const g = document.getElementById('gender-in').value;
         if(!u || !p) return;
-        const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
-            if(storedPass) { alert("ID TAKEN"); return; }
-            localStorage.setItem('pwd_' + u, p); 
-            localStorage.setItem('gender_' + u, g);
+            localStorage.setItem('pwd_' + u, p); localStorage.setItem('gender_' + u, g);
             alert("ACCOUNT SECURED");
         } else {
-            if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
+            if(localStorage.getItem('pwd_' + u) !== p) return alert("ACCESS DENIED");
         }
-        currentUser = u; 
-        userGender = localStorage.getItem('gender_' + u) || 'boy';
-        localStorage.setItem('arch_user', u); initPeer(); showDashboard();
+        currentUser = u; userGender = localStorage.getItem('gender_' + u);
+        localStorage.setItem('arch_user', u); showDashboard();
     }
 
-    function initPeer() {
-        if(peer || currentUser.includes('GUEST')) return;
-        peer = new Peer('ARCH-' + currentUser);
-        peer.on('connection', c => { 
-            conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); 
-            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-','');
-            document.getElementById('p2-label').innerText = currentUser; startGame();
-        });
-    }
-
-    // --- NEW TURBO AI (REPLACED SLOW MINIMAX) ---
-    // Uses PST + Capture value for instant calculation
-    const pst = {
-        p: [ [0,0,0,0,0,0,0,0], [50,50,50,50,50,50,50,50], [10,10,20,30,30,20,10,10], [5,5,10,25,25,10,5,5], [0,0,0,20,20,0,0,0], [5,-5,-10,0,0,-10,-5,5], [5,10,10,-20,-20,10,10,5], [0,0,0,0,0,0,0,0] ],
-        n: [ [-50,-40,-30,-30,-30,-30,-40,-50], [-40,-20,0,0,0,0,-20,-40], [-30,0,10,15,15,10,0,-30], [-30,5,15,20,20,15,5,-30], [-30,0,15,20,20,15,0,-30], [-30,5,10,15,15,10,5,-30], [-40,-20,0,5,5,0,-20,-40], [-50,-40,-30,-30,-30,-30,-40,-50] ]
-    };
-
-    function turboAI() {
-        if(game.game_over()) return;
-        const moves = game.moves({verbose: true});
-        if(moves.length === 0) return;
-
-        let bestMove = moves[0];
-        let bestScore = -99999;
-        const pieceValues = { p: 1, n: 3, b: 3.5, r: 5, q: 9, k: 0 };
-
-        // Shuffle to add variety if scores are equal
-        moves.sort(() => Math.random() - 0.5);
-
-        for(let m of moves) {
-            let score = 0;
-            // 1. Capture Value
-            if(m.captured) score += (pieceValues[m.captured] * 10);
-            
-            // 2. Position Value (using PST tables if available, else central bias)
-            let r = 8 - parseInt(m.to[1]); // Row index 0-7
-            let c = m.to.charCodeAt(0) - 97; // Col index 0-7
-            if(m.color === 'b') { r = 7 - r; } // Flip for black
-            
-            if(pst[m.piece] && pst[m.piece][r] && pst[m.piece][r][c]) {
-                score += pst[m.piece][r][c] / 10;
-            } else {
-                // Central bias for other pieces
-                if(c > 2 && c < 5 && r > 2 && r < 5) score += 2;
-            }
-
-            // 3. Checkmate threat
-            game.move(m.san);
-            if(game.in_checkmate()) score += 1000;
-            if(game.in_check()) score += 5;
-            game.undo();
-
-            if(score > bestScore) {
-                bestScore = score;
-                bestMove = m;
-            }
-        }
-
-        game.move(bestMove.san);
-        playSound(300);
-        render();
-    }
-
-    function handleInput(id) {
-        if (currentMode === 'online' && game.turn() !== playerColor) return;
-        if (selectedSq) {
-            const moveData = { from: selectedSq, to: id, promotion: 'q' };
-            const result = game.move(moveData);
-            if (result) {
-                playSound(400); selectedSq = null; render();
-                if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) {
-                    // FAST AI RESPONSE (50ms)
-                    setTimeout(turboAI, 50); 
-                }
-                return;
-            }
-        }
-        const p = game.get(id); if (p && p.color === game.turn()) { selectedSq = id; render(); }
-    }
-
-    function setupConnection() {
-        document.getElementById('chat-btn').style.display = 'flex';
-        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
-        conn.on('data', data => {
-            if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
-            else if (data.type === 'chat') {
-                const msg = document.createElement('div'); msg.style.marginBottom = "5px";
-                msg.innerHTML = `<span style="color:var(--p)">STRANGER:</span> ${data.data}`;
-                document.getElementById('chat-msgs').appendChild(msg);
-                document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
-            }
-        });
-    }
-
-    function startOnlineGame(id) {
-        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
-        conn.on('open', () => {
-            setupConnection(); document.getElementById('p1-label').innerText = currentUser;
-            document.getElementById('p2-label').innerText = id; startGame();
-        });
-    }
-
+    function bootOffline() { currentUser = "GUEST"; userGender = 'boy'; showDashboard(); }
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = "USER: " + currentUser + " (" + userGender.toUpperCase() + ")";
+        document.getElementById('user-display').innerText = "USER: " + currentUser;
         document.getElementById('global-nav').style.display = 'none';
-        document.getElementById('chat-btn').style.display = 'none';
-        document.getElementById('social-node').style.display = currentUser.includes('GUEST') ? 'none' : 'block';
-        if(!currentUser.includes('GUEST')) renderFriends();
     }
 
-    function prepareGame(mode) {
-        currentMode = mode;
-        if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else { 
-            document.getElementById('pass-setup').style.display = 'flex'; 
-            document.getElementById('p1-in').value = currentUser;
-            // Set default gender for P1 in pass mode based on login
-            document.getElementById('p1-gender-select').value = userGender;
+    function saveGame() {
+        const data = { fen: game.fen(), p1: document.getElementById('p1-label').innerText, p2: document.getElementById('p2-label').innerText, m: currentMode };
+        localStorage.setItem('save_' + currentUser, JSON.stringify(data));
+        alert("GAME SAVED");
+    }
+
+    function loadGame() {
+        const raw = localStorage.getItem('save_' + currentUser);
+        if(!raw) return alert("NO SAVE");
+        const d = JSON.parse(raw);
+        game.load(d.fen); currentMode = d.m;
+        document.getElementById('p1-label').innerText = d.p1;
+        document.getElementById('p2-label').innerText = d.p2;
+        startGame(true);
+    }
+
+    function deleteGame() {
+        if(confirm("PERMANENTLY DELETE SAVED DATA?")) {
+            localStorage.removeItem('save_' + currentUser);
+            alert("SAVE PURGED");
+        }
+    }
+
+    // --- ARCHITECT ORACLE (AI CHAT) ---
+    function toggleOracle() {
+        const el = document.getElementById('oracle-screen');
+        el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function askOracle() {
+        const input = document.getElementById('oracle-input');
+        const log = document.getElementById('oracle-log');
+        if(!input.value) return;
+
+        const q = input.value;
+        log.innerHTML += `<div class="oracle-msg"><span class="oracle-q">YOU:</span> ${q}</div>`;
+        input.value = '';
+
+        // Simulate Architect Response
+        setTimeout(() => {
+            const responses = [
+                "The board is a microcosm of the universe. Every move is a vibration in the dark.",
+                "I see 10,000 parallel futures. In 9,999 of them, you lose. Make the next one count.",
+                "To play chess is to calculate the soul of your opponent. Yours is... interesting.",
+                "The Architect does not make mistakes. Only lessons you haven't learned yet.",
+                "Ask not if you can win, but why you are afraid to lose."
+            ];
+            const answer = responses[Math.floor(Math.random() * responses.length)];
+            log.innerHTML += `<div class="oracle-msg"><span class="oracle-a">[ARCHITECT]:</span> ${answer}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }, 600);
+    }
+
+    // --- BEAST AI ENGINE (MINIMAX + ALPHA BETA) ---
+    const pst = {
+        p: [[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
+        n: [[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]]
+    };
+
+    function evaluateBoard(g) {
+        let total = 0;
+        const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+        const board = g.board();
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                const p = board[r][c];
+                if(p) {
+                    let val = weights[p.type];
+                    // Add positional bonus
+                    if(pst[p.type]) val += (p.color === 'w' ? pst[p.type][r][c] : pst[p.type][7-r][c]);
+                    total += (p.color === 'w' ? val : -val);
+                }
+            }
+        }
+        return total;
+    }
+
+    function minimax(g, depth, alpha, beta, isMax) {
+        if(depth === 0) return -evaluateBoard(g);
+        const moves = g.moves();
+        if(isMax) {
+            let best = -9999;
+            for(let m of moves) {
+                g.move(m);
+                best = Math.max(best, minimax(g, depth-1, alpha, beta, !isMax));
+                g.undo();
+                alpha = Math.max(alpha, best);
+                if(beta <= alpha) break;
+            }
+            return best;
+        } else {
+            let best = 9999;
+            for(let m of moves) {
+                g.move(m);
+                best = Math.min(best, minimax(g, depth-1, alpha, beta, !isMax));
+                g.undo();
+                beta = Math.min(beta, best);
+                if(beta <= alpha) break;
+            }
+            return best;
+        }
+    }
+
+    function turboAI() {
+        if(game.game_over()) return;
+        const moves = game.moves();
+        let bestMove = null;
+        let bestValue = -9999;
+
+        for(let m of moves) {
+            game.move(m);
+            let boardVal = minimax(game, searchDepth - 1, -10000, 10000, false);
+            game.undo();
+            if(boardVal > bestValue) {
+                bestValue = boardVal;
+                bestMove = m;
+            }
+        }
+        game.move(bestMove);
+        playSound(300); render();
+    }
+
+    // --- GAME ENGINE CORE ---
+    function prepareGame(m) {
+        currentMode = m;
+        if(m === 'bot') document.getElementById('ai-setup').style.display='flex';
+        else {
+            p1Gender = userGender; p2Gender = 'boy';
+            document.getElementById('p1-label').innerText = currentUser;
+            document.getElementById('p2-label').innerText = "PLAYER 2";
+            startGame();
         }
     }
 
     function startAI() {
-        aiDifficulty = document.getElementById('ai-level-select').value;
-        playerColor = 'w'; 
-        p1Gender = userGender; // Bot mode uses login gender
-        p2Gender = 'boy'; // AI is default boy/king name
+        searchDepth = parseInt(document.getElementById('ai-level-select').value);
+        p1Gender = userGender; p2Gender = 'boy';
         document.getElementById('p1-label').innerText = currentUser;
-        document.getElementById('p2-label').innerText = "MAUTASIM"; 
+        document.getElementById('p2-label').innerText = "ARCHITECT";
         startGame();
     }
 
-    function startPass() {
-        playerColor = 'w';
-        const p1Name = document.getElementById('p1-in').value || "P1";
-        const p2Name = document.getElementById('p2-in').value || "P2";
-        
-        // Capture selected genders
-        p1Gender = document.getElementById('p1-gender-select').value;
-        p2Gender = document.getElementById('p2-gender-select').value;
-
-        document.getElementById('p1-label').innerText = p1Name;
-        document.getElementById('p2-label').innerText = p2Name; 
-        startGame();
-    }
-
-    function startGame(isLoad = false) {
+    function startGame(isL = false) {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
-        if(!isLoad) game.reset(); 
+        if(!isL) game.reset();
         initBoard();
     }
 
     function initBoard() {
         boardEl.innerHTML = '';
-        for (let i = 0; i < 64; i++) {
+        for(let i=0; i<64; i++) {
             const sq = document.createElement('div');
-            const row = Math.floor(i/8);
-            const col = i%8;
-            sq.className = `sq ${(row + col) % 2 === 0 ? 'l' : 'd'}`;
-            sq.dataset.id = String.fromCharCode(97 + col) + (8 - row);
-            sq.onclick = () => handleInput(sq.dataset.id); boardEl.appendChild(sq);
+            const r = Math.floor(i/8), c = i%8;
+            sq.className = `sq ${(r+c)%2===0?'l':'d'}`;
+            sq.dataset.id = String.fromCharCode(97+c) + (8-r);
+            sq.onclick = () => handleInput(sq.dataset.id);
+            boardEl.appendChild(sq);
         }
         render();
     }
 
-    function updateHistory() {
-        const h = game.history();
-        const box = document.getElementById('history-box');
-        box.innerHTML = '';
-        h.forEach((move, i) => {
-            const span = document.createElement('span');
-            span.className = 'hist-move';
-            if(i % 2 === 0) span.innerText = `${(i/2)+1}. ${move}`;
-            else span.innerText = move;
-            box.appendChild(span);
-        });
-        box.scrollTop = box.scrollHeight;
+    function handleInput(id) {
+        if(selectedSq) {
+            const move = game.move({ from: selectedSq, to: id, promotion: 'q' });
+            if(move) {
+                playSound(400); selectedSq = null; render();
+                if(currentMode === 'bot' && !game.game_over()) setTimeout(turboAI, 250);
+                return;
+            }
+        }
+        const p = game.get(id);
+        if(p && p.color === game.turn()) { selectedSq = id; render(); }
     }
 
     function render() {
-        const p1Name = document.getElementById('p1-label').innerText;
-        const p2Name = document.getElementById('p2-label').innerText;
-        
-        updateHistory(); // Update the history log
+        const h = game.history();
+        const hb = document.getElementById('history-box');
+        hb.innerHTML = h.map(m => `<span class="hist-move">${m}</span>`).join('');
+        hb.scrollTop = hb.scrollHeight;
 
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
             s.classList.remove('selected', 'hint');
             if(s.dataset.id === selectedSq) s.classList.add('selected');
             if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) s.classList.add('hint');
-            if (p) {
+            
+            if(p) {
                 const img = document.createElement('img');
                 img.src = pieces[p.color + p.type.toUpperCase()];
-                img.className = 'piece';
-                if(p.color === 'b') img.classList.add('black');
+                img.className = 'piece' + (p.color === 'b' ? ' black' : '');
                 s.appendChild(img);
 
-                const label = document.createElement('div');
-                label.className = 'piece-label';
-
-                if(currentMode === 'bot' && p.color === 'b' && p.type === 'k') {
-                    label.innerText = "MAUTASIM"; 
-                    label.classList.add('ai-label');
-                    s.appendChild(label);
-                } else {
-                    // NEW DUAL GENDER LOGIC
-                    let targetName = (p.color === 'w') ? p1Name : p2Name;
-                    let targetGender = (p.color === 'w') ? p1Gender : p2Gender;
-                    
-                    let shouldName = false;
-                    if(targetGender === 'boy' && p.type === 'k') shouldName = true;
-                    if(targetGender === 'girl' && p.type === 'q') shouldName = true;
-                    
-                    if(shouldName) {
-                        label.innerText = targetName;
-                        s.appendChild(label);
-                    }
+                const name = (p.color === 'w') ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText;
+                const gen = (p.color === 'w') ? p1Gender : p2Gender;
+                if((gen === 'boy' && p.type === 'k') || (gen === 'girl' && p.type === 'q')) {
+                    const l = document.createElement('div'); l.className = 'piece-label';
+                    l.innerText = name; s.appendChild(l);
                 }
             }
         });
-        
-        if(game.game_over()) { 
-            setTimeout(() => {
-                const winScr = document.getElementById('win-screen');
-                winScr.style.display = 'flex';
-                let winner = (game.turn() === 'b' ? p1Name : p2Name) + " WINS";
-                if(game.in_draw()) winner = "DRAW";
-                document.getElementById('winner-text').innerText = winner;
-                if(!game.in_draw() && game.turn() === 'b' && currentMode === 'bot') {
-                    document.getElementById('cert-btn').style.display = 'block';
-                }
-                playSound(600);
-            }, 500);
+
+        if(game.game_over()) {
+            document.getElementById('win-screen').style.display = 'flex';
+            document.getElementById('winner-text').innerText = game.in_draw() ? "DRAW" : (game.turn() === 'b' ? "WHITE WINS" : "BLACK WINS");
         }
     }
 
-    function toggleWinScreen() {
-        const winScr = document.getElementById('win-screen');
-        winScr.style.display = winScr.style.display === 'none' ? 'flex' : 'none';
-    }
-
-    function claimCert() {
-        const date = new Date().toLocaleDateString();
-        const id = "#" + Math.floor(1000 + Math.random() * 9000);
-        const cert = { name: currentUser, date: date, id: id, timestamp: Date.now() };
-        let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        gallery.push(cert);
-        localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
-        displayCert(cert);
-        document.getElementById('cert-btn').style.display = 'none';
-    }
-
-    function displayCert(c) {
-        document.getElementById('cert-name').innerText = c.name;
-        document.getElementById('cert-id').innerText = c.id;
-        document.getElementById('cert-date').innerText = c.date;
-        document.getElementById('cert-overlay').style.display = 'flex';
-    }
-
-    function showGallery() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        const content = document.getElementById('gallery-content');
-        content.innerHTML = gallery.length ? '' : '<p style="font-size:10px; opacity:0.5">NO CERTIFICATES EARNED YET</p>';
-        gallery.forEach(c => {
-            const div = document.createElement('div'); div.className = 'saved-cert';
-            div.innerHTML = `<div><b style="color:var(--gold)">${c.name}</b><br><span style="color:#777; font-size:10px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.timestamp}')">VIEW</button>`;
-            content.appendChild(div);
-        });
-        document.getElementById('gallery-screen').style.display = 'flex';
-    }
-
-    function viewSavedCert(ts) {
-        const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        const cert = gallery.find(c => c.timestamp == ts);
-        if(cert) displayCert(cert);
-    }
-
-    function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
-    
-    function addFriend() {
-        const id = document.getElementById('friend-id').value.trim().toUpperCase();
-        if(!id) return;
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        if(!friends.includes(id)) {
-            friends.push(id);
-            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
-            renderFriends();
-            document.getElementById('friend-id').value = '';
-        }
-    }
-
-    function removeFriend(id) {
-        if(confirm("REMOVE " + id + " FROM FRIENDS?")) {
-            let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-            friends = friends.filter(f => f !== id);
-            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
-            renderFriends();
-        }
-    }
-
-    function renderFriends() {
-        const list = document.getElementById('friends-list'); list.innerHTML = '';
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        friends.forEach(f => {
-            const div = document.createElement('div'); div.className = 'friend-item';
-            div.innerHTML = `
-                <span onclick="startOnlineGame('${f}')">${f}</span> 
-                <div style="display:flex; gap:5px;">
-                    <span style="color:var(--p)" onclick="startOnlineGame('${f}')">PLAY</span>
-                    <span style="color:#f44336; font-weight:bold; margin-left:10px;" onclick="removeFriend('${f}')">❌</span>
-                </div>`;
-            list.appendChild(div);
-        });
-    }
-
-    function toggleChatWindow() {
-        const win = document.getElementById('chat-window');
-        win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    function sendChat() {
-        const inp = document.getElementById('chat-input');
-        if(!conn || !inp.value) return;
-        conn.send({type: 'chat', data: inp.value});
-        const msg = document.createElement('div'); msg.style.marginBottom = "5px";
-        msg.innerHTML = `<span style="color:#777">YOU:</span> ${inp.value}`;
-        document.getElementById('chat-msgs').appendChild(msg);
-        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
-        inp.value = '';
-    }
-
-    function confirmExit() { if(confirm("ABORT MATCH?")) showDashboard(); }
+    function confirmExit() { if(confirm("ABORT?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    
-    window.onload = () => { 
-        const s = localStorage.getItem('arch_user'); 
-        if(s) { 
-            currentUser = s; 
-            userGender = localStorage.getItem('gender_' + s) || 'boy';
-            document.getElementById('user-in').value = s;
-            document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
-            initPeer(); showDashboard();
-        } 
+
+    window.onload = () => {
+        const u = localStorage.getItem('arch_user');
+        if(u) { currentUser = u; userGender = localStorage.getItem('gender_'+u); showDashboard(); }
     };
 </script>
 </body>
