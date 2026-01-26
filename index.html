@@ -7,13 +7,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&display=swap');
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; --silver: #e0e0e0; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono&family=Cinzel:wght@700&display=swap');
+        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; --gold: #ffd700; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
-        .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; animation: blink 2s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; }
 
         img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
@@ -23,7 +22,6 @@
 
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
         .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
-        .btn-ui:active { background: var(--p); color: #000; }
 
         .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; text-align: center; }
         .auth-card { background: var(--c); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -31,21 +29,25 @@
         input, select { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; }
         .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; }
         
-        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
-        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        
-        #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
-        .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
-
-        /* PRO CERTIFICATE STYLE */
-        #cert-overlay { display:none; background: rgba(0,0,0,0.98); padding: 20px; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
-        #cert-canvas-area { width: 95%; max-width: 650px; background: #050505; color: var(--gold); border: 15px double; border-image: linear-gradient(45deg, #ffd700, #aa8800, #ffd700) 1; padding: 50px 30px; text-align: center; position: relative; box-shadow: 0 0 50px rgba(255, 215, 0, 0.2); }
-        .cert-header { font-size: 38px; font-weight: 900; margin-bottom: 5px; text-shadow: 0 0 15px var(--gold); color: #fff; text-transform: uppercase; letter-spacing: 5px; }
-        .cert-body { font-family: 'Orbitron'; letter-spacing: 2px; line-height: 1.8; }
-        .cert-name { font-size: 45px; color: var(--p); margin: 25px 0; text-transform: uppercase; font-weight: 900; text-shadow: 0 0 10px var(--p); border-bottom: 2px solid #333; display: inline-block; padding: 0 20px; }
-        .cert-footer { margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #666; padding-top: 20px; }
-        .signature { font-family: 'cursive'; font-size: 30px; color: var(--gold); margin-bottom: -5px; }
+        /* NEW PRO CERTIFICATE STYLES */
+        #cert-overlay { display:none; background: rgba(0,0,0,0.98); padding: 10px; position: fixed; inset: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; }
+        #cert-canvas-area { 
+            width: 95%; max-width: 650px; 
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%); 
+            color: var(--gold); 
+            border: 15px double var(--gold); 
+            padding: 40px 20px; 
+            text-align: center; 
+            position: relative; 
+            box-shadow: 0 0 80px rgba(255, 215, 0, 0.2); 
+            border-radius: 4px; 
+            font-family: 'Cinzel', serif;
+        }
+        .cert-header { font-size: 32px; font-weight: 900; margin-bottom: 20px; letter-spacing: 5px; color: #fff; text-shadow: 0 2px 10px var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); display: inline-block; padding-bottom: 10px; }
+        .cert-body { line-height: 1.6; color: #ccc; font-family: 'Orbitron'; letter-spacing: 1px; }
+        .cert-name { font-size: 42px; color: var(--p); margin: 25px 0; font-weight: 900; text-transform: uppercase; text-shadow: 0 0 20px var(--p); font-family: 'Orbitron'; }
+        .cert-badge { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 0 20px var(--gold); background: #000; }
+        .signature { font-family: 'cursive'; font-size: 28px; color: var(--gold); margin-top:10px; }
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
@@ -53,9 +55,20 @@
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
-        .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        .hud { width: 100%; background: var(--c); padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
         
-        #move-log { position: fixed; left: 10px; bottom: 80px; width: 100px; max-height: 150px; background: rgba(0,0,0,0.5); font-size: 10px; overflow-y: auto; padding: 5px; color: var(--silver); border-radius: 5px; z-index: 50; pointer-events: none; }
+        /* MOVE HISTORY STYLES */
+        #history-box { width: 92vw; max-width: 380px; height: 60px; background: #000; border: 1px solid #333; margin-top: 5px; overflow-y: auto; padding: 5px; font-family: 'Roboto Mono', monospace; font-size: 10px; color: #aaa; text-align: left; scrollbar-width: thin; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; border-radius: 6px; }
+        .hist-move { background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #222; }
+        .hist-curr { color: var(--p); border-color: var(--p); }
+
+        /* Existing social/chat styles preserved */
+        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 10px; padding: 10px; display: none; }
+        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        #chat-window { position: fixed; bottom: 80px; right: 20px; width: 280px; height: 350px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 12px; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; scrollbar-width: thin; }
+        .chat-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--p); border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 130; box-shadow: 0 0 15px var(--p); }
+        .saved-cert { background: #111; border-left: 3px solid var(--gold); padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -103,25 +116,29 @@
         </div>
     </div>
 
-    <div id="cert-overlay" style="display: none;">
+    <div id="cert-overlay">
         <div id="cert-canvas-area">
+            <div class="cert-badge">♔</div>
             <div class="cert-header">GRANDMASTER</div>
             <div class="cert-body">
-                <p style="font-size: 10px; color: #888; margin:0; letter-spacing: 3px;">OFFICIAL ARCHITECT RANKING</p>
+                <p style="font-size: 12px; color: var(--gold); letter-spacing: 3px; margin:0">CERTIFICATE OF SUPREME MASTERY</p>
+                <div style="margin:20px 0;">THIS DOCUMENT CERTIFIES THAT</div>
                 <div class="cert-name" id="cert-name">PLAYER</div>
-                <p style="font-size: 14px; margin: 10px 0;">HAS DOMINATED THE NEURAL ENGINE</p>
-                <p style="font-size: 10px; color: var(--gold); letter-spacing: 4px; border: 1px solid #444; display: inline-block; padding: 5px 15px;">RATING: SUPREME ARCHITECT</p>
+                <div style="font-size: 14px; margin: 20px 0; color:#fff">HAS SUCCESSFULLY DISMANTLED THE ARCHITECT ENGINE IN PRO COMBAT</div>
             </div>
-            <div class="cert-footer">
-                <div style="text-align:left">ID: <span id="cert-id">#0000</span><br><span id="cert-date">2024.01.01</span></div>
+            <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 20px; border-top: 1px solid #444;">
+                <div style="text-align:left; font-size:10px; color:#666">
+                    LICENSE ID: <span id="cert-id" style="color:var(--gold)"></span><br>
+                    DATE ISSUED: <span id="cert-date"></span>
+                </div>
                 <div style="text-align:right">
                     <div class="signature">Mautasim</div>
-                    <div style="font-size:8px; letter-spacing:2px; color:var(--p)">CHIEF DEVELOPER</div>
+                    <div style="font-size:8px; letter-spacing:2px; color:var(--p)">CHIEF ARCHITECT</div>
                 </div>
             </div>
         </div>
         <div style="display:flex; gap:10px; margin-top:20px; width:90%; max-width:400px;">
-            <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE</button>
+            <button class="btn-main" style="flex:1; background:#333; color:#fff" onclick="document.getElementById('cert-overlay').style.display='none'">CLOSE VIEW</button>
         </div>
     </div>
 
@@ -133,10 +150,10 @@
 
     <div id="ai-setup" class="overlay" style="display:none">
         <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3>
+            <h3 style="color:var(--p); font-size:14px;">NEURAL SPEED</h3>
             <select id="ai-level-select">
-                <option value="architect">LVL: ARCHITECT (MAX DIFFICULTY)</option>
-                <option value="casual">LVL: CASUAL (PRACTICE)</option>
+                <option value="architect">LVL: ARCHITECT (MAX SPEED)</option>
+                <option value="casual">LVL: CASUAL (EASY)</option>
             </select>
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
@@ -147,15 +164,15 @@
         <div class="auth-card">
             <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3>
             <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)">
-            <select id="p1-gender">
-                <option value="boy">P1 GENDER: BOY (KING)</option>
-                <option value="girl">P1 GENDER: GIRL (QUEEN)</option>
+            <select id="p1-gender-select" style="font-size:10px; padding:8px;">
+                <option value="boy">P1 IS BOY (NAME ON KING)</option>
+                <option value="girl">P1 IS GIRL (NAME ON QUEEN)</option>
             </select>
-            <hr style="border:0; border-top:1px solid #222; margin:10px 0;">
+            <br>
             <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)">
-            <select id="p2-gender">
-                <option value="boy">P2 GENDER: BOY (KING)</option>
-                <option value="girl">P2 GENDER: GIRL (QUEEN)</option>
+            <select id="p2-gender-select" style="font-size:10px; padding:8px;">
+                <option value="boy">P2 IS BOY (NAME ON KING)</option>
+                <option value="girl">P2 IS GIRL (NAME ON QUEEN)</option>
             </select>
             <button class="btn-main" onclick="startPass()">START MATCH</button>
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
@@ -179,26 +196,22 @@
         <input type="text" id="chat-input" placeholder="SEND DATA..." onkeydown="if(event.key==='Enter') sendChat()">
     </div>
 
-    <div id="move-log" style="display:none"></div>
-
     <div class="hud">
         <div id="p1-label">---</div>
         <div style="color:var(--p)">VS</div>
         <div id="p2-label" style="text-align:right">---</div>
     </div>
     <div id="board-box"><div id="board"></div></div>
+    <div id="history-box"></div>
 
 <script>
     let game;
     try { game = new Chess(); } catch(e) { console.error("Chess logic failed to load."); }
 
     const boardEl = document.getElementById('board');
-    let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
+    let currentUser = null, userGender = 'boy', currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false;
     let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w';
-    
-    // Configurable genders
-    let p1Gender = 'boy';
-    let p2Gender = 'boy';
+    let p1Gender = 'boy', p2Gender = 'boy'; // Track genders locally
 
     const pieces = {
         wP: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
@@ -219,26 +232,52 @@
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     function playSound(f) { if(muted || !audioCtx) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
+    function saveGame() {
+        if(!currentUser) return alert("LOGIN REQUIRED TO SAVE");
+        const saveData = { fen: game.fen(), p1: document.getElementById('p1-label').innerText, p2: document.getElementById('p2-label').innerText, mode: currentMode };
+        localStorage.setItem('saved_game_' + currentUser, JSON.stringify(saveData));
+        alert("GAME SAVED SUCCESSFULLY");
+    }
+
+    function loadGame() {
+        if(!currentUser) return;
+        const raw = localStorage.getItem('saved_game_' + currentUser);
+        if(!raw) return alert("NO SAVED GAME FOUND");
+        const data = JSON.parse(raw);
+        game.load(data.fen);
+        currentMode = data.mode;
+        document.getElementById('p1-label').innerText = data.p1;
+        document.getElementById('p2-label').innerText = data.p2;
+        startGame(true); 
+    }
+
+    function bootOffline() {
+        currentUser = "GUEST_OFFLINE";
+        userGender = 'boy';
+        showDashboard();
+    }
+
     function handleAuth(type) {
         const u = document.getElementById('user-in').value.trim().toUpperCase();
         const p = document.getElementById('pass-in').value.trim();
         const g = document.getElementById('gender-in').value;
         if(!u || !p) return;
+        const storedPass = localStorage.getItem('pwd_' + u);
         if(type === 'signup') {
+            if(storedPass) { alert("ID TAKEN"); return; }
             localStorage.setItem('pwd_' + u, p); 
             localStorage.setItem('gender_' + u, g);
             alert("ACCOUNT SECURED");
         } else {
-            const storedPass = localStorage.getItem('pwd_' + u);
             if(!storedPass || storedPass !== p) { alert("ACCESS DENIED"); return; }
         }
         currentUser = u; 
-        p1Gender = localStorage.getItem('gender_' + u) || 'boy';
+        userGender = localStorage.getItem('gender_' + u) || 'boy';
         localStorage.setItem('arch_user', u); initPeer(); showDashboard();
     }
 
     function initPeer() {
-        if(peer || (currentUser && currentUser.includes('GUEST'))) return;
+        if(peer || currentUser.includes('GUEST')) return;
         peer = new Peer('ARCH-' + currentUser);
         peer.on('connection', c => { 
             conn = c; currentMode = 'online'; playerColor = 'b'; setupConnection(); 
@@ -247,25 +286,71 @@
         });
     }
 
-    // AI MOVE TRIGGER (FAST)
-    function aiMove() {
+    // --- NEW TURBO AI (REPLACED SLOW MINIMAX) ---
+    // Uses PST + Capture value for instant calculation
+    const pst = {
+        p: [ [0,0,0,0,0,0,0,0], [50,50,50,50,50,50,50,50], [10,10,20,30,30,20,10,10], [5,5,10,25,25,10,5,5], [0,0,0,20,20,0,0,0], [5,-5,-10,0,0,-10,-5,5], [5,10,10,-20,-20,10,10,5], [0,0,0,0,0,0,0,0] ],
+        n: [ [-50,-40,-30,-30,-30,-30,-40,-50], [-40,-20,0,0,0,0,-20,-40], [-30,0,10,15,15,10,0,-30], [-30,5,15,20,20,15,5,-30], [-30,0,15,20,20,15,0,-30], [-30,5,10,15,15,10,5,-30], [-40,-20,0,5,5,0,-20,-40], [-50,-40,-30,-30,-30,-30,-40,-50] ]
+    };
+
+    function turboAI() {
         if(game.game_over()) return;
-        const moves = game.moves();
-        // Simple fast AI: pick a random move or capture
-        let move = moves[Math.floor(Math.random() * moves.length)];
-        for(let m of moves) if(m.includes('x')) move = m; 
-        game.move(move);
-        playSound(300); render();
+        const moves = game.moves({verbose: true});
+        if(moves.length === 0) return;
+
+        let bestMove = moves[0];
+        let bestScore = -99999;
+        const pieceValues = { p: 1, n: 3, b: 3.5, r: 5, q: 9, k: 0 };
+
+        // Shuffle to add variety if scores are equal
+        moves.sort(() => Math.random() - 0.5);
+
+        for(let m of moves) {
+            let score = 0;
+            // 1. Capture Value
+            if(m.captured) score += (pieceValues[m.captured] * 10);
+            
+            // 2. Position Value (using PST tables if available, else central bias)
+            let r = 8 - parseInt(m.to[1]); // Row index 0-7
+            let c = m.to.charCodeAt(0) - 97; // Col index 0-7
+            if(m.color === 'b') { r = 7 - r; } // Flip for black
+            
+            if(pst[m.piece] && pst[m.piece][r] && pst[m.piece][r][c]) {
+                score += pst[m.piece][r][c] / 10;
+            } else {
+                // Central bias for other pieces
+                if(c > 2 && c < 5 && r > 2 && r < 5) score += 2;
+            }
+
+            // 3. Checkmate threat
+            game.move(m.san);
+            if(game.in_checkmate()) score += 1000;
+            if(game.in_check()) score += 5;
+            game.undo();
+
+            if(score > bestScore) {
+                bestScore = score;
+                bestMove = m;
+            }
+        }
+
+        game.move(bestMove.san);
+        playSound(300);
+        render();
     }
 
     function handleInput(id) {
         if (currentMode === 'online' && game.turn() !== playerColor) return;
         if (selectedSq) {
             const moveData = { from: selectedSq, to: id, promotion: 'q' };
-            if (game.move(moveData)) {
+            const result = game.move(moveData);
+            if (result) {
                 playSound(400); selectedSq = null; render();
                 if (currentMode === 'online' && conn) conn.send({ type: 'move', data: moveData });
-                if (currentMode === 'bot' && !game.game_over()) setTimeout(aiMove, 100); 
+                if (currentMode === 'bot' && !game.game_over()) {
+                    // FAST AI RESPONSE (50ms)
+                    setTimeout(turboAI, 50); 
+                }
                 return;
             }
         }
@@ -274,60 +359,86 @@
 
     function setupConnection() {
         document.getElementById('chat-btn').style.display = 'flex';
+        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
         conn.on('data', data => {
-            if(data.type === 'move') { game.move(data.data); render(); }
+            if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
             else if (data.type === 'chat') {
-                const msg = document.createElement('div'); msg.innerHTML = `<span style="color:var(--p)">STRANGER:</span> ${data.data}`;
+                const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+                msg.innerHTML = `<span style="color:var(--p)">STRANGER:</span> ${data.data}`;
                 document.getElementById('chat-msgs').appendChild(msg);
+                document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
             }
+        });
+    }
+
+    function startOnlineGame(id) {
+        conn = peer.connect('ARCH-'+id); currentMode = 'online'; playerColor = 'w';
+        conn.on('open', () => {
+            setupConnection(); document.getElementById('p1-label').innerText = currentUser;
+            document.getElementById('p2-label').innerText = id; startGame();
         });
     }
 
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
-        document.getElementById('user-display').innerText = "USER: " + currentUser;
+        document.getElementById('user-display').innerText = "USER: " + currentUser + " (" + userGender.toUpperCase() + ")";
         document.getElementById('global-nav').style.display = 'none';
-        document.getElementById('move-log').style.display = 'none';
+        document.getElementById('chat-btn').style.display = 'none';
+        document.getElementById('social-node').style.display = currentUser.includes('GUEST') ? 'none' : 'block';
+        if(!currentUser.includes('GUEST')) renderFriends();
     }
 
     function prepareGame(mode) {
         currentMode = mode;
         if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else document.getElementById('pass-setup').style.display = 'flex';
+        else { 
+            document.getElementById('pass-setup').style.display = 'flex'; 
+            document.getElementById('p1-in').value = currentUser;
+            // Set default gender for P1 in pass mode based on login
+            document.getElementById('p1-gender-select').value = userGender;
+        }
     }
 
     function startAI() {
         aiDifficulty = document.getElementById('ai-level-select').value;
-        playerColor = 'w';
-        p1Gender = localStorage.getItem('gender_' + currentUser) || 'boy';
-        p2Gender = 'boy'; // Bot is Mautasim (Boy)
+        playerColor = 'w'; 
+        p1Gender = userGender; // Bot mode uses login gender
+        p2Gender = 'boy'; // AI is default boy/king name
         document.getElementById('p1-label').innerText = currentUser;
-        document.getElementById('p2-label').innerText = "MAUTASIM"; startGame();
+        document.getElementById('p2-label').innerText = "MAUTASIM"; 
+        startGame();
     }
 
     function startPass() {
         playerColor = 'w';
-        p1Gender = document.getElementById('p1-gender').value;
-        p2Gender = document.getElementById('p2-gender').value;
-        document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "PLAYER 1";
-        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "PLAYER 2"; 
+        const p1Name = document.getElementById('p1-in').value || "P1";
+        const p2Name = document.getElementById('p2-in').value || "P2";
+        
+        // Capture selected genders
+        p1Gender = document.getElementById('p1-gender-select').value;
+        p2Gender = document.getElementById('p2-gender-select').value;
+
+        document.getElementById('p1-label').innerText = p1Name;
+        document.getElementById('p2-label').innerText = p2Name; 
         startGame();
     }
 
-    function startGame() {
+    function startGame(isLoad = false) {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('global-nav').style.display = 'flex';
-        document.getElementById('move-log').style.display = 'block';
-        document.getElementById('move-log').innerHTML = '';
-        game.reset(); initBoard();
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.style.display = (currentMode === 'online') ? 'none' : 'block';
+        if(!isLoad) game.reset(); 
+        initBoard();
     }
 
     function initBoard() {
         boardEl.innerHTML = '';
         for (let i = 0; i < 64; i++) {
             const sq = document.createElement('div');
-            const row = Math.floor(i/8), col = i%8;
+            const row = Math.floor(i/8);
+            const col = i%8;
             sq.className = `sq ${(row + col) % 2 === 0 ? 'l' : 'd'}`;
             sq.dataset.id = String.fromCharCode(97 + col) + (8 - row);
             sq.onclick = () => handleInput(sq.dataset.id); boardEl.appendChild(sq);
@@ -335,56 +446,91 @@
         render();
     }
 
+    function updateHistory() {
+        const h = game.history();
+        const box = document.getElementById('history-box');
+        box.innerHTML = '';
+        h.forEach((move, i) => {
+            const span = document.createElement('span');
+            span.className = 'hist-move';
+            if(i % 2 === 0) span.innerText = `${(i/2)+1}. ${move}`;
+            else span.innerText = move;
+            box.appendChild(span);
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+
     function render() {
         const p1Name = document.getElementById('p1-label').innerText;
         const p2Name = document.getElementById('p2-label').innerText;
         
+        updateHistory(); // Update the history log
+
         document.querySelectorAll('.sq').forEach(s => {
             const p = game.get(s.dataset.id); s.innerHTML = '';
-            if(s.dataset.id === selectedSq) s.classList.add('selected'); else s.classList.remove('selected');
+            s.classList.remove('selected', 'hint');
+            if(s.dataset.id === selectedSq) s.classList.add('selected');
+            if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) s.classList.add('hint');
             if (p) {
                 const img = document.createElement('img');
                 img.src = pieces[p.color + p.type.toUpperCase()];
-                img.className = 'piece' + (p.color === 'b' ? ' black' : '');
+                img.className = 'piece';
+                if(p.color === 'b') img.classList.add('black');
                 s.appendChild(img);
 
-                const label = document.createElement('div'); label.className = 'piece-label';
-                
-                // Gender-based naming
-                if(p.color === 'w') {
-                    if((p1Gender === 'boy' && p.type === 'k') || (p1Gender === 'girl' && p.type === 'q')) {
-                        label.innerText = p1Name; s.appendChild(label);
-                    }
+                const label = document.createElement('div');
+                label.className = 'piece-label';
+
+                if(currentMode === 'bot' && p.color === 'b' && p.type === 'k') {
+                    label.innerText = "MAUTASIM"; 
+                    label.classList.add('ai-label');
+                    s.appendChild(label);
                 } else {
-                    if(currentMode === 'bot' && p.type === 'k') {
-                        label.innerText = "MAUTASIM"; label.classList.add('ai-label'); s.appendChild(label);
-                    } else if((p2Gender === 'boy' && p.type === 'k') || (p2Gender === 'girl' && p.type === 'q')) {
-                        label.innerText = p2Name; s.appendChild(label);
+                    // NEW DUAL GENDER LOGIC
+                    let targetName = (p.color === 'w') ? p1Name : p2Name;
+                    let targetGender = (p.color === 'w') ? p1Gender : p2Gender;
+                    
+                    let shouldName = false;
+                    if(targetGender === 'boy' && p.type === 'k') shouldName = true;
+                    if(targetGender === 'girl' && p.type === 'q') shouldName = true;
+                    
+                    if(shouldName) {
+                        label.innerText = targetName;
+                        s.appendChild(label);
                     }
                 }
             }
         });
-
-        const history = game.history();
-        if(history.length > 0) {
-            const log = document.getElementById('move-log');
-            log.innerHTML = history.slice(-10).map((m,i) => `<div>${i+1}. ${m}</div>`).join('');
-            log.scrollTop = log.scrollHeight;
-        }
-
+        
         if(game.game_over()) { 
-            document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('winner-text').innerText = (game.turn() === 'b' ? p1Name : p2Name) + " WINS";
-            if(currentMode === 'bot' && game.turn() === 'b' && aiDifficulty === 'architect') document.getElementById('cert-btn').style.display = 'block';
+            setTimeout(() => {
+                const winScr = document.getElementById('win-screen');
+                winScr.style.display = 'flex';
+                let winner = (game.turn() === 'b' ? p1Name : p2Name) + " WINS";
+                if(game.in_draw()) winner = "DRAW";
+                document.getElementById('winner-text').innerText = winner;
+                if(!game.in_draw() && game.turn() === 'b' && currentMode === 'bot') {
+                    document.getElementById('cert-btn').style.display = 'block';
+                }
+                playSound(600);
+            }, 500);
         }
     }
 
+    function toggleWinScreen() {
+        const winScr = document.getElementById('win-screen');
+        winScr.style.display = winScr.style.display === 'none' ? 'flex' : 'none';
+    }
+
     function claimCert() {
+        const date = new Date().toLocaleDateString();
         const id = "#" + Math.floor(1000 + Math.random() * 9000);
-        const cert = { name: currentUser, date: new Date().toLocaleDateString(), id: id, timestamp: Date.now() };
+        const cert = { name: currentUser, date: date, id: id, timestamp: Date.now() };
         let gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
-        gallery.push(cert); localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
+        gallery.push(cert);
+        localStorage.setItem('gallery_' + currentUser, JSON.stringify(gallery));
         displayCert(cert);
+        document.getElementById('cert-btn').style.display = 'none';
     }
 
     function displayCert(c) {
@@ -395,25 +541,90 @@
     }
 
     function showGallery() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
         const content = document.getElementById('gallery-content');
-        content.innerHTML = gallery.map(c => `<div style="background:#111; padding:10px; margin:5px; border-left:3px solid var(--gold); display:flex; justify-content:space-between;"><b>${c.name}</b> <span>${c.date}</span> <button class="btn-ui" onclick="displayCert(${JSON.stringify(c).replace(/"/g, '&quot;')})">VIEW</button></div>`).join('');
+        content.innerHTML = gallery.length ? '' : '<p style="font-size:10px; opacity:0.5">NO CERTIFICATES EARNED YET</p>';
+        gallery.forEach(c => {
+            const div = document.createElement('div'); div.className = 'saved-cert';
+            div.innerHTML = `<div><b style="color:var(--gold)">${c.name}</b><br><span style="color:#777; font-size:10px">${c.date}</span></div> <button class="btn-ui" style="padding:4px" onclick="viewSavedCert('${c.timestamp}')">VIEW</button>`;
+            content.appendChild(div);
+        });
         document.getElementById('gallery-screen').style.display = 'flex';
     }
 
-    function toggleChatWindow() { document.getElementById('chat-window').style.display = document.getElementById('chat-window').style.display === 'flex' ? 'none' : 'flex'; }
+    function viewSavedCert(ts) {
+        const gallery = JSON.parse(localStorage.getItem('gallery_' + currentUser) || "[]");
+        const cert = gallery.find(c => c.timestamp == ts);
+        if(cert) displayCert(cert);
+    }
+
+    function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+    
+    function addFriend() {
+        const id = document.getElementById('friend-id').value.trim().toUpperCase();
+        if(!id) return;
+        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+        if(!friends.includes(id)) {
+            friends.push(id);
+            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
+            renderFriends();
+            document.getElementById('friend-id').value = '';
+        }
+    }
+
+    function removeFriend(id) {
+        if(confirm("REMOVE " + id + " FROM FRIENDS?")) {
+            let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+            friends = friends.filter(f => f !== id);
+            localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
+            renderFriends();
+        }
+    }
+
+    function renderFriends() {
+        const list = document.getElementById('friends-list'); list.innerHTML = '';
+        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
+        friends.forEach(f => {
+            const div = document.createElement('div'); div.className = 'friend-item';
+            div.innerHTML = `
+                <span onclick="startOnlineGame('${f}')">${f}</span> 
+                <div style="display:flex; gap:5px;">
+                    <span style="color:var(--p)" onclick="startOnlineGame('${f}')">PLAY</span>
+                    <span style="color:#f44336; font-weight:bold; margin-left:10px;" onclick="removeFriend('${f}')">❌</span>
+                </div>`;
+            list.appendChild(div);
+        });
+    }
+
+    function toggleChatWindow() {
+        const win = document.getElementById('chat-window');
+        win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    }
+
     function sendChat() {
         const inp = document.getElementById('chat-input');
-        if(conn) conn.send({type: 'chat', data: inp.value});
+        if(!conn || !inp.value) return;
+        conn.send({type: 'chat', data: inp.value});
+        const msg = document.createElement('div'); msg.style.marginBottom = "5px";
+        msg.innerHTML = `<span style="color:#777">YOU:</span> ${inp.value}`;
+        document.getElementById('chat-msgs').appendChild(msg);
+        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
         inp.value = '';
     }
-    function confirmExit() { if(confirm("EXIT GAME?")) showDashboard(); }
-    function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
-    function bootOffline() { currentUser = "GUEST"; showDashboard(); }
 
+    function confirmExit() { if(confirm("ABORT MATCH?")) showDashboard(); }
+    function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
+    
     window.onload = () => { 
         const s = localStorage.getItem('arch_user'); 
-        if(s) { currentUser = s; p1Gender = localStorage.getItem('gender_' + s); showDashboard(); initPeer(); } 
+        if(s) { 
+            currentUser = s; 
+            userGender = localStorage.getItem('gender_' + s) || 'boy';
+            document.getElementById('user-in').value = s;
+            document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
+            initPeer(); showDashboard();
+        } 
     };
 </script>
 </body>
