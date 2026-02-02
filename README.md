@@ -1,1 +1,1 @@
-# Carrom-by-mautasim
+chess-by-mautasim
