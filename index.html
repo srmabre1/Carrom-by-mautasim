@@ -56,7 +56,7 @@
             pointer-events: none;  
             filter: drop-shadow(0 0 2px rgba(255,255,255,0.5));  
         } 
-        .black {  
+        .black-p {  
             filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important;  
         } 
  
@@ -222,69 +222,21 @@
             font-weight: 900;  
         } 
          
-        /* Draw/Resign buttons */ 
-        .draw-resign {  
-            position: absolute;  
-            top: 10px;  
-            right: 10px;  
-            z-index: 100;  
-            display: flex;  
-            gap: 5px;  
-        } 
-        .btn-draw {  
-            background: #ffd700;  
-            color: #000;  
-            padding: 5px 10px;  
-            border-radius: 4px;  
-            font-size: 10px;  
-            cursor: pointer;  
-            border: none; 
-        } 
-        .btn-resign {  
-            background: #ff4d4d;  
-            color: white;  
-            padding: 5px 10px;  
-            border-radius: 4px;  
-            font-size: 10px;  
-            cursor: pointer;  
-            border: none; 
-        } 
-         
-        /* Board customization */ 
-        .theme-selector {  
-            position: fixed;  
-            bottom: 10px;  
-            left: 10px;  
-            z-index: 100;  
-            background: var(--c);  
-            padding: 10px;  
-            border-radius: 8px;  
-            border: 1px solid var(--p);  
-        } 
-        .theme-selector select {  
-            background: #000;  
-            color: white;  
-            padding: 5px;  
-            border: 1px solid var(--p);  
-            border-radius: 4px;  
-        } 
-         
-        /* Loading spinner */ 
         .spinner {  
-            width: 20px;  
-            height: 20px;  
-            border: 2px solid #333;  
-            border-top: 2px solid var(--p);  
+            width: 14px;  
+            height: 14px;  
+            border: 2px solid rgba(0,0,0,0.1);  
+            border-top: 2px solid #000;  
             border-radius: 50%;  
             animation: spin 1s linear infinite;  
-            display: inline-block;  
-            margin-left: 10px;  
+            display: none; 
+            margin-left: 8px; 
+            vertical-align: middle; 
         } 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
          
-        /* Status messages */ 
         .status-msg {  
-            font-size: 12px;  
+            font-size: 11px;  
             margin-top: 10px;  
             padding: 8px;  
             border-radius: 4px;  
@@ -292,47 +244,12 @@
         } 
         .status-error { background: rgba(255,77,77,0.2); color: var(--error); border: 1px solid var(--error); } 
         .status-success { background: rgba(77,255,77,0.2); color: var(--success); border: 1px solid var(--success); } 
-         
-        /* Smooth animations for mobile */ 
-        .sq.selected, .sq.hint { 
-            transition: background-color 0.2s ease-out, transform 0.1s ease-in; 
-            transform: scale(1.05); 
-        } 
-        .sq:hover:not(.selected) { 
-            background-color: rgba(0, 212, 255, 0.1); 
-        } 
-        /* Lazy load images */ 
-        img.piece { 
-            width: 90%; 
-            z-index: 5; 
-            pointer-events: none; 
-            filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); 
-            transition: opacity 0.3s ease-in-out; 
-        } 
-        img.piece.black { 
-            filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; 
-        } 
-        /* Better mobile touch targets */ 
-        @media (max-width: 600px) { 
-            .sq { 
-                min-height: 40px; 
-                font-size: 12px; 
-            } 
-            #board-box { 
-                width: 95vw; 
-                max-width: none; 
-            } 
-            .btn-ui, .btn-main { 
-                padding: 6px 10px; 
-                font-size: 8px; 
-            } 
-        } 
     </style> 
 </head> 
 <body onclick="initAudio()"> 
  
     <div id="global-nav" class="nav-ui" style="display:none"> 
-        <div class="btn-ui" onclick="confirmExit()">🏠 HOME</div> 
+        <div class="btn-ui" onclick="location.reload()">🏠 HOME</div> 
         <div class="btn-ui" id="mute-btn" onclick="toggleMute()">🔊 SOUND</div> 
     </div> 
  
@@ -342,359 +259,137 @@
         <div class="auth-card"> 
             <input type="text" id="user-in" placeholder="USERNAME (3+ chars)" maxlength="20"> 
             <input type="password" id="pass-in" placeholder="PASSKEY (6+ chars)" maxlength="50"> 
-            <button class="btn-main" id="login-btn" onclick="handleAuth('login')">LOGIN</button> 
-            <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" id="signup-btn" onclick="handleAuth('signup')">SIGN UP</button> 
+            <button class="btn-main" id="login-btn" onclick="handleAuth('login')">LOGIN <span id="login-spinner" class="spinner"></span></button> 
+            <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" id="signup-btn" onclick="handleAuth('signup')">SIGN UP <span id="signup-spinner" class="spinner"></span></button> 
             <div id="auth-status" class="status-msg"></div> 
         </div> 
     </div> 
  
     <div id="home-screen" class="overlay" style="display:none"> 
         <div class="architect-tag" id="user-display">---</div> 
-        <div class="credits">DEVELOPED BY MAUTASIM - PERFECT EDITION 💯</div> 
+        <div class="credits">DASHBOARD ACTIVE</div> 
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;"> 
-            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>🤖 NEURAL AI</span></div> 
-            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>👥 LOCAL PASS</span></div> 
-            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>🌐 SOCIAL HUB</span></div> 
-            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer; transition: all 0.2s;"><span>🚪 LOGOUT</span></div> 
-        </div> 
-        <div id="social-panel"> 
-            <input type="text" id="friend-id" placeholder="ENTER FRIEND ID (e.g. ARCH-PLAYER)" maxlength="20"> 
-            <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button> 
-            <div id="friends-list"></div> 
-            <div id="connection-status" class="status-msg" style="margin-top: 10px;"></div> 
+            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer;"><span>🤖 NEURAL AI</span></div> 
+            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer;"><span>👥 LOCAL PASS</span></div> 
+            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer;"><span>🌐 SOCIAL</span></div> 
+            <div onclick="location.reload()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer;"><span>🚪 LOGOUT</span></div> 
         </div> 
     </div> 
  
-    <div id="ai-setup" class="overlay" style="display:none"> 
-        <div class="auth-card"> 
-            <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3> 
-            <select id="ai-level-select"> 
-                <option value="architect">⚡ LVL: ARCHITECT (WORLD'S HARDEST)</option> 
-                <option value="casual">😊 LVL: CASUAL</option> 
-            </select> 
-            <button class="btn-main" onclick="startAI()">ENGAGE AI</button> 
-            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button> 
-        </div> 
-    </div> 
- 
-    <div id="pass-setup" class="overlay" style="display:none"> 
-        <div class="auth-card"> 
-            <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3> 
-            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)" value=""> 
-            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)" value=""> 
-            <button class="btn-main" onclick="startPass()">START MATCH</button> 
-            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button> 
-        </div> 
-    </div> 
- 
-    <div id="win-screen" class="overlay" style="display:none"> 
-        <div class="architect-tag">CHECKMATE</div> 
-        <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div> 
-        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM - PERFECT EDITION 💯</div> 
-        <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button> 
-    </div> 
- 
-    <div id="chat-window"> 
-        <div style="padding: 5px; border-bottom: 1px solid var(--p); font-size: 10px;"> 
-            CHAT: <span id="chatting-with"></span>  
-            <button onclick="closeChat()" style="float:right; background:none; color:red; border:none; cursor:pointer;">X</button> 
-        </div> 
-        <div id="chat-msgs"></div> 
-        <input type="text" id="chat-input" placeholder="Type message..." onkeydown="if(event.key==='Enter') sendChat()"> 
-    </div> 
- 
-    <div class="hud"> 
-        <div id="p1-label">---</div> 
+    <div class="hud" style="display:none" id="game-hud"> 
+        <div id="p1-label">WHITE</div> 
         <div style="color:var(--p)">VS</div> 
-        <div id="p2-label" style="text-align:right">---</div> 
+        <div id="p2-label" style="text-align:right">BLACK</div> 
     </div> 
-    <div id="board-box"><div id="board"></div></div> 
- 
-    <!-- Theme Selector --> 
-    <div class="theme-selector"> 
-        <label>Theme:</label> 
-        <select onchange="applyTheme(this.value)"> 
-            <option value="default">Default</option> 
-            <option value="wood">Wood</option> 
-            <option value="blue">Blue</option> 
-            <option value="green">Green</option> 
-        </select> 
-    </div> 
+    <div id="board-box" style="display:none"><div id="board"></div></div> 
  
 <script> 
     const game = new Chess(); 
     const boardEl = document.getElementById('board'); 
-    let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false; 
-    let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w'; 
-    let isConnected = false; 
+    let currentUser = null, selectedSq = null, audioCtx = null, muted = false; 
  
-    // Initialize Audio Context 
-    function initAudio() {  
-        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();  
-    } 
+    function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+    function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; } 
      
-    function toggleMute() {  
-        muted = !muted;  
-        document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND";  
-    } 
-     
-    // Optimized playSound with error handling 
-    function playSound(frequency, duration = 0.1) { 
-        if(muted || !audioCtx) return; 
-        try { 
-            const oscillator = audioCtx.createOscillator(); 
-            const gainNode = audioCtx.createGain(); 
-            oscillator.connect(gainNode); 
-            gainNode.connect(audioCtx.destination); 
-            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); 
-            gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime); 
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration); 
-            oscillator.start(); 
-            oscillator.stop(audioCtx.currentTime + duration); 
-        } catch(e) { 
-            console.error('Audio failed:', e); 
-        } 
-    } 
- 
-    // PERFECT LOGIN SYSTEM - Fixed and Secure 
     function handleAuth(type) { 
         const u = document.getElementById('user-in').value.trim().toUpperCase(); 
         const p = document.getElementById('pass-in').value.trim(); 
         const statusEl = document.getElementById('auth-status'); 
-        const loginBtn = document.getElementById('login-btn'); 
-        const signupBtn = document.getElementById('signup-btn'); 
-        const loginSpinner = document.getElementById('login-spinner'); 
-        const signupSpinner = document.getElementById('signup-spinner'); 
+        const lSpin = document.getElementById('login-spinner'); 
+        const sSpin = document.getElementById('signup-spinner'); 
  
-        // Clear previous status 
-        statusEl.style.display = 'none'; 
-        statusEl.className = 'status-msg'; 
- 
-        // Basic validation 
-        if(!u || !p) {  
-            showStatus('Both username and password are required.', 'error'); 
-            return;  
-        } 
-        if(u.length < 3) {  
-            showStatus('Username must be at least 3 characters.', 'error'); 
-            return;  
-        } 
-        if(p.length < 6) {  
-            showStatus('Password must be at least 6 characters.', 'error'); 
-            return;  
+        if(u.length < 3 || p.length < 6) { 
+            statusEl.innerText = "Username 3+ | Pass 6+"; 
+            statusEl.className = "status-msg status-error"; 
+            statusEl.style.display = "block"; 
+            return; 
         } 
  
-        // Show loading 
-        if(type === 'login') { 
-            loginBtn.disabled = true; 
-            loginSpinner.style.display = 'inline-block'; 
-            loginBtn.innerHTML = 'LOGGING IN...'; 
-        } else { 
-            signupBtn.disabled = true; 
-            signupSpinner.style.display = 'inline-block'; 
-            signupBtn.innerHTML = 'CREATING...'; 
-        } 
+        if(type === 'login') lSpin.style.display = "inline-block"; else sSpin.style.display = "inline-block"; 
  
-        // Hash password for security 
-        const hashPass = CryptoJS.SHA256(p).toString(); 
+        setTimeout(() => { 
+            const hash = CryptoJS.SHA256(p).toString(); 
+            const stored = localStorage.getItem('arch_' + u); 
  
-        try { 
-            // Check storage availability 
-            if(!localStorage) { 
-                throw new Error('Local storage not available'); 
-            } 
- 
-            const storedHash = localStorage.getItem('pwd_' + u); 
-             
             if(type === 'signup') { 
-                if(storedHash) {  
-                    showStatus('Username already taken. Please choose another.', 'error'); 
-                    resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
-                    return;  
-                } 
-                // Create account 
-                localStorage.setItem('pwd_' + u, hashPass); 
-                localStorage.setItem('arch_user', u); 
-                currentUser = u; 
-                showStatus('Account created successfully! Welcome to ARCHITECT PRO 💯', 'success'); 
-                setTimeout(() => { 
-                    initPeer(); 
-                    showDashboard(); 
-                }, 1500); 
+                if(stored) { statusEl.innerText = "Taken!"; statusEl.className="status-msg status-error"; } 
+                else { localStorage.setItem('arch_'+u, hash); loginSuccess(u); } 
             } else { 
-                // Login 
-                if(!storedHash || storedHash !== hashPass) {  
-                    showStatus('Invalid username or password. Please try again.', 'error'); 
-                    resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
-                    return;  
+                if(stored === hash) { loginSuccess(u); } 
+                else { statusEl.innerText = "Wrong!"; statusEl.className="status-msg status-error"; } 
+            } 
+            statusEl.style.display = "block"; 
+            lSpin.style.display = "none"; sSpin.style.display = "none"; 
+        }, 800); 
+    } 
+ 
+    function loginSuccess(u) { 
+        currentUser = u; 
+        document.getElementById('auth-screen').style.display = "none"; 
+        document.getElementById('home-screen').style.display = "flex"; 
+        document.getElementById('user-display').innerText = u; 
+        document.getElementById('global-nav').style.display = "flex"; 
+    } 
+ 
+    function prepareGame(mode) { 
+        document.getElementById('home-screen').style.display = "none"; 
+        document.getElementById('game-hud').style.display = "flex"; 
+        document.getElementById('board-box').style.display = "block"; 
+        renderBoard(); 
+    } 
+ 
+    function renderBoard() { 
+        boardEl.innerHTML = ''; 
+        const currentBoard = game.board(); 
+        for(let r=0; r<8; r++) { 
+            for(let c=0; c<8; c++) { 
+                const sq = document.createElement('div'); 
+                const pos = String.fromCharCode(97+c) + (8-r); 
+                sq.className = `sq ${(r+c)%2===0?'l':'d'}`; 
+                sq.dataset.pos = pos; 
+                sq.onclick = () => handleSquareClick(pos); 
+                if(currentBoard[r][c]) { 
+                    const img = document.createElement('img'); 
+                    img.src = `https://lichess1.org/assets/piece/cburnett/${currentBoard[r][c].color}${currentBoard[r][c].type.toUpperCase()}.svg`; 
+                    img.className = 'piece'; 
+                    if(currentBoard[r][c].color === 'b') img.classList.add('black-p'); 
+                    sq.appendChild(img); 
                 } 
-                localStorage.setItem('arch_user', u); 
-                currentUser = u; 
-                showStatus('Login successful! Welcome back to ARCHITECT PRO 💯', 'success'); 
-                setTimeout(() => { 
-                    initPeer(); 
-                    showDashboard(); 
-                }, 1000); 
+                boardEl.appendChild(sq); 
             } 
-        } catch(e) { 
-            console.error('Auth error:', e); 
-            showStatus('Storage error occurred. Please check browser settings or clear cache.', 'error'); 
-            resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
         } 
     } 
  
-    function showStatus(message, type) { 
-        const statusEl = document.getElementById('auth-status'); 
-        statusEl.textContent = message; 
-        statusEl.className = `status-msg status-${type}`; 
-        statusEl.style.display = 'block'; 
-    } 
- 
-    function resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type) { 
-        if(type === 'login') { 
-            loginBtn.disabled = false; 
-            loginSpinner.style.display = 'none'; 
-            loginBtn.innerHTML = 'LOGIN'; 
+    function handleSquareClick(pos) { 
+        if(selectedSq === pos) { selectedSq = null; renderBoard(); return; } 
+        if(selectedSq) { 
+            const move = game.move({ from: selectedSq, to: pos, promotion: 'q' }); 
+            if(move) { selectedSq = null; renderBoard(); setTimeout(makeAiMove, 500); } 
+            else { selectedSq = pos; renderBoard(); highlightMoves(pos); } 
         } else { 
-            signupBtn.disabled = false; 
-            signupSpinner.style.display = 'none'; 
-            signupBtn.innerHTML = 'SIGN UP'; 
+            selectedSq = pos; 
+            highlightMoves(pos); 
         } 
     } 
  
-    // PERFECT PEERJS CONNECTION - Fixed NAT & Retry Logic 
-    function initPeer() { 
-        if(peer) { 
-            peer.destroy(); 
-        } 
-         
-        const config = { 
-            host: '0.peerjs.com',  // Cloud server - reliable for testing 
-            port: 443, 
-            path: '/peerjs', 
-            secure: true, 
-            debug: 2,  // Moderate logging 
-            config: {  
-                iceServers: [ 
-                    {urls: 'stun:stun.l.google.com:19302'},  // Google STUN 
-                    {urls: 'stun:stun1.l.google.com:19302'}, // Backup STUN 
-                    // Add TURN if needed: {urls: 'turn:your-turn-server.com:3478', username: 'user', credential: 'pass'} 
-                ], 
-                iceTransportPolicy: 'all'  // Try relay if direct fails 
-            } 
-        }; 
-         
-        peer = new Peer('ARCH-' + currentUser, config); 
-        isConnected = false; 
-         
-        // Connection events 
-        peer.on('open', id => { 
-            console.log('Peer connected with ID:', id); 
-            showConnectionStatus('Connected: ' + id, 'success'); 
-            isConnected = true; 
+    function highlightMoves(pos) { 
+        renderBoard(); 
+        const moves = game.moves({ square: pos, verbose: true }); 
+        moves.forEach(m => { 
+            const el = document.querySelector(`[data-pos="${m.to}"]`); 
+            if(el) el.classList.add('hint'); 
         }); 
-         
-        peer.on('connection', c => {  
-            conn = c;  
-            currentMode = 'online'; 
-            playerColor = 'b'; 
-            setupConnection();  
-            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-',''); 
-            document.getElementById('p2-label').innerText = currentUser; 
-            showConnectionStatus('Opponent connected: ' + conn.peer.replace('ARCH-',''), 'success'); 
-            startGame(); 
-        }); 
-         
-        peer.on('error', err => { 
-            console.error('Peer error:', err); 
-            showConnectionStatus('Connection error: ' + err.type + '. Retrying...', 'error'); 
-            if(err.type === 'network' || err.type === 'timeout') { 
-                setTimeout(initPeer, 5000); 
-            } 
-        }); 
-         
-        peer.on('disconnected', () => { 
-            console.log('Peer disconnected, reconnecting...'); 
-            showConnectionStatus('Disconnected. Reconnecting...', 'error'); 
-            setTimeout(initPeer, 3000); 
-        }); 
-         
-        // Heartbeat 
-        setInterval(() => { 
-            if(conn && conn.open) { 
-                try { 
-                    conn.send({type: 'ping'}); 
-                } catch(e) { 
-                    console.error('Heartbeat failed:', e); 
-                } 
-            } 
-        }, 30000); 
+        document.querySelector(`[data-pos="${pos}"]`).classList.add('selected'); 
     } 
  
-    function showConnectionStatus(message, type) { 
-        const statusEl = document.getElementById('connection-status'); 
-        if(statusEl) { 
-            statusEl.textContent = message; 
-            statusEl.className = `status-msg status-${type}`; 
-            statusEl.style.display = 'block'; 
-            setTimeout(() => statusEl.style.display = 'none', 5000); 
+    function makeAiMove() { 
+        const moves = game.moves(); 
+        if(moves.length > 0) { 
+            const move = moves[Math.floor(Math.random() * moves.length)]; 
+            game.move(move); 
+            renderBoard(); 
         } 
     } 
- 
-    // AI Engine - Enhanced Minimax 
-    function orderMoves(moves, g) { 
-        return moves.sort((a, b) => { 
-            const capA = g.is_capture(a); 
-            const capB = g.is_capture(b); 
-            if (capA !== capB) return capA ? -1 : 1; 
-            const promA = a.promotion; 
-            const promB = b.promotion; 
-            if (promA && !promB) return -1; 
-            if (!promA && promB) return 1; 
-            return 0; 
-        }); 
-    } 
- 
-    function enhancedMinimax(g, maxDepth, alpha, beta, isMax) { 
-        let best = -Infinity; 
-        const orderedMoves = orderMoves(g.moves(), g); 
-         
-        for (let depth = 1; depth <= maxDepth; depth++) { 
-            const val = minimaxHelper(g.clone(), depth, alpha, beta, isMax); 
-            if (val > best) best = val; 
-            if (beta <= alpha) break; 
-        } 
-        return best; 
-    } 
- 
-    function minimaxHelper(g, depth, alpha, beta, isMax) { 
-        if (depth === 0 || g.game_over()) return -evaluateBoard(g); 
-         
-        const moves = orderMoves(g.moves(), g); 
-        if (isMax) { 
-            let best = -Infinity; 
-            for (let m of moves) { 
-                g.move(m); 
-                best = Math.max(best, minimaxHelper(g, depth - 1, alpha, beta, false)); 
-                g.undo(); 
-                alpha = Math.max(alpha, best); 
-                if (beta <= alpha) break; 
-            } 
-            return best; 
-        } else { 
-            let best = Infinity; 
-            for (let m of moves) { 
-                g.move(m); 
-                best = Math.min(best, minimaxHelper(g, depth - 1, alpha, beta, true)); 
-                g.undo(); 
-                beta = Math.min(beta, best); 
-                if (beta <= alpha) break; 
-            } 
-            return best; 
-        } 
-    } 
- 
-    const pst = { 
-        p: , 
-        n: [-50,-40,-30,-30,-30,-30,-40,-50,-40,-20, 0, 5, 5, 0,-20,-40,-30, 5, 10, 15, 15, 10, 5,-30,-30, 0, 15, 20, 20, 15, 0,-30,-30, 5
-
+</script> 
+</body> 
+</html>
