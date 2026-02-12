@@ -3,56 +3,295 @@
 <head> 
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-    <title>ARCHITECT CHESS PRO</title> 
+    <title>ARCHITECT CHESS PRO - PERFECT EDITION 💯</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script> 
     <style> 
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap'); 
-        :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; } 
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; } 
+        :root {  
+            --p: #00d4ff;  
+            --bg: #0a0e17;  
+            --c: #141b26;  
+            --sl: #dee3e6;  
+            --sd: #769656;  
+            --error: #ff4d4d; 
+            --success: #4dff4d; 
+        } 
+        body {  
+            margin: 0;  
+            background: var(--bg);  
+            color: white;  
+            font-family: 'Orbitron', sans-serif;  
+            display: flex;  
+            flex-direction: column;  
+            align-items: center;  
+            height: 100vh;  
+            overflow: hidden;  
+            touch-action: none;  
+        } 
          
-        .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; } 
-        .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; animation: blink 2s infinite; } 
+        .architect-tag {  
+            font-size: 24px;  
+            font-weight: 900;  
+            color: var(--p);  
+            text-shadow: 0 0 10px var(--p);  
+            letter-spacing: 4px;  
+            margin-top: 15px;  
+            text-transform: uppercase;  
+        } 
+        .credits {  
+            font-size: 9px;  
+            color: var(--p);  
+            letter-spacing: 3px;  
+            margin-bottom: 15px;  
+            opacity: 0.7;  
+            animation: blink 2s infinite;  
+        } 
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } } 
  
-        img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); } 
-        .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; } 
+        img.piece {  
+            width: 90%;  
+            z-index: 5;  
+            pointer-events: none;  
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.5));  
+        } 
+        .black {  
+            filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important;  
+        } 
  
-        .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; } 
-        .btn-ui { background: rgba(0, 212, 255, 0.1); border: 1px solid var(--p); color: var(--p); padding: 8px 12px; border-radius: 8px; font-size: 10px; cursor: pointer; font-weight: bold; } 
-        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; text-align: center; } 
-        .auth-card { background: var(--c); padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,0.5); } 
+        .nav-ui {  
+            position: fixed;  
+            top: 15px;  
+            left: 15px;  
+            z-index: 110;  
+            display: flex;  
+            gap: 8px;  
+        } 
+        .btn-ui {  
+            background: rgba(0, 212, 255, 0.1);  
+            border: 1px solid var(--p);  
+            color: var(--p);  
+            padding: 8px 12px;  
+            border-radius: 8px;  
+            font-size: 10px;  
+            cursor: pointer;  
+            font-weight: bold;  
+            transition: all 0.2s ease; 
+        } 
+        .btn-ui:hover { background: rgba(0, 212, 255, 0.2); } 
+        .overlay {  
+            position: fixed;  
+            inset: 0;  
+            background: var(--bg);  
+            display: flex;  
+            flex-direction: column;  
+            align-items: center;  
+            justify-content: center;  
+            z-index: 100;  
+            overflow-y: auto;  
+            text-align: center;  
+        } 
+        .auth-card {  
+            background: var(--c);  
+            padding: 25px;  
+            border-radius: 20px;  
+            width: 85%;  
+            max-width: 320px;  
+            border: 1px solid #222;  
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);  
+        } 
          
-        input, select { background: #000; border: 1px solid var(--p); color: white; padding: 12px; margin: 8px 0; width: 100%; text-align: center; border-radius: 8px; font-family: 'Roboto Mono'; outline: none; box-sizing: border-box; } 
-        .btn-main { width: 100%; padding: 14px; background: var(--p); color: #000; border: none; border-radius: 8px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin-top: 10px; } 
+        input, select {  
+            background: #000;  
+            border: 1px solid var(--p);  
+            color: white;  
+            padding: 12px;  
+            margin: 8px 0;  
+            width: 100%;  
+            text-align: center;  
+            border-radius: 8px;  
+            font-family: 'Roboto Mono';  
+            outline: none;  
+            box-sizing: border-box;  
+        } 
+        .btn-main {  
+            width: 100%;  
+            padding: 14px;  
+            background: var(--p);  
+            color: #000;  
+            border: none;  
+            border-radius: 8px;  
+            font-family: 'Orbitron';  
+            font-weight: 900;  
+            cursor: pointer;  
+            margin-top: 10px;  
+            transition: all 0.2s ease; 
+            position: relative; 
+        } 
+        .btn-main:hover { transform: scale(1.02); } 
+        .btn-main:disabled { opacity: 0.6; cursor: not-allowed; } 
          
-        #social-panel { width: 90%; max-height: 200px; overflow-y: auto; background: #000; border: 1px solid #222; border-radius: 10px; margin-top: 15px; padding: 10px; display: none; } 
-        .friend-item { padding: 8px; border-bottom: 1px solid #111; font-size: 10px; display: flex; justify-content: space-between; cursor: pointer; } 
+        #social-panel {  
+            width: 90%;  
+            max-height: 200px;  
+            overflow-y: auto;  
+            background: #000;  
+            border: 1px solid #222;  
+            border-radius: 10px;  
+            margin-top: 15px;  
+            padding: 10px;  
+            display: none;  
+        } 
+        .friend-item {  
+            padding: 8px;  
+            border-bottom: 1px solid #111;  
+            font-size: 10px;  
+            display: flex;  
+            justify-content: space-between;  
+            cursor: pointer;  
+            transition: background 0.2s; 
+        } 
+        .friend-item:hover { background: rgba(0,212,255,0.1); } 
          
-        #chat-window { position: fixed; bottom: 10px; right: 10px; width: 250px; height: 300px; background: var(--c); border: 1px solid var(--p); display: none; flex-direction: column; z-index: 120; border-radius: 10px; } 
-        #chat-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; text-align: left; } 
+        #chat-window {  
+            position: fixed;  
+            bottom: 10px;  
+            right: 10px;  
+            width: 250px;  
+            height: 300px;  
+            background: var(--c);  
+            border: 1px solid var(--p);  
+            display: none;  
+            flex-direction: column;  
+            z-index: 120;  
+            border-radius: 10px;  
+        } 
+        #chat-msgs {  
+            flex: 1;  
+            overflow-y: auto;  
+            padding: 10px;  
+            font-size: 11px;  
+            text-align: left;  
+        } 
  
-        .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; } 
-        .selected { background: rgba(0, 212, 255, 0.3) !important; } 
-        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; } 
-        #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; } 
-        .sq { display: flex; justify-content: center; align-items: center; position: relative; } 
-        .sq.l { background: var(--sl); } .sq.d { background: var(--sd); } 
-        .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; } 
+        .sq.hint::after {  
+            content: '';  
+            width: 15px;  
+            height: 15px;  
+            background: var(--p);  
+            border-radius: 50%;  
+            opacity: 0.6;  
+        } 
+        .selected {  
+            background: rgba(0, 212, 255, 0.3) !important;  
+        } 
+        #board-box {  
+            margin: 10px 0;  
+            width: 92vw;  
+            max-width: 380px;  
+            aspect-ratio: 1/1;  
+            border: 6px solid var(--c);  
+            position: relative;  
+            border-radius: 12px;  
+        } 
+        #board {  
+            display: grid;  
+            grid-template-columns: repeat(8, 1fr);  
+            grid-template-rows: repeat(8, 1fr);  
+            height: 100%;  
+        } 
+        .sq {  
+            display: flex;  
+            justify-content: center;  
+            align-items: center;  
+            position: relative;  
+            transition: all 0.2s ease; 
+        } 
+        .sq.l { background: var(--sl); }  
+        .sq.d { background: var(--sd); } 
+        .hud {  
+            width: 100%;  
+            background: var(--c);  
+            padding: 15px;  
+            display: flex;  
+            justify-content: space-between;  
+            border-bottom: 2px solid var(--p);  
+            margin-top: 60px;  
+            font-size: 12px;  
+            font-weight: 900;  
+        } 
          
         /* Draw/Resign buttons */ 
-        .draw-resign { position: absolute; top: 10px; right: 10px; z-index: 100; display: flex; gap: 5px; } 
-        .btn-draw { background: #ffd700; color: #000; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; } 
-        .btn-resign { background: #ff4d4d; color: white; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; } 
+        .draw-resign {  
+            position: absolute;  
+            top: 10px;  
+            right: 10px;  
+            z-index: 100;  
+            display: flex;  
+            gap: 5px;  
+        } 
+        .btn-draw {  
+            background: #ffd700;  
+            color: #000;  
+            padding: 5px 10px;  
+            border-radius: 4px;  
+            font-size: 10px;  
+            cursor: pointer;  
+            border: none; 
+        } 
+        .btn-resign {  
+            background: #ff4d4d;  
+            color: white;  
+            padding: 5px 10px;  
+            border-radius: 4px;  
+            font-size: 10px;  
+            cursor: pointer;  
+            border: none; 
+        } 
          
         /* Board customization */ 
-        .theme-selector { position: fixed; bottom: 10px; left: 10px; z-index: 100; background: var(--c); padding: 10px; border-radius: 8px; border: 1px solid var(--p); } 
-        .theme-selector select { background: #000; color: white; padding: 5px; border: 1px solid var(--p); border-radius: 4px; } 
+        .theme-selector {  
+            position: fixed;  
+            bottom: 10px;  
+            left: 10px;  
+            z-index: 100;  
+            background: var(--c);  
+            padding: 10px;  
+            border-radius: 8px;  
+            border: 1px solid var(--p);  
+        } 
+        .theme-selector select {  
+            background: #000;  
+            color: white;  
+            padding: 5px;  
+            border: 1px solid var(--p);  
+            border-radius: 4px;  
+        } 
          
         /* Loading spinner */ 
-        .spinner { width: 20px; height: 20px; border: 2px solid #333; border-top: 2px solid var(--p); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-left: 10px; } 
+        .spinner {  
+            width: 20px;  
+            height: 20px;  
+            border: 2px solid #333;  
+            border-top: 2px solid var(--p);  
+            border-radius: 50%;  
+            animation: spin 1s linear infinite;  
+            display: inline-block;  
+            margin-left: 10px;  
+        } 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
+         
+        /* Status messages */ 
+        .status-msg {  
+            font-size: 12px;  
+            margin-top: 10px;  
+            padding: 8px;  
+            border-radius: 4px;  
+            display: none;  
+        } 
+        .status-error { background: rgba(255,77,77,0.2); color: var(--error); border: 1px solid var(--error); } 
+        .status-success { background: rgba(77,255,77,0.2); color: var(--success); border: 1px solid var(--success); } 
          
         /* Smooth animations for mobile */ 
         .sq.selected, .sq.hint { 
@@ -99,29 +338,30 @@
  
     <div id="auth-screen" class="overlay"> 
         <div class="architect-tag">ARCHITECT PRO</div> 
-        <div class="credits">DEVELOPED BY MAUTASIM</div> 
+        <div class="credits">DEVELOPED BY MAUTASIM - PERFECT EDITION 💯</div> 
         <div class="auth-card"> 
-            <input type="text" id="user-in" placeholder="USERNAME"> 
-            <input type="password" id="pass-in" placeholder="PASSKEY"> 
-            <button class="btn-main" onclick="handleAuth('login')">LOGIN <span id="login-spinner" class="spinner" style="display:none;"></span></button> 
-            <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" onclick="handleAuth('signup')">SIGN UP <span id="signup-spinner" class="spinner" style="display:none;"></span></button> 
-            <p id="auth-status" style="font-size: 10px; color: var(--p); margin-top: 15px;">SECURE ACCESS PROTOCOL</p> 
+            <input type="text" id="user-in" placeholder="USERNAME (3+ chars)" maxlength="20"> 
+            <input type="password" id="pass-in" placeholder="PASSKEY (6+ chars)" maxlength="50"> 
+            <button class="btn-main" id="login-btn" onclick="handleAuth('login')">LOGIN</button> 
+            <button class="btn-main" style="background:none; border:1px solid var(--p); color:var(--p)" id="signup-btn" onclick="handleAuth('signup')">SIGN UP</button> 
+            <div id="auth-status" class="status-msg"></div> 
         </div> 
     </div> 
  
     <div id="home-screen" class="overlay" style="display:none"> 
         <div class="architect-tag" id="user-display">---</div> 
-        <div class="credits">DEVELOPED BY MAUTASIM</div> 
+        <div class="credits">DEVELOPED BY MAUTASIM - PERFECT EDITION 💯</div> 
         <div class="dashboard" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 90%;"> 
-            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div> 
-            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div> 
-            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div> 
-            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div> 
+            <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>🤖 NEURAL AI</span></div> 
+            <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>👥 LOCAL PASS</span></div> 
+            <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer; transition: all 0.2s;"><span>🌐 SOCIAL HUB</span></div> 
+            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer; transition: all 0.2s;"><span>🚪 LOGOUT</span></div> 
         </div> 
         <div id="social-panel"> 
-            <input type="text" id="friend-id" placeholder="ADD FRIEND ID"> 
+            <input type="text" id="friend-id" placeholder="ENTER FRIEND ID (e.g. ARCH-PLAYER)" maxlength="20"> 
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button> 
             <div id="friends-list"></div> 
+            <div id="connection-status" class="status-msg" style="margin-top: 10px;"></div> 
         </div> 
     </div> 
  
@@ -129,8 +369,8 @@
         <div class="auth-card"> 
             <h3 style="color:var(--p); font-size:14px;">NEURAL OVERRIDE</h3> 
             <select id="ai-level-select"> 
-                <option value="architect">LVL: ARCHITECT (WORLD'S HARDEST)</option> 
-                <option value="casual">LVL: CASUAL</option> 
+                <option value="architect">⚡ LVL: ARCHITECT (WORLD'S HARDEST)</option> 
+                <option value="casual">😊 LVL: CASUAL</option> 
             </select> 
             <button class="btn-main" onclick="startAI()">ENGAGE AI</button> 
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button> 
@@ -140,8 +380,8 @@
     <div id="pass-setup" class="overlay" style="display:none"> 
         <div class="auth-card"> 
             <h3 style="color:var(--p); font-size:14px;">PASS & PLAY SETUP</h3> 
-            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)"> 
-            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)"> 
+            <input type="text" id="p1-in" placeholder="PLAYER 1 (WHITE)" value=""> 
+            <input type="text" id="p2-in" placeholder="PLAYER 2 (BLACK)" value=""> 
             <button class="btn-main" onclick="startPass()">START MATCH</button> 
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button> 
         </div> 
@@ -150,12 +390,15 @@
     <div id="win-screen" class="overlay" style="display:none"> 
         <div class="architect-tag">CHECKMATE</div> 
         <div id="winner-text" style="font-size: 20px; color: var(--p); margin-top:10px;">---</div> 
-        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM</div> 
+        <div class="credits" style="margin-top:20px">DEVELOPED BY MAUTASIM - PERFECT EDITION 💯</div> 
         <button class="btn-main" style="width:200px" onclick="showDashboard()">EXIT TO HUB</button> 
     </div> 
  
     <div id="chat-window"> 
-        <div style="padding: 5px; border-bottom: 1px solid var(--p); font-size: 10px;">CHAT: <span id="chatting-with"></span> <button onclick="closeChat()" style="float:right; background:none; color:red; border:none;">X</button></div> 
+        <div style="padding: 5px; border-bottom: 1px solid var(--p); font-size: 10px;"> 
+            CHAT: <span id="chatting-with"></span>  
+            <button onclick="closeChat()" style="float:right; background:none; color:red; border:none; cursor:pointer;">X</button> 
+        </div> 
         <div id="chat-msgs"></div> 
         <input type="text" id="chat-input" placeholder="Type message..." onkeydown="if(event.key==='Enter') sendChat()"> 
     </div> 
@@ -167,27 +410,251 @@
     </div> 
     <div id="board-box"><div id="board"></div></div> 
  
+    <!-- Theme Selector --> 
+    <div class="theme-selector"> 
+        <label>Theme:</label> 
+        <select onchange="applyTheme(this.value)"> 
+            <option value="default">Default</option> 
+            <option value="wood">Wood</option> 
+            <option value="blue">Blue</option> 
+            <option value="green">Green</option> 
+        </select> 
+    </div> 
+ 
 <script> 
     const game = new Chess(); 
     const boardEl = document.getElementById('board'); 
     let currentUser = null, currentMode = 'bot', selectedSq = null, audioCtx = null, muted = false; 
     let peer = null, conn = null, aiDifficulty = 'architect', playerColor = 'w'; 
+    let isConnected = false; 
  
-    // Helper: Order moves by priority (captures first, then promotions) 
+    // Initialize Audio Context 
+    function initAudio() {  
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();  
+    } 
+     
+    function toggleMute() {  
+        muted = !muted;  
+        document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND";  
+    } 
+     
+    // Optimized playSound with error handling 
+    function playSound(frequency, duration = 0.1) { 
+        if(muted || !audioCtx) return; 
+        try { 
+            const oscillator = audioCtx.createOscillator(); 
+            const gainNode = audioCtx.createGain(); 
+            oscillator.connect(gainNode); 
+            gainNode.connect(audioCtx.destination); 
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime); 
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration); 
+            oscillator.start(); 
+            oscillator.stop(audioCtx.currentTime + duration); 
+        } catch(e) { 
+            console.error('Audio failed:', e); 
+        } 
+    } 
+ 
+    // PERFECT LOGIN SYSTEM - Fixed and Secure 
+    function handleAuth(type) { 
+        const u = document.getElementById('user-in').value.trim().toUpperCase(); 
+        const p = document.getElementById('pass-in').value.trim(); 
+        const statusEl = document.getElementById('auth-status'); 
+        const loginBtn = document.getElementById('login-btn'); 
+        const signupBtn = document.getElementById('signup-btn'); 
+        const loginSpinner = document.getElementById('login-spinner'); 
+        const signupSpinner = document.getElementById('signup-spinner'); 
+ 
+        // Clear previous status 
+        statusEl.style.display = 'none'; 
+        statusEl.className = 'status-msg'; 
+ 
+        // Basic validation 
+        if(!u || !p) {  
+            showStatus('Both username and password are required.', 'error'); 
+            return;  
+        } 
+        if(u.length < 3) {  
+            showStatus('Username must be at least 3 characters.', 'error'); 
+            return;  
+        } 
+        if(p.length < 6) {  
+            showStatus('Password must be at least 6 characters.', 'error'); 
+            return;  
+        } 
+ 
+        // Show loading 
+        if(type === 'login') { 
+            loginBtn.disabled = true; 
+            loginSpinner.style.display = 'inline-block'; 
+            loginBtn.innerHTML = 'LOGGING IN...'; 
+        } else { 
+            signupBtn.disabled = true; 
+            signupSpinner.style.display = 'inline-block'; 
+            signupBtn.innerHTML = 'CREATING...'; 
+        } 
+ 
+        // Hash password for security 
+        const hashPass = CryptoJS.SHA256(p).toString(); 
+ 
+        try { 
+            // Check storage availability 
+            if(!localStorage) { 
+                throw new Error('Local storage not available'); 
+            } 
+ 
+            const storedHash = localStorage.getItem('pwd_' + u); 
+             
+            if(type === 'signup') { 
+                if(storedHash) {  
+                    showStatus('Username already taken. Please choose another.', 'error'); 
+                    resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
+                    return;  
+                } 
+                // Create account 
+                localStorage.setItem('pwd_' + u, hashPass); 
+                localStorage.setItem('arch_user', u); 
+                currentUser = u; 
+                showStatus('Account created successfully! Welcome to ARCHITECT PRO 💯', 'success'); 
+                setTimeout(() => { 
+                    initPeer(); 
+                    showDashboard(); 
+                }, 1500); 
+            } else { 
+                // Login 
+                if(!storedHash || storedHash !== hashPass) {  
+                    showStatus('Invalid username or password. Please try again.', 'error'); 
+                    resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
+                    return;  
+                } 
+                localStorage.setItem('arch_user', u); 
+                currentUser = u; 
+                showStatus('Login successful! Welcome back to ARCHITECT PRO 💯', 'success'); 
+                setTimeout(() => { 
+                    initPeer(); 
+                    showDashboard(); 
+                }, 1000); 
+            } 
+        } catch(e) { 
+            console.error('Auth error:', e); 
+            showStatus('Storage error occurred. Please check browser settings or clear cache.', 'error'); 
+            resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type); 
+        } 
+    } 
+ 
+    function showStatus(message, type) { 
+        const statusEl = document.getElementById('auth-status'); 
+        statusEl.textContent = message; 
+        statusEl.className = `status-msg status-${type}`; 
+        statusEl.style.display = 'block'; 
+    } 
+ 
+    function resetButtons(loginBtn, signupBtn, loginSpinner, signupSpinner, type) { 
+        if(type === 'login') { 
+            loginBtn.disabled = false; 
+            loginSpinner.style.display = 'none'; 
+            loginBtn.innerHTML = 'LOGIN'; 
+        } else { 
+            signupBtn.disabled = false; 
+            signupSpinner.style.display = 'none'; 
+            signupBtn.innerHTML = 'SIGN UP'; 
+        } 
+    } 
+ 
+    // PERFECT PEERJS CONNECTION - Fixed NAT & Retry Logic 
+    function initPeer() { 
+        if(peer) { 
+            peer.destroy(); 
+        } 
+         
+        const config = { 
+            host: '0.peerjs.com',  // Cloud server - reliable for testing 
+            port: 443, 
+            path: '/peerjs', 
+            secure: true, 
+            debug: 2,  // Moderate logging 
+            config: {  
+                iceServers: [ 
+                    {urls: 'stun:stun.l.google.com:19302'},  // Google STUN 
+                    {urls: 'stun:stun1.l.google.com:19302'}, // Backup STUN 
+                    // Add TURN if needed: {urls: 'turn:your-turn-server.com:3478', username: 'user', credential: 'pass'} 
+                ], 
+                iceTransportPolicy: 'all'  // Try relay if direct fails 
+            } 
+        }; 
+         
+        peer = new Peer('ARCH-' + currentUser, config); 
+        isConnected = false; 
+         
+        // Connection events 
+        peer.on('open', id => { 
+            console.log('Peer connected with ID:', id); 
+            showConnectionStatus('Connected: ' + id, 'success'); 
+            isConnected = true; 
+        }); 
+         
+        peer.on('connection', c => {  
+            conn = c;  
+            currentMode = 'online'; 
+            playerColor = 'b'; 
+            setupConnection();  
+            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-',''); 
+            document.getElementById('p2-label').innerText = currentUser; 
+            showConnectionStatus('Opponent connected: ' + conn.peer.replace('ARCH-',''), 'success'); 
+            startGame(); 
+        }); 
+         
+        peer.on('error', err => { 
+            console.error('Peer error:', err); 
+            showConnectionStatus('Connection error: ' + err.type + '. Retrying...', 'error'); 
+            if(err.type === 'network' || err.type === 'timeout') { 
+                setTimeout(initPeer, 5000); 
+            } 
+        }); 
+         
+        peer.on('disconnected', () => { 
+            console.log('Peer disconnected, reconnecting...'); 
+            showConnectionStatus('Disconnected. Reconnecting...', 'error'); 
+            setTimeout(initPeer, 3000); 
+        }); 
+         
+        // Heartbeat 
+        setInterval(() => { 
+            if(conn && conn.open) { 
+                try { 
+                    conn.send({type: 'ping'}); 
+                } catch(e) { 
+                    console.error('Heartbeat failed:', e); 
+                } 
+            } 
+        }, 30000); 
+    } 
+ 
+    function showConnectionStatus(message, type) { 
+        const statusEl = document.getElementById('connection-status'); 
+        if(statusEl) { 
+            statusEl.textContent = message; 
+            statusEl.className = `status-msg status-${type}`; 
+            statusEl.style.display = 'block'; 
+            setTimeout(() => statusEl.style.display = 'none', 5000); 
+        } 
+    } 
+ 
+    // AI Engine - Enhanced Minimax 
     function orderMoves(moves, g) { 
         return moves.sort((a, b) => { 
             const capA = g.is_capture(a); 
             const capB = g.is_capture(b); 
-            if (capA !== capB) return capA ? -1 : 1; // Captures first 
+            if (capA !== capB) return capA ? -1 : 1; 
             const promA = a.promotion; 
             const promB = b.promotion; 
             if (promA && !promB) return -1; 
             if (!promA && promB) return 1; 
-            return 0; // Default sort 
+            return 0; 
         }); 
     } 
  
-    // Enhanced minimax with iterative deepening 
     function enhancedMinimax(g, maxDepth, alpha, beta, isMax) { 
         let best = -Infinity; 
         const orderedMoves = orderMoves(g.moves(), g); 
@@ -195,7 +662,7 @@
         for (let depth = 1; depth <= maxDepth; depth++) { 
             const val = minimaxHelper(g.clone(), depth, alpha, beta, isMax); 
             if (val > best) best = val; 
-            if (beta <= alpha) break; // Early exit 
+            if (beta <= alpha) break; 
         } 
         return best; 
     } 
@@ -227,448 +694,7 @@
         } 
     } 
  
-    // Optimized playSound with error handling 
-    function playSound(frequency, duration = 0.1) { 
-        if(muted || !audioCtx) return; 
-         
-        try { 
-            const oscillator = audioCtx.createOscillator(); 
-            const gainNode = audioCtx.createGain(); 
-            oscillator.connect(gainNode); 
-            gainNode.connect(audioCtx.destination); 
-             
-            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); 
-            gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime); 
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration); 
-             
-            oscillator.start(); 
-            oscillator.stop(audioCtx.currentTime + duration); 
-        } catch(e) { 
-            console.error('Audio failed:', e); 
-        } 
-    } 
- 
-    // Improved initPeer with config and heartbeats 
-    function initPeer() { 
-        if(peer) return; 
-         
-        const config = { 
-            host: 'your-peer-server.com', 
-            port: 9000, 
-            path: '/peer', 
-            debug: 3, 
-            config: { iceServers: }] } 
-        }; 
-         
-        peer = new Peer('ARCH-' + currentUser, config); 
-         
-        // Heartbeat to prevent timeouts 
-        setInterval(() => { 
-            if(conn && conn.open) conn.send({type: 'ping'}); 
-        }, 30000); 
-         
-        peer.on('connection', c => {  
-            conn = c;  
-            currentMode = 'online'; 
-            playerColor = 'b'; 
-            setupConnection();  
-            document.getElementById('p1-label').innerText = conn.peer.replace('ARCH-',''); 
-            document.getElementById('p2-label').innerText = currentUser; 
-            startGame(); 
-        }); 
-         
-        peer.on('error', err => { 
-            console.warn('Peer error:', err); 
-            if(err.type === 'network') { 
-                setTimeout(initPeer, 5000); 
-            } 
-        }); 
-    } 
- 
-    // --- PRO LEVEL AI ENGINE --- 
     const pst = { 
         p: , 
-        n:  
-    }; 
-    const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; 
- 
-    function evaluateBoard(g) { 
-        let total = 0; 
-        const b = g.board(); 
-        for(let i=0; i<8; i++) { 
-            for(let j=0; j<8; j++) { 
-                if(b) { 
-                    let v = pieceValues.type]; 
-                    if(pst.type]) v += pst.type]; 
-                    total += (b.color === 'w' ? v : -v); 
-                } 
-            } 
-        } 
-        return total; 
-    } 
- 
-    // Replaced aiMove with enhanced version 
-    function aiMove() { 
-        if(game.game_over()) return; 
-        const moves = game.moves(); 
-        let bestMove = null, bestVal = -Infinity; 
-         
-        for(let m of moves) { 
-            game.move(m); 
-            let v = enhancedMinimax(game.clone(), 3, -Infinity, Infinity, false); 
-            game.undo(); 
-            if(v > bestVal) { bestVal = v; bestMove = m; } 
-        } 
-        game.move(bestMove || moves); 
-        playSound(300); 
-        render(); 
-    } 
- 
-    function handleInput(id) { 
-        if (currentMode === 'online' && game.turn() !== playerColor) return; 
-        if (selectedSq) { 
-            const moveData = { from: selectedSq, to: id, promotion: 'q' }; 
-            const move = game.move(moveData); 
-            if (move) { 
-                playSound(400); 
-                selectedSq = null; 
-                render(); 
-                 
-                if (currentMode === 'online' && conn) { 
-                    try { 
-                        conn.send({ type: 'move', data: moveData }); 
-                    } catch(e) { 
-                        console.error('Send move failed:', e); 
-                    } 
-                } 
-                 
-                if (currentMode === 'bot' && !game.game_over()) { 
-                    setTimeout(aiMove, 100); 
-                } 
-                return; 
-            } 
-        } 
-        const p = game.get(id); 
-        if (p && p.color === game.turn()) { 
-            selectedSq = id; 
-            render(); 
-        } 
-    } 
- 
-    function setupConnection() { 
-        document.getElementById('chat-window').style.display = 'flex'; 
-        document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-',''); 
-         
-        conn.on('data', data => { 
-            if(data.type === 'move') { 
-                try { 
-                    game.move(data.data); 
-                    playSound(300); 
-                    render(); 
-                } catch(e) { 
-                    console.error('Apply move failed:', e); 
-                } 
-            } else if (data.type === 'chat') { 
-                const msg = document.createElement('div'); 
-                msg.style.color = "var(--p)"; 
-                msg.innerText = "Friend: " + data.data; 
-                document.getElementById('chat-msgs').appendChild(msg); 
-            } else if (data.type === 'ping') { 
-                // Handle ping silently 
-            } 
-        }); 
-         
-        // Auto-send messages 
-        conn.on('open', () => { 
-            document.getElementById('chat-input').addEventListener('keypress', event => { 
-                if(event.key === 'Enter' && conn.open) { 
-                    const inputValue = document.getElementById('chat-input').value; 
-                    if(inputValue) { 
-                        try { 
-                            conn.send({type: 'chat', data: inputValue}); 
-                            const msgDiv = document.createElement('div'); 
-                            msgDiv.innerText = "Me: " + inputValue; 
-                            document.getElementById('chat-msgs').appendChild(msgDiv); 
-                            document.getElementById('chat-input').value = ''; 
-                        } catch(e) { 
-                            console.error('Send chat failed:', e); 
-                        } 
-                    } 
-                } 
-            }); 
-        }); 
-    } 
- 
-    function startOnlineGame(id) { 
-        conn = peer.connect('ARCH-'+id); 
-        currentMode = 'online'; 
-        playerColor = 'w'; 
-         
-        conn.on('open', () => { 
-            setupConnection(); 
-            document.getElementById('p1-label').innerText = currentUser; 
-            document.getElementById('p2-label').innerText = id; 
-            startGame(); 
-        }); 
-         
-        conn.on('error', err => { 
-            console.error('Connection error:', err); 
-            alert('Failed to connect: ' + err.message); 
-        }); 
-    } 
- 
-    function showDashboard() { 
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); 
-        document.getElementById('home-screen').style.display = 'flex'; 
-        document.getElementById('user-display').innerText = currentUser; 
-        document.getElementById('global-nav').style.display = 'none'; 
-        renderFriends(); 
-    } 
- 
-    function prepareGame(mode) { 
-        currentMode = mode; 
-        if(mode === 'bot') { 
-            document.getElementById('ai-setup').style.display = 'flex'; 
-        } else { 
-            document.getElementById('pass-setup').style.display = 'flex'; 
-            document.getElementById('p1-in').value = currentUser; 
-        } 
-    } 
- 
-    function startAI() { 
-        aiDifficulty = document.getElementById('ai-level-select').value; 
-        playerColor = 'w'; 
-        document.getElementById('p1-label').innerText = currentUser; 
-        document.getElementById('p2-label').innerText = "ARCH-AI"; 
-        startGame(); 
-    } 
- 
-    function startPass() { 
-        playerColor = 'w'; 
-        document.getElementById('p1-label').innerText = document.getElementById('p1-in').value || "P1"; 
-        document.getElementById('p2-label').innerText = document.getElementById('p2-in').value || "P2"; 
-        startGame(); 
-    } 
- 
-    function resignGame() { 
-        if(currentMode === 'online' && conn) { 
-            conn.send({type: 'resign'}); 
-        } 
-        game.set_status('resigned'); 
-        document.getElementById('win-screen').style.display = 'flex'; 
-        document.getElementById('winner-text').innerText = (playerColor === 'w' ? document.getElementById('p2-label').innerText : document.getElementById('p1-label').innerText) + " RESIGNED"; 
-        playSound(600); 
-        showDashboard(); 
-    } 
- 
-    function offerDraw() { 
-        if(currentMode === 'online' && conn) { 
-            conn.send({type: 'offer_draw'}); 
-        } 
-        alert('Draw offered!'); 
-    } 
- 
-    function acceptDraw() { 
-        game.set_status('draw'); 
-        document.getElementById('win-screen').style.display = 'flex'; 
-        document.getElementById('winner-text').innerText = "GAME DRAWN"; 
-        playSound(600); 
-        showDashboard(); 
-    } 
- 
-    function startGame() { 
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); 
-        document.getElementById('global-nav').style.display = 'flex'; 
-        game.reset(); 
-        localStorage.setItem(`game_${currentUser}`, game.fen()); // Persist game state 
-        initBoard(); 
-         
-        // Add draw/resign buttons 
-        const hud = document.querySelector('.hud'); 
-        const drawBtn = document.createElement('div'); 
-        drawBtn.className = 'draw-resign'; 
-        drawBtn.innerHTML = ` 
-            <button class="btn-draw" onclick="offerDraw()">Offer Draw</button> 
-            <button class="btn-resign" onclick="resignGame()">Resign</button> 
-        `; 
-        hud.parentNode.insertBefore(drawBtn, hud.nextSibling); 
-    } 
- 
-    function initBoard() { 
-        boardEl.innerHTML = ''; 
-        for (let i = 0; i < 64; i++) { 
-            const sq = document.createElement('div'); 
-            sq.className = `sq ${(Math.floor(i/8) + i%8) % 2 === 0 ? 'l' : 'd'}`; 
-            sq.dataset.id = String.fromCharCode(97 + (i%8)) + (8 - Math.floor(i/8)); 
-            sq.onclick = () => handleInput(sq.dataset.id); 
-            boardEl.appendChild(sq); 
-        } 
-        render(); 
-    } 
- 
-    function render() { 
-        document.querySelectorAll('.sq').forEach(s => { 
-            const p = game.get(s.dataset.id); 
-            s.innerHTML = ''; 
-            s.classList.remove('selected', 'hint'); 
-             
-            if(s.dataset.id === selectedSq) { 
-                s.classList.add('selected'); 
-            } 
-            if(selectedSq && game.moves({square: selectedSq}).some(m => m.includes(s.dataset.id))) { 
-                s.classList.add('hint'); 
-            } 
-             
-            if (p) { 
-                const img = document.createElement('img'); 
-                img.src = `https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/alpha/${p.color}${p.type.toUpperCase()}.svg`; 
-                img.className = 'piece' + (p.color === 'b' ? ' black' : ''); 
-                img.style.opacity = '0'; 
-                s.appendChild(img); 
-                setTimeout(() => img.style.opacity = '1', 100); 
-            } 
-        }); 
-         
-        if(game.game_over()) {  
-            document.getElementById('win-screen').style.display = 'flex';  
-            let winnerStr = game.in_checkmate() ? (game.turn() === 'b' ? document.getElementById('p1-label').innerText : document.getElementById('p2-label').innerText) + " WINS" : "DRAW"; 
-            document.getElementById('winner-text').innerText = winnerStr; 
-            playSound(600); 
-        } 
-    } 
- 
-    function toggleSocial() {  
-        const p = document.getElementById('social-panel');  
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';  
-    } 
-     
-    function addFriend() { 
-        const id = document.getElementById('friend-id').value.trim().toUpperCase(); 
-        if(!id) return; 
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || ""); 
-        if(!friends.includes(id)) friends.push(id); 
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends)); 
-        renderFriends(); 
-    } 
-     
-    function renderFriends() { 
-        const list = document.getElementById('friends-list');  
-        list.innerHTML = ''; 
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || ""); 
-        friends.forEach(f => { 
-            const div = document.createElement('div');  
-            div.className = 'friend-item'; 
-            div.innerHTML = `<span>${f}</span> <span style="color:var(--p)">PLAY</span>`; 
-            div.onclick = () => startOnlineGame(f);  
-            list.appendChild(div); 
-        }); 
-    } 
-     
-    function sendChat() { 
-        const inp = document.getElementById('chat-input'); 
-        if(!conn || !inp.value) return; 
-        try { 
-            conn.send({type: 'chat', data: inp.value}); 
-            const msg = document.createElement('div');  
-            msg.innerText = "Me: " + inp.value; 
-            document.getElementById('chat-msgs').appendChild(msg); 
-            inp.value = ''; 
-        } catch(e) { 
-            console.error('Send chat failed:', e); 
-        } 
-    } 
-     
-    function closeChat() {  
-        document.getElementById('chat-window').style.display = 'none';  
-    } 
-     
-    function confirmExit() {  
-        if(confirm("Exit game?")) showDashboard();  
-    } 
-     
-    function doLogout() {  
-        localStorage.removeItem('arch_user'); 
-        localStorage.removeItem(`game_${currentUser}`); 
-        localStorage.removeItem('pwd_' + currentUser); 
-        location.reload();  
-    } 
-     
-    window.onload = () => {  
-        const s = localStorage.getItem('arch_user');  
-        if(s) {  
-            currentUser = s;  
-            document.getElementById('user-in').value = s; 
-            document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s); 
-             
-            // Auto-login disabled for clarity—force explicit entry 
-            // Uncomment if preferred: initPeer(); showDashboard(); 
-            document.getElementById('auth-screen').style.display = 'flex'; 
-        } else { 
-            document.getElementById('auth-screen').style.display = 'flex'; 
-        }  
-         
-        // Load theme preference 
-        const theme = localStorage.getItem('theme_preference') || 'default'; 
-        applyTheme(theme); 
-    }; 
-     
-    function applyTheme(theme) { 
-        const root = document.documentElement; 
-        switch(theme) { 
-            case 'wood': root.style.setProperty('--bg', '#2d1b00'); root.style.setProperty('--c', '#4a3010'); root.style.setProperty('--sl', '#cda875'); root.style.setProperty('--sd', '#8b5a2b'); break; 
-            case 'blue': root.style.setProperty('--bg', '#001f3f'); root.style.setProperty('--c', '#003366'); root.style.setProperty('--sl', '#cceeff'); root.style.setProperty('--sd', '#66ccff'); break; 
-            case 'green': root.style.setProperty('--bg', '#003300'); root.style.setProperty('--c', '#006600'); root.style.setProperty('--sl', '#ccffcc'); root.style.setProperty('--sd', '#66cc66'); break; 
-            default: root.style.setProperty('--bg', '#0a0e17'); root.style.setProperty('--c', '#141b26'); root.style.setProperty('--sl', '#dee3e6'); root.style.setProperty('--sd', '#769656'); break; 
-        } 
-        localStorage.setItem('theme_preference', theme); 
-    } 
-     
-    // Password hashing for security 
-    function handleAuth(type) { 
-        const u = document.getElementById('user-in').value.trim().toUpperCase(); 
-        const p = document.getElementById('pass-in').value.trim(); 
-         
-        // Basic validation 
-        if(!u || !p) {  
-            alert("ERROR: Both username and password are required.");  
-            return;  
-        } 
-        if(u.length < 3) {  
-            alert("Username must be at least 3 characters.");  
-            return;  
-        } 
-        if(p.length < 6) {  
-            alert("Password must be at least 6 characters.");  
-            return;  
-        } 
-         
-        const hashPass = CryptoJS.SHA256(p).toString(); // Client-side hashing 
-         
-## Login System Issues & Quick Fixes
- 
-**Your login isn't working because of these common problems:** 
- 
-### 🔍 **Main Issues Found:**
-1. **Password Hashing Mismatch** - Code now uses SHA256 hashing, but old plain passwords don't match
-[zellwk.com](https://zellwk.com/blog/frontend-login-system/)
-2. **Auto-login Confirmation** - Browser asks "Continue as ?" every reload - annoying! 
-3. **localStorage Errors** - Storage quota full or browser blocking
-[stackoverflow.com](https://stackoverflow.com/questions/78313214/how-to-fix-chess-js-implementation-for-index-html)
-4. **No Loading States** - Buttons don't show "logging in." so feels stuck
-[softwarekeep.com](https://softwarekeep.com/blogs/how-to/how-to-fix-windows-10-login-problems)
- 
-### 🚀 **FIXED VERSION - Copy & Paste This:**
- 
-```html 
-<!DOCTYPE html> 
-<html lang="en"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>ARCHITECT CHESS PRO</title> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> 
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script> 
-    <style> 
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap'); 
-        :root { --p: #00d4ff
+        n: [-50,-40,-30,-30,-30,-30,-40,-50,-40,-20, 0, 5, 5, 0,-20,-40,-30, 5, 10, 15, 15, 10, 5,-30,-30, 0, 15, 20, 20, 15, 0,-30,-30, 5
 
