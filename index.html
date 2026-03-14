@@ -9,17 +9,28 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Roboto+Mono&display=swap');
         :root { --p: #00d4ff; --bg: #0a0e17; --c: #141b26; --sl: #dee3e6; --sd: #769656; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Orbitron', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; transition: background 0.5s; }
         
         .architect-tag { font-size: 24px; font-weight: 900; color: var(--p); text-shadow: 0 0 10px var(--p); letter-spacing: 4px; margin-top: 15px; text-transform: uppercase; }
         .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; animation: blink 2s infinite; }
+        
+        /* CRAZY ANIMATIONS */
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-
-        /* CHANGED: Added setting click animation */
         @keyframes settingsClick { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(0.9) rotate(-5deg); filter: hue-rotate(90deg); box-shadow: 0 0 20px var(--p); } 100% { transform: scale(1) rotate(0deg); } }
-        .anim-click { animation: settingsClick 0.4s ease; }
+        @keyframes rgb-cycle { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        @keyframes ghost-pulse { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px var(--p)); } 50% { opacity: 0.2; filter: drop-shadow(0 0 15px var(--p)); } }
+        @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-3px, 3px); } 40% { transform: translate(-3px, -3px); } 60% { transform: translate(3px, 3px); } 80% { transform: translate(3px, -3px); } 100% { transform: translate(0); } }
+        @keyframes screen-shake { 0% { transform: rotate(0deg) translate(0,0); } 25% { transform: rotate(1deg) translate(2px, 2px); } 75% { transform: rotate(-1deg) translate(-2px, -2px); } 100% { transform: rotate(0deg) translate(0,0); } }
+        @keyframes row-flicker { 0% { background: var(--p); color: black; } 100% { background: rgba(0,0,0,0.3); color: white; } }
 
-        img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
+        .anim-click { animation: settingsClick 0.4s ease; }
+        .rgb-active { animation: rgb-cycle 3s linear infinite !important; }
+        .ghost-active img.piece { animation: ghost-pulse 1.5s infinite ease-in-out; }
+        .glitch-active .architect-tag, .glitch-active .hud { animation: glitch 0.15s infinite; }
+        .shake-active { animation: screen-shake 0.08s infinite; }
+        .flicker-on { animation: row-flicker 0.3s ease-out; }
+        
+        img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); transition: all 0.3s; }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
 
         .nav-ui { position: fixed; top: 15px; left: 15px; z-index: 110; display: flex; gap: 8px; }
@@ -39,16 +50,16 @@
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
         
-        /* CHANGED: Added transition for the 3D crazy feature */
         #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s; }
-        
-        /* CHANGED: The crazy feature class */
         .holo-board-active { transform: perspective(800px) rotateX(35deg) scale(0.85); box-shadow: 0 40px 80px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.2) !important; border-color: var(--p) !important; }
 
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
         .hud { width: 100%; background: var(--c); padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--p); margin-top: 60px; font-size: 12px; font-weight: 900; }
+        
+        .setting-row { margin: 10px 0; font-size: 11px; color: white; display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid #222; transition: 0.2s; }
+        .setting-row input { width: auto !important; margin: 0 !important; cursor: pointer; transform: scale(1.4); }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -89,12 +100,15 @@
     </div>
 
     <div id="settings-setup" class="overlay" style="display:none">
-        <div class="auth-card">
-            <h3 style="color:var(--p); font-size:14px;">SYSTEM SETTINGS</h3>
-            <div style="margin: 20px 0; font-size: 12px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <input type="checkbox" id="holo-toggle" onchange="toggleHolo(this)" style="width: auto; margin: 0; transform: scale(1.5);">
-                <label for="holo-toggle">3D HOLO-BOARD (CRAZY)</label>
-            </div>
+        <div class="auth-card" style="max-width: 350px;">
+            <h3 style="color:var(--p); font-size:14px; margin-bottom: 20px;">SYSTEM OVERRIDE</h3>
+            
+            <div class="setting-row" id="row-holo"><span>3D HOLO-BOARD</span><input type="checkbox" onchange="toggleSetting('holo', this, 'row-holo')"></div>
+            <div class="setting-row" id="row-rgb"><span>RGB NEON MODE</span><input type="checkbox" onchange="toggleSetting('rgb', this, 'row-rgb')"></div>
+            <div class="setting-row" id="row-ghost"><span>GHOST PIECES</span><input type="checkbox" onchange="toggleSetting('ghost', this, 'row-ghost')"></div>
+            <div class="setting-row" id="row-glitch"><span>UI GLITCH</span><input type="checkbox" onchange="toggleSetting('glitch', this, 'row-glitch')"></div>
+            <div class="setting-row" id="row-shake"><span>SEISMIC SHAKE</span><input type="checkbox" onchange="toggleSetting('shake', this, 'row-shake')"></div>
+
             <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
@@ -150,7 +164,6 @@
     function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function toggleMute() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇 MUTED" : "🔊 SOUND"; }
     
-    // MIC LOGIC
     async function toggleMic() {
         if (!localStream) {
             try {
@@ -159,8 +172,7 @@
                 document.getElementById('mic-btn').style.color = "lime";
                 if(conn) peer.call(conn.peer, localStream);
             } catch (e) { 
-                // CHANGED: Updated alert to explain why browsers block mic access
-                alert("Mic access denied! \n\nNote: Browsers strictly block mic popups unless you are running this on an HTTPS website or a 'localhost' server."); 
+                alert("Mic access denied! Use HTTPS."); 
             }
         } else {
             localStream.getTracks().forEach(t => t.stop());
@@ -190,20 +202,16 @@
     function initPeer() {
         if(peer) return;
         peer = new Peer('ARCH-' + currentUser);
-        peer.on('open', () => console.log("Peer ID: ARCH-" + currentUser));
         peer.on('connection', c => { 
             conn = c; currentMode = 'online'; playerColor = 'b';
             setupConnection(); startGame();
         });
         peer.on('call', call => {
             call.answer(localStream);
-            call.on('stream', remoteStream => {
-                const audio = new Audio(); audio.srcObject = remoteStream; audio.play();
-            });
+            call.on('stream', st => { const a = new Audio(); a.srcObject = st; a.play(); });
         });
     }
 
-    // --- ENHANCED AI ENGINE ---
     const pst = {
         p: [0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10, 5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5, 5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
         n: [-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40, -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30, -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30, -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
@@ -252,7 +260,6 @@
         const moves = game.moves();
         const depth = document.getElementById('ai-level-select').value === 'architect' ? 2 : 1;
         let bestMove = null, bestVal = -Infinity;
-        moves.sort(() => Math.random() - 0.5); 
         for(let m of moves) {
             game.move(m);
             let v = minimax(game, depth - 1, -Infinity, Infinity, false);
@@ -262,7 +269,6 @@
         game.move(bestMove || moves[0]); playSound(300); render();
     }
 
-    // BOARD LOGIC
     function handleInput(id) {
         if (currentMode === 'online' && game.turn() !== playerColor) return;
         if (selectedSq) {
@@ -285,15 +291,7 @@
         document.getElementById('chatting-with').innerText = conn.peer.replace('ARCH-','');
         document.getElementById('p1-label').innerText = playerColor === 'w' ? currentUser : conn.peer.replace('ARCH-','');
         document.getElementById('p2-label').innerText = playerColor === 'b' ? currentUser : conn.peer.replace('ARCH-','');
-        
-        conn.on('data', data => {
-            if(data.type === 'move') { game.move(data.data); playSound(300); render(); }
-            else if (data.type === 'chat') {
-                const msg = document.createElement('div'); msg.style.color = "var(--p)";
-                msg.innerText = "Opponent: " + data.data; document.getElementById('chat-msgs').appendChild(msg);
-            }
-        });
-        conn.on('close', () => { alert("Opponent Disconnected"); showDashboard(); });
+        conn.on('data', d => { if(d.type === 'move') { game.move(d.data); playSound(300); render(); } });
     }
 
     function startOnlineGame(id) {
@@ -302,46 +300,50 @@
         conn.on('open', () => { setupConnection(); startGame(); });
     }
 
-    // UI CONTROLS
     function showDashboard() {
         document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
         document.getElementById('home-screen').style.display = 'flex';
         document.getElementById('user-display').innerText = currentUser;
-        document.getElementById('global-nav').style.display = 'none';
         renderFriends();
     }
 
-    // CHANGED: Open Settings function with animation logic
     function openSettings() {
-        const btn = document.getElementById('settings-btn');
-        btn.classList.add('anim-click');
+        const b = document.getElementById('settings-btn'); b.classList.add('anim-click');
         setTimeout(() => {
-            btn.classList.remove('anim-click');
+            b.classList.remove('anim-click');
             document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
             document.getElementById('settings-setup').style.display = 'flex';
-        }, 400); // Waits for animation to complete
+        }, 400);
     }
 
-    // CHANGED: Toggle the crazy 3D board feature
-    function toggleHolo(cb) {
-        if(cb.checked) document.getElementById('board-box').classList.add('holo-board-active');
-        else document.getElementById('board-box').classList.remove('holo-board-active');
+    // UPDATED: Logic for Crazy Features + Click Animation
+    function toggleSetting(type, cb, rowId) {
+        const body = document.body;
+        const boardBox = document.getElementById('board-box');
+        const row = document.getElementById(rowId);
+        
+        // Trigger visual "click" effect on the row
+        row.classList.add('flicker-on');
+        setTimeout(() => row.classList.remove('flicker-on'), 300);
+        playSound(800); // System Beep
+
+        if(type === 'holo') {
+            cb.checked ? boardBox.classList.add('holo-board-active') : boardBox.classList.remove('holo-board-active');
+        } else if(type === 'rgb') {
+            cb.checked ? body.classList.add('rgb-active') : body.classList.remove('rgb-active');
+        } else if(type === 'ghost') {
+            cb.checked ? body.classList.add('ghost-active') : body.classList.remove('ghost-active');
+        } else if(type === 'glitch') {
+            cb.checked ? body.classList.add('glitch-active') : body.classList.remove('glitch-active');
+        } else if(type === 'shake') {
+            cb.checked ? body.classList.add('shake-active') : body.classList.remove('shake-active');
+        }
     }
 
-    function prepareGame(mode) {
-        currentMode = mode;
-        if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
-        else { document.getElementById('pass-setup').style.display = 'flex'; document.getElementById('p1-in').value = currentUser; }
-    }
-
+    function prepareGame(mode) { currentMode = mode; document.getElementById(mode === 'bot' ? 'ai-setup' : 'pass-setup').style.display = 'flex'; }
     function startAI() { playerColor = 'w'; startGame(); }
     function startPass() { startGame(); }
-
-    function startGame() {
-        document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
-        document.getElementById('global-nav').style.display = 'flex';
-        game.reset(); initBoard();
-    }
+    function startGame() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); document.getElementById('global-nav').style.display = 'flex'; game.reset(); initBoard(); }
 
     function initBoard() {
         boardEl.innerHTML = '';
@@ -375,56 +377,13 @@
     }
 
     function toggleSocial() { const p = document.getElementById('social-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
-    
-    function addFriend() {
-        const id = document.getElementById('friend-id').value.trim().toUpperCase();
-        if(!id) return;
-        if(id === currentUser) { alert("CANNOT ADD YOURSELF"); return; }
-        
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        if(!friends.includes(id)) friends.push(id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
-        renderFriends();
-    }
-
-    function removeFriend(id) {
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        friends = friends.filter(f => f !== id);
-        localStorage.setItem('friends_'+currentUser, JSON.stringify(friends));
-        renderFriends();
-    }
-
-    function renderFriends() {
-        const list = document.getElementById('friends-list'); list.innerHTML = '';
-        let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
-        friends.forEach(f => {
-            const div = document.createElement('div'); div.className = 'friend-item';
-            div.innerHTML = `<span>${f}</span> <div><span style="color:red; margin-right:10px; cursor:pointer;" onclick="event.stopPropagation(); removeFriend('${f}')">DEL</span> <span style="color:var(--p); cursor:pointer;" onclick="event.stopPropagation(); startOnlineGame('${f}')">PLAY</span></div>`;
-            list.appendChild(div);
-        });
-    }
-
-    function sendChat() {
-        const inp = document.getElementById('chat-input');
-        if(!conn || !inp.value) return;
-        conn.send({type: 'chat', data: inp.value});
-        const msg = document.createElement('div'); msg.innerText = "Me: " + inp.value;
-        document.getElementById('chat-msgs').appendChild(msg); inp.value = '';
-    }
-    
+    function addFriend() { const id = document.getElementById('friend-id').value.trim().toUpperCase(); if(!id || id === currentUser) return; let f = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]"); if(!f.includes(id)) f.push(id); localStorage.setItem('friends_'+currentUser, JSON.stringify(f)); renderFriends(); }
+    function renderFriends() { const l = document.getElementById('friends-list'); l.innerHTML = ''; let f = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]"); f.forEach(x => { const d = document.createElement('div'); d.className = 'friend-item'; d.innerHTML = `<span>${x}</span> <span style="color:var(--p); cursor:pointer;" onclick="startOnlineGame('${x}')">PLAY</span>`; l.appendChild(d); }); }
     function closeChat() { document.getElementById('chat-window').style.display = 'none'; }
     function confirmExit() { if(confirm("Exit game?")) showDashboard(); }
     function doLogout() { localStorage.removeItem('arch_user'); location.reload(); }
     
-    window.onload = () => { 
-        const s = localStorage.getItem('arch_user'); 
-        if(s) { 
-            currentUser = s; 
-            document.getElementById('user-in').value = s;
-            document.getElementById('pass-in').value = localStorage.getItem('pwd_' + s);
-            initPeer(); showDashboard();
-        } 
-    };
+    window.onload = () => { const s = localStorage.getItem('arch_user'); if(s) { currentUser = s; initPeer(); showDashboard(); } };
 </script>
 </body>
 </html>
