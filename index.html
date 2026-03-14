@@ -15,6 +15,10 @@
         .credits { font-size: 9px; color: var(--p); letter-spacing: 3px; margin-bottom: 15px; opacity: 0.7; animation: blink 2s infinite; }
         @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
+        /* CHANGED: Added setting click animation */
+        @keyframes settingsClick { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(0.9) rotate(-5deg); filter: hue-rotate(90deg); box-shadow: 0 0 20px var(--p); } 100% { transform: scale(1) rotate(0deg); } }
+        .anim-click { animation: settingsClick 0.4s ease; }
+
         img.piece { width: 90%; z-index: 5; pointer-events: none; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
         .black { filter: invert(1) brightness(0.8) drop-shadow(0 0 2px var(--p)) !important; }
 
@@ -34,7 +38,13 @@
 
         .sq.hint::after { content: ''; width: 15px; height: 15px; background: var(--p); border-radius: 50%; opacity: 0.6; }
         .selected { background: rgba(0, 212, 255, 0.3) !important; }
-        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; }
+        
+        /* CHANGED: Added transition for the 3D crazy feature */
+        #board-box { margin: 10px 0; width: 92vw; max-width: 380px; aspect-ratio: 1/1; border: 6px solid var(--c); position: relative; border-radius: 12px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s; }
+        
+        /* CHANGED: The crazy feature class */
+        .holo-board-active { transform: perspective(800px) rotateX(35deg) scale(0.85); box-shadow: 0 40px 80px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.2) !important; border-color: var(--p) !important; }
+
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); height: 100%; }
         .sq { display: flex; justify-content: center; align-items: center; position: relative; }
         .sq.l { background: var(--sl); } .sq.d { background: var(--sd); }
@@ -68,12 +78,24 @@
             <div onclick="prepareGame('bot')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>NEURAL AI</span></div>
             <div onclick="prepareGame('pass')" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>LOCAL PASS</span></div>
             <div onclick="toggleSocial()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #333; cursor:pointer"><span>SOCIAL HUB</span></div>
-            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer"><span>LOGOUT</span></div>
+            <div id="settings-btn" onclick="openSettings()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #ff00ff; color: #ff00ff; cursor:pointer;"><span>⚙️ SETTINGS</span></div>
+            <div onclick="doLogout()" style="background:var(--c); padding:20px 10px; border-radius:12px; border:1px solid #f44336; cursor:pointer; grid-column: span 2;"><span>LOGOUT</span></div>
         </div>
         <div id="social-panel">
             <input type="text" id="friend-id" placeholder="ADD FRIEND ID">
             <button class="btn-main" style="padding: 5px; font-size: 9px;" onclick="addFriend()">ADD FRIEND</button>
             <div id="friends-list"></div>
+        </div>
+    </div>
+
+    <div id="settings-setup" class="overlay" style="display:none">
+        <div class="auth-card">
+            <h3 style="color:var(--p); font-size:14px;">SYSTEM SETTINGS</h3>
+            <div style="margin: 20px 0; font-size: 12px; color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <input type="checkbox" id="holo-toggle" onchange="toggleHolo(this)" style="width: auto; margin: 0; transform: scale(1.5);">
+                <label for="holo-toggle">3D HOLO-BOARD (CRAZY)</label>
+            </div>
+            <button class="btn-main" style="background:none; border:1px solid #444; color:#777" onclick="showDashboard()">BACK</button>
         </div>
     </div>
 
@@ -136,7 +158,10 @@
                 document.getElementById('mic-btn').innerText = "🎤 MIC ON";
                 document.getElementById('mic-btn').style.color = "lime";
                 if(conn) peer.call(conn.peer, localStream);
-            } catch (e) { alert("Mic access denied"); }
+            } catch (e) { 
+                // CHANGED: Updated alert to explain why browsers block mic access
+                alert("Mic access denied! \n\nNote: Browsers strictly block mic popups unless you are running this on an HTTPS website or a 'localhost' server."); 
+            }
         } else {
             localStream.getTracks().forEach(t => t.stop());
             localStream = null;
@@ -225,10 +250,8 @@
     function aiMove() {
         if(game.game_over()) return;
         const moves = game.moves();
-        // CHANGED: Reduced depth for instant moves
         const depth = document.getElementById('ai-level-select').value === 'architect' ? 2 : 1;
         let bestMove = null, bestVal = -Infinity;
-        // Optimization: Sort moves briefly to improve pruning
         moves.sort(() => Math.random() - 0.5); 
         for(let m of moves) {
             game.move(m);
@@ -288,6 +311,23 @@
         renderFriends();
     }
 
+    // CHANGED: Open Settings function with animation logic
+    function openSettings() {
+        const btn = document.getElementById('settings-btn');
+        btn.classList.add('anim-click');
+        setTimeout(() => {
+            btn.classList.remove('anim-click');
+            document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+            document.getElementById('settings-setup').style.display = 'flex';
+        }, 400); // Waits for animation to complete
+    }
+
+    // CHANGED: Toggle the crazy 3D board feature
+    function toggleHolo(cb) {
+        if(cb.checked) document.getElementById('board-box').classList.add('holo-board-active');
+        else document.getElementById('board-box').classList.remove('holo-board-active');
+    }
+
     function prepareGame(mode) {
         currentMode = mode;
         if(mode === 'bot') document.getElementById('ai-setup').style.display = 'flex';
@@ -339,7 +379,6 @@
     function addFriend() {
         const id = document.getElementById('friend-id').value.trim().toUpperCase();
         if(!id) return;
-        // CHANGED: Prevent adding yourself
         if(id === currentUser) { alert("CANNOT ADD YOURSELF"); return; }
         
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
@@ -348,7 +387,6 @@
         renderFriends();
     }
 
-    // CHANGED: Added delete friend function
     function removeFriend(id) {
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
         friends = friends.filter(f => f !== id);
@@ -361,7 +399,6 @@
         let friends = JSON.parse(localStorage.getItem('friends_'+currentUser) || "[]");
         friends.forEach(f => {
             const div = document.createElement('div'); div.className = 'friend-item';
-            // CHANGED: Added DEL button and separated clicks
             div.innerHTML = `<span>${f}</span> <div><span style="color:red; margin-right:10px; cursor:pointer;" onclick="event.stopPropagation(); removeFriend('${f}')">DEL</span> <span style="color:var(--p); cursor:pointer;" onclick="event.stopPropagation(); startOnlineGame('${f}')">PLAY</span></div>`;
             list.appendChild(div);
         });
